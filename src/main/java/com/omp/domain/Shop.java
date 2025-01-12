@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table
+@Table(name = "SHOPS")
 public class Shop {
     @Id
     @GeneratedValue(strategy = IDENTITY)
