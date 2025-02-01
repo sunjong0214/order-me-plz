@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 public class DeliveryService {
     private final DeliveryRepository deliveryRepository;
 
-    public Delivery findDeliveryBy(Long id) {
+    public Delivery findDeliveryBy(final Long id) {
         return deliveryRepository.findById(id).orElseThrow();
     }
 
-    public Long saveDeliveryBy(CreateDeliveryDto createDeliveryDto) {
+    public Long saveDeliveryBy(final CreateDeliveryDto createDeliveryDto) {
         return deliveryRepository.save(CreateDeliveryDto.of(createDeliveryDto)).getId();
     }
 }

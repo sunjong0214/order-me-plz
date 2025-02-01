@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 public class CreateDeliveryDto {
     private final DeliveryStatus status;
 
-    public static Delivery of(CreateDeliveryDto dto) {
+    public static Delivery of(final CreateDeliveryDto dto) {
         return new Delivery(dto.status);
     }
 }

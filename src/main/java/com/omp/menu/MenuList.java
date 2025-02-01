@@ -8,5 +8,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Embeddable
 public class MenuList {
-    private final List<Menu> menuList = new ArrayList<Menu>();
+    private final List<Menu> menuList = new ArrayList<>();
 }
