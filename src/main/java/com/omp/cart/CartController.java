@@ -16,11 +16,11 @@ public class CartController {
 
     @GetMapping("/{id}")
     public Cart getCartById(@PathVariable Long id) {
-        return cartService.findCartById(id);
+        return cartService.findCartBy(id);
     }
 
     @PostMapping
     public Long createCart(@RequestBody CreateCartDto createCartDto) {
-        return cartService.createCart(createCartDto);
+        return cartService.saveCartBy(createCartDto);
     }
 }

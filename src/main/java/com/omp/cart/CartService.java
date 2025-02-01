@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 public class CartService {
     private final CartRepository cartRepository;
 
-    public Cart findCartById(Long id) {
+    public Cart findCartBy(Long id) {
         return cartRepository.findById(id).orElseThrow();
     }
 
-    public Long createCart(CreateCartDto createCartDto) {
+    public Long saveCartBy(CreateCartDto createCartDto) {
         return cartRepository.save(CreateCartDto.to(createCartDto)).getId();
     }
 }
