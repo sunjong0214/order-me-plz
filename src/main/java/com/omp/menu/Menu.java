@@ -1,22 +1,21 @@
-package com.omp.domain;
+package com.omp.menu;
 
-import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "DELIVERIES")
-public class Delivery {
+@Table(name = "MENUS")
+public class Menu {
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    @Column(name = "delivery_id")
+    @Column(name = "menu_id")
     private Long id;
-    @Enumerated(STRING)
-    private DeliveryStatus status;
+    private String name;
+    private Integer price;
+    private String description;
 }

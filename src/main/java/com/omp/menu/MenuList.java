@@ -1,4 +1,4 @@
-package com.omp.domain;
+package com.omp.menu;
 
 import jakarta.persistence.Embeddable;
 import java.util.ArrayList;

@@ -1,21 +1,24 @@
-package com.omp.domain;
+package com.omp.cart;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.omp.menu.MenuList;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "USERS")
-public class User {
+@Table(name = "CARTS")
+public class Cart {
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "cart_id")
     private Long id;
-    private String email;
-    private String password;
-    private String name;
+    private Long userId;
+    private Long shopId;
+    @Embedded
+    private MenuList menuList;
 }

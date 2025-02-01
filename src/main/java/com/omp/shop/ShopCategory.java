@@ -1,4 +1,4 @@
-package com.omp.domain;
+package com.omp.shop;
 
 public enum ShopCategory {
     CHICKEN, PIZZA, BEEF

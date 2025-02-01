@@ -1,4 +1,4 @@
-package com.omp.domain;
+package com.omp.shop;
 
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;

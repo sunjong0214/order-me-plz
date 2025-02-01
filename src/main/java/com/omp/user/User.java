@@ -1,4 +1,4 @@
-package com.omp.domain;
+package com.omp.user;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
@@ -9,13 +9,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "MENUS")
-public class Menu {
+@Table(name = "USERS")
+public class User {
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    @Column(name = "menu_id")
+    @Column(name = "user_id")
     private Long id;
+    private String email;
+    private String password;
     private String name;
-    private Integer price;
-    private String description;
 }

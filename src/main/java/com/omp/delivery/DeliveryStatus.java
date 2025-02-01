@@ -1,4 +1,4 @@
-package com.omp.domain;
+package com.omp.delivery;
 
 public enum DeliveryStatus {
     BEFORE, OUT, COMPLETE
