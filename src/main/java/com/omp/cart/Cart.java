@@ -1,6 +1,7 @@
 package com.omp.cart;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
 
 import com.omp.menu.MenuList;
 import jakarta.persistence.Column;
@@ -9,9 +10,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "CARTS")
+@NoArgsConstructor(access = PROTECTED)
 public class Cart {
     @Id
     @GeneratedValue(strategy = IDENTITY)
@@ -21,4 +24,14 @@ public class Cart {
     private Long shopId;
     @Embedded
     private MenuList menuList;
+
+    public Cart(Long userId, Long shopId, MenuList menuList) {
+        this.userId = userId;
+        this.shopId = shopId;
+        this.menuList = menuList;
+    }
+
+    public Long getId() {
+        return id;
+    }
 }
