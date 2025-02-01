@@ -15,12 +15,12 @@ public class ShopController {
     private final ShopService shopService;
 
     @GetMapping("/{id}")
-    public Shop getShopById(@PathVariable Long id) {
+    public Shop getShopById(final @PathVariable Long id) {
         return shopService.findShopBy(id);
     }
 
     @PostMapping
-    public Long createShop(@RequestBody CreateShopDto createShopDto) {
+    public Long createShop(final @RequestBody CreateShopDto createShopDto) {
         return shopService.saveShopBy(createShopDto);
     }
 }

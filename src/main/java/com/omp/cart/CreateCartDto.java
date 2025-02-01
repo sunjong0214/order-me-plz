@@ -1,7 +1,6 @@
 package com.omp.cart;
 
 import com.omp.menu.MenuList;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
