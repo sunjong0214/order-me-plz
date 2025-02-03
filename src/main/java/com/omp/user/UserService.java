@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User findUserBy(Long id) {
+    public User findUserBy(final Long id) {
         return userRepository.findById(id).orElseThrow();
     }
 
-    public Long saveUserBy(CreateUserDto createUserDto) {
+    public Long saveUserBy(final CreateUserDto createUserDto) {
         return userRepository.save(CreateUserDto.of(createUserDto)).getId();
     }
 }

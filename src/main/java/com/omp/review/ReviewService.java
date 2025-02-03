@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 public class ReviewService {
     private final ReviewRepository reviewRepository;
 
-    public Review findReviewBy(Long id) {
+    public Review findReviewBy(final Long id) {
         return reviewRepository.findById(id).orElseThrow();
     }
 
-    public Long saveReviewBy(CreateReviewDto createReviewDto) {
+    public Long saveReviewBy(final CreateReviewDto createReviewDto) {
         return reviewRepository.save(CreateReviewDto.of(createReviewDto)).getId();
     }
 }
