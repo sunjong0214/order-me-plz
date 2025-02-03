@@ -1,6 +1,7 @@
 package com.omp.shop;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Slice;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,4 +24,9 @@ public class ShopController {
     public Long createShop(final @RequestBody CreateShopDto createShopDto) {
         return shopService.saveShopBy(createShopDto);
     }
+
+//    @GetMapping("/list/{cursor}")
+//    public Slice<ShopResponse> getShopsBy(final @PathVariable Long cursor) {
+//        shopService.findShopsBy(cursor);
+//    }
 }

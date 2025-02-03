@@ -10,6 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -20,9 +22,11 @@ public class Shop {
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "shop_id")
     private Long id;
+    @NotBlank
     private String name;
     @Enumerated(STRING)
     private ShopCategory category;
+    @NotNull
     private boolean isOpen;
 
     public Shop(String name, ShopCategory category) {

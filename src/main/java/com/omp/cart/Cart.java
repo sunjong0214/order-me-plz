@@ -10,6 +10,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -20,7 +22,9 @@ public class Cart {
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "cart_id")
     private Long id;
+    @Positive
     private Long userId;
+    @Positive
     private Long shopId;
     @Embedded
     private MenuList menuList;

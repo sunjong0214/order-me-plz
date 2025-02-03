@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -18,8 +20,10 @@ public class Menu {
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "menu_id")
     private Long id;
+    @NotBlank
     private String name;
-    private Integer price;
+    @PositiveOrZero
+    private int price;
     private String description;
 
     public Menu(String name, Integer price, String description) {

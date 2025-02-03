@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -18,7 +19,9 @@ public class User {
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "user_id")
     private Long id;
+    @NotBlank
     private String email;
+    @NotBlank
     private String name;
 
     public User(String email, String name) {

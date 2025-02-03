@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Positive;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -18,13 +19,16 @@ public class Order {
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "ORDER_ID")
     private Long id;
+    @Positive
     private Long deliveryId;
-    private Long paymentId;
+    @Positive
+    private Long ordererId;
+    @Positive
     private Long shopId;
 
-    public Order(Long deliveryId, Long paymentId, Long shopId) {
+    public Order(Long deliveryId, Long ordererId, Long shopId) {
         this.deliveryId = deliveryId;
-        this.paymentId = paymentId;
+        this.ordererId = ordererId;
         this.shopId = shopId;
     }
 
