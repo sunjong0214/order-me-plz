@@ -1,10 +1,14 @@
 package com.omp.menu;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 
 @Embeddable
 public class MenuList {
-    private final List<Menu> menuList = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Menu> menuList = new ArrayList<>();
 }
