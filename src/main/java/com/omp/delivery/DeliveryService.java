@@ -13,6 +13,6 @@ public class DeliveryService {
     }
 
     public Long saveDeliveryBy(final CreateDeliveryDto createDeliveryDto) {
-        return deliveryRepository.save(CreateDeliveryDto.of(createDeliveryDto)).getId();
+        return deliveryRepository.save(CreateDeliveryDto.from(createDeliveryDto)).getId();
     }
 }

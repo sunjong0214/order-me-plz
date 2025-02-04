@@ -21,6 +21,6 @@ public class ReviewController {
 
     @PostMapping
     public Long createReview(final @RequestBody CreateReviewRequest request) {
-        return reviewService.saveReviewBy(CreateReviewRequest.of(request));
+        return reviewService.saveReviewBy(CreateReviewRequest.from(request));
     }
 }

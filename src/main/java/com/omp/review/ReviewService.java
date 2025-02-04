@@ -13,6 +13,6 @@ public class ReviewService {
     }
 
     public Long saveReviewBy(final CreateReviewDto createReviewDto) {
-        return reviewRepository.save(CreateReviewDto.of(createReviewDto)).getId();
+        return reviewRepository.save(CreateReviewDto.from(createReviewDto)).getId();
     }
 }

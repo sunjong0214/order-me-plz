@@ -10,7 +10,7 @@ public class CreateUserDto {
     @NotBlank
     private final String name;
 
-    public static User of(final CreateUserDto dto) {
+    public static User from(final CreateUserDto dto) {
         return new User(dto.email, dto.name);
     }
 }

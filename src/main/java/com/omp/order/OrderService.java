@@ -13,6 +13,6 @@ public class OrderService {
     }
 
     public Long saveOrderBy(final CreateOrderDto createOrderDto) {
-        return orderRepository.save(CreateOrderDto.of(createOrderDto)).getId();
+        return orderRepository.save(CreateOrderDto.from(createOrderDto)).getId();
     }
 }

@@ -8,7 +8,7 @@ public class CreateDeliveryRequest {
     @NotNull
     private final DeliveryStatus status;
 
-    public static CreateDeliveryDto of(final CreateDeliveryRequest request) {
+    public static CreateDeliveryDto from(final CreateDeliveryRequest request) {
         return new CreateDeliveryDto(request.status);
     }
 }

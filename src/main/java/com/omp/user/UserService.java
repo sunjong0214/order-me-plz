@@ -13,6 +13,6 @@ public class UserService {
     }
 
     public Long saveUserBy(final CreateUserDto createUserDto) {
-        return userRepository.save(CreateUserDto.of(createUserDto)).getId();
+        return userRepository.save(CreateUserDto.from(createUserDto)).getId();
     }
 }

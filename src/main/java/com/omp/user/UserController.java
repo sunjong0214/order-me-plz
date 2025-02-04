@@ -20,7 +20,7 @@ public class UserController {
     }
 
     @PostMapping
-    public Long createUser(final @RequestBody CreateUserDto createUserDto) {
-        return userService.saveUserBy(createUserDto);
+    public Long createUser(final @RequestBody CreateUserRequest request) {
+        return userService.saveUserBy(CreateUserRequest.from(request));
     }
 }

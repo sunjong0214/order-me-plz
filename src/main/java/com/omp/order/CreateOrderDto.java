@@ -12,7 +12,7 @@ public class CreateOrderDto {
     @Positive
     private final Long shopId;
 
-    public static Order of(final CreateOrderDto createOrderDto) {
+    public static Order from(final CreateOrderDto createOrderDto) {
         return new Order(createOrderDto.deliveryId, createOrderDto.ordererId, createOrderDto.shopId);
     }
 }

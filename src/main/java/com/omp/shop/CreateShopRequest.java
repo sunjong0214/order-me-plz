@@ -11,7 +11,7 @@ public class CreateShopRequest {
     @NotNull
     private final ShopCategory category;
 
-    public static CreateShopDto of(final CreateShopRequest request) {
+    public static CreateShopDto from(final CreateShopRequest request) {
         return new CreateShopDto(request.name, request.category);
     }
 }

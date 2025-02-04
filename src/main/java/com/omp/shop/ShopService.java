@@ -1,6 +1,5 @@
 package com.omp.shop;
 
-import com.omp.cart.Cart;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +13,6 @@ public class ShopService {
     }
 
     public Long saveShopBy(final CreateShopDto createShopDto) {
-        return shopRepository.save(CreateShopDto.of(createShopDto)).getId();
+        return shopRepository.save(CreateShopDto.from(createShopDto)).getId();
     }
 }

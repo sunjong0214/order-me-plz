@@ -21,7 +21,7 @@ public class ShopController {
 
     @PostMapping
     public Long createShop(final @RequestBody CreateShopRequest request) {
-        return shopService.saveShopBy(CreateShopRequest.of(request));
+        return shopService.saveShopBy(CreateShopRequest.from(request));
     }
 
 //    @GetMapping("/list/{cursor}")

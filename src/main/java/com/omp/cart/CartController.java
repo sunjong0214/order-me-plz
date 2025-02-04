@@ -21,6 +21,6 @@ public class CartController {
 
     @PostMapping
     public Long createCart(final @RequestBody CreateCartRequest request) {
-        return cartService.saveCartBy(CreateCartRequest.of(request));
+        return cartService.saveCartBy(CreateCartRequest.from(request));
     }
 }

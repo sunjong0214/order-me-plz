@@ -17,7 +17,7 @@ public class CreateReviewRequest {
     @Positive
     private final Double rating;
 
-    public static CreateReviewDto of(final CreateReviewRequest request) {
+    public static CreateReviewDto from(final CreateReviewRequest request) {
         return new CreateReviewDto(request.title, request.writerId, request.shopId, request.detail, request.rating);
     }
 }

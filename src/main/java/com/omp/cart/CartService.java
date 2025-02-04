@@ -13,6 +13,6 @@ public class CartService {
     }
 
     public Long saveCartBy(final CreateCartDto createCartDto) {
-        return cartRepository.save(CreateCartDto.of(createCartDto)).getId();
+        return cartRepository.save(CreateCartDto.from(createCartDto)).getId();
     }
 }

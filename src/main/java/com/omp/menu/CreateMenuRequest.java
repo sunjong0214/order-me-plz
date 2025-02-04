@@ -13,7 +13,7 @@ public class CreateMenuRequest {
     @NotBlank
     private final String description;
 
-    public static CreateMenuDto of(CreateMenuRequest request) {
+    public static CreateMenuDto from(CreateMenuRequest request) {
         return new CreateMenuDto(request.name, request.price, request.description);
     }
 }

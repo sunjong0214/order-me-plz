@@ -17,7 +17,7 @@ public class CreateReviewDto {
     @Positive
     private final Double rating;
 
-    public static Review of(final CreateReviewDto dto) {
+    public static Review from(final CreateReviewDto dto) {
         return new Review(dto.title, dto.writerId, dto.shopId, dto.detail, dto.rating);
     }
 }

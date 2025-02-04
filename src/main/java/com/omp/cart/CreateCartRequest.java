@@ -12,7 +12,7 @@ public class CreateCartRequest {
     private final Long shopId;
     private final MenuList menuList;
 
-    public static CreateCartDto of(final CreateCartRequest request) {
+    public static CreateCartDto from(final CreateCartRequest request) {
         return new CreateCartDto(request.userId, request.shopId, request.menuList);
     }
 }

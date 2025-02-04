@@ -21,6 +21,6 @@ public class OrderController {
 
     @PostMapping
     public Long createOrder(final @RequestBody CreateOrderRequest request) {
-        return orderService.saveOrderBy(CreateOrderRequest.of(request));
+        return orderService.saveOrderBy(CreateOrderRequest.from(request));
     }
 }

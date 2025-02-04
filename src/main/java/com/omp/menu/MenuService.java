@@ -13,6 +13,6 @@ public class MenuService {
     }
 
     public Long saveMenuBy(final CreateMenuDto createMenuDto) {
-        return menuRepository.save(CreateMenuDto.of(createMenuDto)).getId();
+        return menuRepository.save(CreateMenuDto.from(createMenuDto)).getId();
     }
 }

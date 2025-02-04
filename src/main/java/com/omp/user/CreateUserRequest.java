@@ -10,7 +10,7 @@ public class CreateUserRequest {
     @NotBlank
     private final String name;
 
-    public static CreateUserDto of(final CreateUserRequest request) {
+    public static CreateUserDto from(final CreateUserRequest request) {
         return new CreateUserDto(request.email, request.name);
     }
 }
