@@ -20,7 +20,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public Long createOrder(final @RequestBody CreateOrderDto createOrderDto) {
-        return orderService.saveOrderBy(createOrderDto);
+    public Long createOrder(final @RequestBody CreateOrderRequest request) {
+        return orderService.saveOrderBy(CreateOrderRequest.of(request));
     }
 }

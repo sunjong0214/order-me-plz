@@ -20,7 +20,7 @@ public class DeliveryController {
     }
 
     @PostMapping
-    public Long createDelivery(final @RequestBody CreateDeliveryDto createDeliveryDto) {
-        return deliveryService.saveDeliveryBy(createDeliveryDto);
+    public Long createDelivery(final @RequestBody CreateDeliveryRequest request) {
+        return deliveryService.saveDeliveryBy(CreateDeliveryRequest.of(request));
     }
 }

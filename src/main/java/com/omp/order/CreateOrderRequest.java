@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CreateOrderDto {
+public class CreateOrderRequest {
     @Positive
     private final Long deliveryId;
     @Positive
@@ -12,7 +12,7 @@ public class CreateOrderDto {
     @Positive
     private final Long shopId;
 
-    public static Order of(final CreateOrderDto createOrderDto) {
-        return new Order(createOrderDto.deliveryId, createOrderDto.ordererId, createOrderDto.shopId);
+    public static CreateOrderDto of(final CreateOrderRequest request) {
+        return new CreateOrderDto(request.deliveryId, request.ordererId, request.shopId);
     }
 }

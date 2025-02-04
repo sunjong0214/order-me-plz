@@ -6,5 +6,5 @@ import lombok.RequiredArgsConstructor;
 public class ShopResponse {
     private final String name;
     private final boolean isOpen;
-    private final Double reviewRate;
+    private final double reviewRate;
 }

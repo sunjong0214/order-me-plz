@@ -18,7 +18,7 @@ public class MenuController {
     }
 
     @PostMapping
-    public Long createMenu(final CreateMenuDto createMenuDto) {
-        return menuService.saveMenuBy(createMenuDto);
+    public Long createMenu(final CreateMenuRequest request) {
+        return menuService.saveMenuBy(CreateMenuRequest.of(request));
     }
 }

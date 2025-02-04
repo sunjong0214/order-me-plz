@@ -20,7 +20,7 @@ public class CartController {
     }
 
     @PostMapping
-    public Long createCart(final @RequestBody CreateCartDto createCartDto) {
-        return cartService.saveCartBy(createCartDto);
+    public Long createCart(final @RequestBody CreateCartRequest request) {
+        return cartService.saveCartBy(CreateCartRequest.of(request));
     }
 }

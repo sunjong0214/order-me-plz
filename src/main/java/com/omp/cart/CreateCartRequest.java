@@ -5,14 +5,14 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CreateCartDto {
+public class CreateCartRequest {
     @Positive
     private final Long userId;
     @Positive
     private final Long shopId;
     private final MenuList menuList;
 
-    public static Cart of(final CreateCartDto createCartDto) {
-        return new Cart(createCartDto.userId, createCartDto.shopId, createCartDto.menuList);
+    public static CreateCartDto of(final CreateCartRequest request) {
+        return new CreateCartDto(request.userId, request.shopId, request.menuList);
     }
 }
