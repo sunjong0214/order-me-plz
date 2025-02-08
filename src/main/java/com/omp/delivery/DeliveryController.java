@@ -1,5 +1,6 @@
 package com.omp.delivery;
 
+import com.omp.delivery.dto.CreateDeliveryRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,5 +1,7 @@
-package com.omp.delivery;
+package com.omp.delivery.dto;
 
+import com.omp.delivery.Delivery;
+import com.omp.delivery.DeliveryStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 

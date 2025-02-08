@@ -1,10 +1,10 @@
-package com.omp.order;
+package com.omp.order.dto;
 
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CreateOrderDto {
+public class CreateOrderRequest {
     @Positive
     private final Long deliveryId;
     @Positive
@@ -12,7 +12,7 @@ public class CreateOrderDto {
     @Positive
     private final Long shopId;
 
-    public static Order from(final CreateOrderDto createOrderDto) {
-        return new Order(createOrderDto.deliveryId, createOrderDto.ordererId, createOrderDto.shopId);
+    public static CreateOrderDto from(final CreateOrderRequest request) {
+        return new CreateOrderDto(request.deliveryId, request.ordererId, request.shopId);
     }
 }

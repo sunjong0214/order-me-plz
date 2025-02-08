@@ -1,5 +1,6 @@
 package com.omp.review;
 
+import com.omp.review.dto.CreateReviewRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

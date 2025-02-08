@@ -1,5 +1,6 @@
-package com.omp.review;
+package com.omp.review.dto;
 
+import com.omp.review.Review;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;

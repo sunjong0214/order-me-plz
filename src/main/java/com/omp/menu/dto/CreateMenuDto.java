@@ -1,5 +1,6 @@
-package com.omp.menu;
+package com.omp.menu.dto;
 
+import com.omp.menu.Menu;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;

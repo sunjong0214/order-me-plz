@@ -1,4 +1,4 @@
-package com.omp.cart;
+package com.omp.cart.dto;
 
 import com.omp.menu.MenuList;
 import jakarta.validation.constraints.Positive;

@@ -67,3 +67,5 @@ gradle/wrapper/gradle-wrapper.jar
 # Debug and Test
 .testResults/
 *.hprof
+
+build/generated

@@ -1,4 +1,4 @@
-package com.omp.review;
+package com.omp.review.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;

@@ -1,4 +1,4 @@
-package com.omp.menu;
+package com.omp.menu.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;

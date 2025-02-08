@@ -38,6 +38,26 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
+	//querydsl
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+}
+
+// Querydsl 설정
+def querydslDir = "$buildDir/generated/querydsl"
+
+tasks.withType(JavaCompile) {
+	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+sourceSets {
+	main.java.srcDirs += [ querydslDir ]
+}
+
+clean {
+	delete file(querydslDir)
 }
 
 tasks.named('test') {

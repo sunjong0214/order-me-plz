@@ -1,5 +1,6 @@
 package com.omp.menu;
 
+import com.omp.menu.dto.CreateMenuDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

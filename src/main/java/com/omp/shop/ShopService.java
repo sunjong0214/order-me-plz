@@ -1,5 +1,6 @@
 package com.omp.shop;
 
+import com.omp.shop.dto.CreateShopDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

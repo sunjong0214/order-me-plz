@@ -1,5 +1,6 @@
 package com.omp.shop;
 
+import com.omp.shop.dto.CreateShopRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

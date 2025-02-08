@@ -1,5 +1,6 @@
-package com.omp.user;
+package com.omp.user.dto;
 
+import com.omp.user.User;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 
