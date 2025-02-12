@@ -3,7 +3,7 @@ package com.omp.cart;
 import static jakarta.persistence.GenerationType.IDENTITY;
 import static lombok.AccessLevel.PROTECTED;
 
-import com.omp.menu.MenuList;
+import com.omp.menu.Menus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -26,12 +26,12 @@ public class Cart {
     @Positive
     private Long shopId;
     @Embedded
-    private MenuList menuList;
+    private Menus menus;
 
-    public Cart(Long userId, Long shopId, MenuList menuList) {
+    public Cart(Long userId, Long shopId, Menus menus) {
         this.userId = userId;
         this.shopId = shopId;
-        this.menuList = menuList;
+        this.menus = menus;
     }
 
     public Long getId() {

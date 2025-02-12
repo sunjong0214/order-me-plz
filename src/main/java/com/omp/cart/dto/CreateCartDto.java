@@ -1,7 +1,7 @@
 package com.omp.cart.dto;
 
 import com.omp.cart.Cart;
-import com.omp.menu.MenuList;
+import com.omp.menu.Menus;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
@@ -11,9 +11,9 @@ public class CreateCartDto {
     private final Long userId;
     @Positive
     private final Long shopId;
-    private final MenuList menuList;
+    private final Menus menus;
 
     public static Cart from(final CreateCartDto createCartDto) {
-        return new Cart(createCartDto.userId, createCartDto.shopId, createCartDto.menuList);
+        return new Cart(createCartDto.userId, createCartDto.shopId, createCartDto.menus);
     }
 }

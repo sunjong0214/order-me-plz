@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Embeddable
-public class MenuList {
+public class Menus {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Menu> menuList = new ArrayList<>();
