@@ -4,6 +4,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 import static lombok.AccessLevel.PROTECTED;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -25,11 +26,14 @@ public class Order {
     private Long ordererId;
     @Positive
     private Long shopId;
+    @Embedded
+    private OrderMenus orderMenus;
 
-    public Order(Long deliveryId, Long ordererId, Long shopId) {
+    public Order(Long deliveryId, Long ordererId, Long shopId, OrderMenus orderMenus) {
         this.deliveryId = deliveryId;
         this.ordererId = ordererId;
         this.shopId = shopId;
+        this.orderMenus = orderMenus;
     }
 
     public Long getId() {

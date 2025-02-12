@@ -1,6 +1,7 @@
 package com.omp.order.dto;
 
 import com.omp.order.Order;
+import com.omp.order.OrderMenus;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
@@ -12,8 +13,9 @@ public class CreateOrderDto {
     private final Long ordererId;
     @Positive
     private final Long shopId;
+    private final OrderMenus orderMenus;
 
     public static Order from(final CreateOrderDto createOrderDto) {
-        return new Order(createOrderDto.deliveryId, createOrderDto.ordererId, createOrderDto.shopId);
+        return new Order(createOrderDto.deliveryId, createOrderDto.ordererId, createOrderDto.shopId, createOrderDto.orderMenus);
     }
 }
