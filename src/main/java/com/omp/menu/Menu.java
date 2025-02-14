@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.NoArgsConstructor;
 
@@ -20,13 +21,16 @@ public class Menu {
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "menu_id")
     private Long id;
+    @Positive
+    private Long shopId;
     @NotBlank
     private String name;
     @PositiveOrZero
     private int price;
     private String description;
 
-    public Menu(String name, Integer price, String description) {
+    public Menu(Long shopId, String name, Integer price, String description) {
+        this.shopId = shopId;
         this.name = name;
         this.price = price;
         this.description = description;
