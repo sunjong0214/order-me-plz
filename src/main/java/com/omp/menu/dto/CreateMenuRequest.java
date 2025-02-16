@@ -13,10 +13,12 @@ public class CreateMenuRequest {
     private final String name;
     @PositiveOrZero
     private final int price;
+    @PositiveOrZero
+    private final int quantity;
     @NotBlank
     private final String description;
 
     public static CreateMenuDto from(CreateMenuRequest request) {
-        return new CreateMenuDto(request.shopId, request.name, request.price, request.description);
+        return new CreateMenuDto(request.shopId, request.quantity, request.name, request.price, request.description);
     }
 }

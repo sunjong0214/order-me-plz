@@ -14,9 +14,11 @@ public class MenuRequest {
     private final String name;
     @PositiveOrZero
     private final int price;
+    @PositiveOrZero
+    private final int quantity;
     private final String description;
 
     public static Menu from(MenuRequest request) {
-        return new Menu(request.shopId, request.name, request.price, request.description);
+        return new Menu(request.shopId, request.quantity, request.name, request.price, request.description);
     }
 }

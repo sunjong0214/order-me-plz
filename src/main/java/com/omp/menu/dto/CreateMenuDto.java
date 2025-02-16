@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 public class CreateMenuDto {
     @Positive
     private final Long shopId;
+    @PositiveOrZero
+    private final int quantity;
     @NotBlank
     private final String name;
     @PositiveOrZero
@@ -18,6 +20,6 @@ public class CreateMenuDto {
     private final String description;
 
     public static Menu from(final CreateMenuDto createMenuDto) {
-        return new Menu(createMenuDto.shopId, createMenuDto.name, createMenuDto.price, createMenuDto.description);
+        return new Menu(createMenuDto.shopId, createMenuDto.quantity, createMenuDto.name, createMenuDto.price, createMenuDto.description);
     }
 }

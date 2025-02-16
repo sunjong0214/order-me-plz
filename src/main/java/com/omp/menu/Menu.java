@@ -27,9 +27,12 @@ public class Menu {
     private String name;
     @PositiveOrZero
     private int price;
+    @PositiveOrZero
+    private int quantity;
     private String description;
 
-    public Menu(Long shopId, String name, Integer price, String description) {
+    public Menu(Long shopId, int quantity, String name, Integer price, String description) {
+        this.quantity = quantity;
         this.shopId = shopId;
         this.name = name;
         this.price = price;
