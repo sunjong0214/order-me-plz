@@ -1,10 +1,15 @@
 package com.omp.menu;
 
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
 import com.omp.menu.dto.CreateMenuRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -21,5 +26,11 @@ public class MenuController {
     @PostMapping
     public Long createMenu(final CreateMenuRequest request) {
         return menuService.saveMenuBy(CreateMenuRequest.from(request));
+    }
+
+    @PatchMapping("/{id}")
+    @ResponseStatus(NO_CONTENT)
+    public void changeMenuInfo(@PathVariable Long id, final ChangeMenuRequest request) {
+        menuService.updateMenuBy(ChangeMenuRequest.from(request), id);
     }
 }
