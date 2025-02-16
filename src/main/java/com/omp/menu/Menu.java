@@ -3,11 +3,13 @@ package com.omp.menu;
 import static jakarta.persistence.GenerationType.IDENTITY;
 import static lombok.AccessLevel.PROTECTED;
 
+import com.omp.menu.dto.UpdateMenuDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -28,6 +30,7 @@ public class Menu {
     @PositiveOrZero
     private int price;
     @PositiveOrZero
+    @Version
     private int quantity;
     private String description;
 
@@ -41,5 +44,17 @@ public class Menu {
 
     public Long getId() {
         return id;
+    }
+
+    public int deductQuantity() {
+        return --quantity;
+    }
+
+    public Menu changeInfo(final UpdateMenuDto dto) {
+        this.name = dto.name();
+        this.price = dto.price();
+        this.quantity = dto.quantity();
+        this.description = dto.description();
+        return this;
     }
 }
