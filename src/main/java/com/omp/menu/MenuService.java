@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MenuService {
     private final MenuRepository menuRepository;
+    private final MenuRepositoryCustom menuRepositoryCustomImpl;
 
     public Menu findMenuBy(final Long id) {
         return menuRepository.findById(id).orElseThrow();
@@ -20,6 +21,6 @@ public class MenuService {
 
     public void updateMenuBy(final UpdateMenuDto dto, final Long id) {
         Menu updateMenu = menuRepository.findById(id).orElseThrow();
-        updateMenu.changeInfo(dto);
+        menuRepositoryCustomImpl.updateMenu(dto, id);
     }
 }

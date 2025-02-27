@@ -7,8 +7,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 public record CreateMenuRequest(
         @Positive Long shopId,
         @NotBlank String name,
-        @PositiveOrZero Integer price,
-        @PositiveOrZero Integer quantity,
+        @PositiveOrZero int price,
+        @PositiveOrZero int quantity,
         @NotBlank String description) {
 
     public static CreateMenuDto from(CreateMenuRequest request) {

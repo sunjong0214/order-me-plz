@@ -29,12 +29,14 @@ public class Menu {
     private String name;
     @PositiveOrZero
     private int price;
-    @PositiveOrZero
     @Version
+    @PositiveOrZero
     private int quantity;
+    private boolean isSoldOut;
     private String description;
 
     public Menu(Long shopId, int quantity, String name, Integer price, String description) {
+        this.isSoldOut = false;
         this.quantity = quantity;
         this.shopId = shopId;
         this.name = name;
@@ -48,13 +50,5 @@ public class Menu {
 
     public int deductQuantity() {
         return --quantity;
-    }
-
-    public Menu changeInfo(final UpdateMenuDto dto) {
-        this.name = dto.name();
-        this.price = dto.price();
-        this.quantity = dto.quantity();
-        this.description = dto.description();
-        return this;
     }
 }
