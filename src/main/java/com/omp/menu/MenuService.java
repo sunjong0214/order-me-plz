@@ -20,7 +20,6 @@ public class MenuService {
     }
 
     public void updateMenuBy(final UpdateMenuDto dto, final Long id) {
-        Menu updateMenu = menuRepository.findById(id).orElseThrow();
         menuRepositoryCustomImpl.updateMenu(dto, id);
     }
 }
