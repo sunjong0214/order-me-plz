@@ -1,6 +1,7 @@
 package com.omp.user;
 
 import com.omp.user.dto.CreateUserRequest;
+import com.omp.user.dto.GetUserResponse;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class UserController {
     private static final String USER_URI = "/api/v1/users/";
 
     @GetMapping("/{id}")
-    public User getUser(final @PathVariable Long id) {
+    public GetUserResponse getUser(final @PathVariable Long id) {
         return userService.findUserBy(id);
     }
 

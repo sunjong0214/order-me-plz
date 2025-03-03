@@ -1,6 +1,7 @@
 package com.omp.user;
 
 import com.omp.user.dto.CreateUserDto;
+import com.omp.user.dto.GetUserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,8 +10,8 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User findUserBy(final Long id) {
-        return userRepository.findById(id).orElseThrow();
+    public GetUserResponse findUserBy(final Long id) {
+        return GetUserResponse.to(userRepository.findById(id).orElseThrow());
     }
 
     public Long saveUserBy(final CreateUserDto createUserDto) {
