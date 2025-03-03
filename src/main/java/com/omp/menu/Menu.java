@@ -13,6 +13,7 @@ import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NoArgsConstructor;
 
 @Entity

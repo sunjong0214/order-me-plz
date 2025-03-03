@@ -2,14 +2,15 @@ package com.omp.delivery.dto;
 
 import com.omp.delivery.DeliveryStatus;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class CreateDeliveryRequest {
-    @NotNull
-    private final DeliveryStatus status;
+    @Positive
+    private final Long orderId;
 
     public static CreateDeliveryDto from(final CreateDeliveryRequest request) {
-        return new CreateDeliveryDto(request.status);
+        return new CreateDeliveryDto(request.orderId);
     }
 }
