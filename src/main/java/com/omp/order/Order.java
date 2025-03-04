@@ -26,14 +26,14 @@ public class Order {
     private Long ordererId;
     @Positive
     private Long shopId;
-    @Embedded
-    private OrderMenus orderMenus;
+    @Positive
+    private Long cartId;
 
-    public Order(Long deliveryId, Long ordererId, Long shopId, OrderMenus orderMenus) {
+    public Order(Long deliveryId, Long ordererId, Long shopId, Long cartId) {
         this.deliveryId = deliveryId;
         this.ordererId = ordererId;
         this.shopId = shopId;
-        this.orderMenus = orderMenus;
+        this.cartId = cartId;
     }
 
     public Long getId() {

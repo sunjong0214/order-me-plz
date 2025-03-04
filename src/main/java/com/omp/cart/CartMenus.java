@@ -1,14 +1,17 @@
-package com.omp.menu;
+package com.omp.cart;
 
+import com.omp.menu.Menu;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.NoArgsConstructor;
 
 @Embeddable
-public class Menus {
+@NoArgsConstructor
+public class CartMenus {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Menu> menuList = new ArrayList<>();
+    private List<Menu> cartMenus = new ArrayList<>();
 }

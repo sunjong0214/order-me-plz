@@ -23,10 +23,6 @@ public class OrderService {
     }
 
     public Long saveOrderBy(final CreateOrderDto createOrderDto) {
-        User orderer = userRepository.findById(createOrderDto.getOrdererId()).orElseThrow();
-        Delivery delivery = deliveryRepository.findById(createOrderDto.getDeliveryId()).orElseThrow();
-        Shop shop = shopRepository.findById(createOrderDto.getShopId()).orElseThrow();
-
         return orderRepository.save(CreateOrderDto.from(createOrderDto)).getId();
     }
 }
