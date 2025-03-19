@@ -14,4 +14,5 @@ public class CartMenus {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Menu> cartMenus = new ArrayList<>();
+
 }

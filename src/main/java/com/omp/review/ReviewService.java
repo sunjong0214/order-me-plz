@@ -1,19 +1,63 @@
 package com.omp.review;
 
 import com.omp.review.dto.CreateReviewDto;
+import com.omp.shop.Shop;
+import com.omp.shop.ShopRepository;
+import com.omp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.backoff.ExponentialRandomBackOffPolicy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class ReviewService {
     private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
+    private final ShopRepository shopRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Review findReviewBy(final Long id) {
         return reviewRepository.findById(id).orElseThrow();
     }
 
-    public Long saveReviewBy(final CreateReviewDto createReviewDto) {
-        return reviewRepository.save(CreateReviewDto.from(createReviewDto)).getId();
+    public Long saveReviewBy(final CreateReviewDto dto) {
+        Shop shop = shopRepository.findById(dto.getShopId()).orElseThrow();
+        Review review = reviewRepository.save(CreateReviewDto.from(dto, shop));
+
+        eventPublisher.publishEvent(
+                new CreateReviewEvent(review.getId(), shop.getId(), review.getRating()));
+
+        return review.getId();
+    }
+
+    @Retryable(
+            recover = "recoverSaveReviewBy",
+            retryFor = {OptimisticLockingFailureException.class},
+            backoff = @Backoff(
+                    multiplier = 2.0,
+                    random = true,
+                    maxDelay = 6000
+            )
+    )
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    @TransactionalEventListener
+    public void updateAverageRating(final CreateReviewEvent event) {
+        Shop shop = shopRepository.findByIdWithOptimisticLock(event.getShopId()).orElseThrow();
+        shop.updateRatingAverage(event.getReviewRating());
+    }
+
+    @Recover
+    public void recoverSaveReviewBy(final OptimisticLockingFailureException e, final CreateReviewEvent event) {
     }
 }

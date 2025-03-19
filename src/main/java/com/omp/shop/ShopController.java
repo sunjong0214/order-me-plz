@@ -1,23 +1,27 @@
 package com.omp.shop;
 
 import com.omp.shop.dto.CreateShopRequest;
+import com.omp.shop.dto.ShopInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Slice;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/shop")
+@RequestMapping("/api/v1/shops")
 public class ShopController {
     private final ShopService shopService;
 
-    @GetMapping("/{id}")
-    public Shop getShopById(final @PathVariable Long id) {
-        return shopService.findShopBy(id);
+    @GetMapping
+    @Cacheable(cacheNames = "shops")
+    public Slice<ShopInfo> getShopById(final @RequestParam ShopCategory category, final @RequestParam Long cursor, final @RequestParam int pageSize) {
+        return shopService.findShopBy(category, cursor, pageSize);
     }
 
     @PostMapping

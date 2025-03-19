@@ -1,11 +1,15 @@
 package com.omp.review.dto;
 
 import com.omp.review.Review;
+import com.omp.shop.Shop;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+@Getter
 public class CreateReviewDto {
     @NotBlank
     private final String title;
@@ -16,9 +20,9 @@ public class CreateReviewDto {
     @NotBlank
     private final String detail;
     @Positive
-    private final Double rating;
+    private final BigDecimal rating;
 
-    public static Review from(final CreateReviewDto dto) {
-        return new Review(dto.title, dto.writerId, dto.shopId, dto.detail, dto.rating);
+    public static Review from(final CreateReviewDto dto, final Shop shop) {
+        return new Review(dto.title, dto.writerId, dto.detail, dto.rating, shop);
     }
 }
