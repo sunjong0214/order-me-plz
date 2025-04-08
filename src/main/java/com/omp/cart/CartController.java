@@ -16,12 +16,12 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping("/{id}")
-    public Cart getCartById(final @PathVariable Long id) {
-        return cartService.findCartBy(id);
+    public Cart getCartsById(final @PathVariable Long id) {
+        return cartService.findCartsBy(id);
     }
 
     @PostMapping
     public Long createCart(final @RequestBody CreateCartRequest request) {
-        return cartService.saveCartBy(CreateCartRequest.from(request));
+        return cartService.saveCartBy(request);
     }
 }

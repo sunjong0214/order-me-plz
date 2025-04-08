@@ -1,10 +1,17 @@
 package com.omp.shop.dto;
 
-import lombok.RequiredArgsConstructor;
+import com.omp.review.ReviewDetail;
+import java.math.BigDecimal;
+import java.util.List;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
+@Data
+@NoArgsConstructor
 public class ShopInfo {
-    private final Long shopId;
-    private final String name;
-    private final boolean isOpen;
+    private Long shopId;
+    private String name;
+    private boolean isOpen;
+    private BigDecimal averageRating;
+    private List<ReviewDetail> recentlyReviewDetail;
 }

@@ -3,6 +3,7 @@ package com.omp.menu;
 import com.omp.menu.dto.CreateMenuDto;
 import com.omp.menu.dto.UpdateMenuDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -21,5 +22,9 @@ public class MenuService {
 
     public void updateMenuBy(final UpdateMenuDto dto, final Long id) {
         menuRepositoryCustomImpl.updateMenu(dto, id);
+    }
+
+    public Slice<MenuResponse> findMenusBy(int pageSize, Long shopId, Long cursor) {
+        return menuRepository.findMenusBy(pageSize, shopId, cursor);
     }
 }
