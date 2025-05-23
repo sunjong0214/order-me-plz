@@ -41,6 +41,14 @@ public class MenuRepositoryCustomImpl implements MenuRepositoryCustom {
     }
 
     @Override
+    public Long countByIdIn(List<Long> ids) {
+        return queryFactory.select(menu.count())
+                .from(menu)
+                .where(menu.id.in(ids))
+                .fetchOne();
+    }
+
+    @Override
     public void updateMenu(final UpdateMenuDto dto, final Long id) {
         JPAUpdateClause updateClause = queryFactory.update(menu)
                 .where(menu.id.eq(id));

@@ -20,6 +20,14 @@ public class ShopRepositoryCustomImpl implements ShopRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public boolean isOpenById(Long shopId) {
+        return Boolean.TRUE.equals(queryFactory.select(shop.isOpen)
+                .from(shop)
+                .where(shop.id.eq(shopId))
+                .fetchOne());
+    }
+
+    @Override
     public Slice<ShopInfo> findBy(final ShopCategory category, final Long cursor, final int pageSize) {
         List<ShopInfo> shops = queryFactory.select(
                         Projections.constructor(ShopInfo.class,

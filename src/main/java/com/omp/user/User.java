@@ -5,6 +5,8 @@ import static lombok.AccessLevel.PROTECTED;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -25,9 +27,15 @@ public class User {
     private String email;
     @NotBlank
     private String name;
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     public User(String email, String name) {
         this.email = email;
         this.name = name;
+    }
+
+    public boolean isBan() {
+        return status == UserStatus.BAN;
     }
 }

@@ -63,6 +63,11 @@ public class Shop {
     public BigDecimal getRawRatingAverage() {
         return averageRating;
     }
+
+    public boolean isOpen() {
+        return isOpen;
+    }
+
 //    public void addReview(Review review) {
 //        this.ratingAverage = shopReviews.addReviewAndCalculateNewAverage(review, ratingAverage);
 //        review.setShop(this);

@@ -15,8 +15,5 @@ public class CreateOrderDto {
     @Positive
     private final Long cartId;
 
-    public static Order from(final CreateOrderDto createOrderDto) {
-        return new Order(createOrderDto.deliveryId, createOrderDto.ordererId, createOrderDto.shopId,
-                createOrderDto.cartId);
-    }
+
 }

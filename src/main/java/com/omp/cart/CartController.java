@@ -1,6 +1,7 @@
 package com.omp.cart;
 
-import com.omp.cart.dto.CreateCartRequest;
+import com.omp.cart.dto.AddOrderMenuRequest;
+import com.omp.orderMenu.OrderMenuRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +22,11 @@ public class CartController {
     }
 
     @PostMapping
-    public Long createCart(final @RequestBody CreateCartRequest request) {
-        return cartService.saveCartBy(request);
+    public CartResponse addCartMenu(final @RequestBody AddOrderMenuRequest request) {
+        Long cartId = request.getCartId();
+        if (cartId == null) {
+            cartId = cartService.saveCartBy(request);
+        }
+        return cartService.addOrderMenu(new OrderMenuRequest(request.getMenuId(), cartId, request.getQuantity()));
     }
 }
