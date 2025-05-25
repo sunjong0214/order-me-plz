@@ -34,4 +34,8 @@ public class Cart {
     public Long getId() {
         return id;
     }
+
+    public boolean validateUserAndShop(Long userId, Long shopId) {
+        return this.userId.equals(userId) && this.shopId.equals(shopId);
+    }
 }

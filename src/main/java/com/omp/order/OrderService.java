@@ -4,14 +4,11 @@ import com.omp.cart.CartRepository;
 import com.omp.delivery.DeliveryService;
 import com.omp.delivery.dto.CreateDeliveryDto;
 import com.omp.order.dto.CreateOrderRequest;
-import com.omp.orderMenu.OrderMenu;
 import com.omp.orderMenu.OrderMenuService;
 import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
@@ -29,33 +26,40 @@ public class OrderService {
         return orderRepository.findById(id).orElseThrow();
     }
 
-//    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
     public Long saveOrderBy(final CreateOrderRequest request) {
-//        userRepository.findById(request.getOrdererId())
-//                .ifPresentOrElse(u -> {
-//                    if (u.isBan()) {
-//                        throw new IllegalStateException();
-//                    }
-//                }, IllegalStateException::new);
-        validateUser(request.getOrdererId());
-        validateCart(request.getCartId());
+        Long ordererId = request.getOrdererId();
+        userRepository.findById(ordererId)
+                .ifPresentOrElse(u -> {
+                    if (u.isBan()) {
+                        throw new IllegalStateException();
+                    }
+                }, IllegalStateException::new);
         /*
             todo : cart를 db에 저장? 혹은 쓰레드로컬로 메모리? 어처피 휘발성이 강함 db로 저장해야되는 이유는?
                    성능 테스트 필요
          */
-//        shopRepository.findById(request.getShopId())
-//                .ifPresentOrElse(s -> {
-//                    if (!s.isOpen()) {
-//                        throw new IllegalStateException();
-//                    }
-//                }, IllegalStateException::new);
-        validateShop(request.getShopId());
+        Long shopId = request.getShopId();
+        shopRepository.findById(shopId)
+                .ifPresentOrElse(s -> {
+                    if (!s.isOpen()) {
+                        throw new IllegalStateException();
+                    }
+                }, IllegalStateException::new);
 
+        Long cartId = request.getCartId();
+        cartRepository.findById(cartId)
+                .ifPresentOrElse(c -> {
+                    if (!c.validateUserAndShop(ordererId, shopId)) {
+                        throw new IllegalStateException();
+                    }
+                }, IllegalStateException::new);
         /*
             todo : 이 부분 좀 최적화 가능? (ex. 하나의 로직으로 cartId로 가져오면?)
+                    orderMenu는 cart에 담길 때 이미 검증이 완료
+                    그리고 사용자의 요청은 cart만을 보내기 때문에 굳이?
          */
-        List<OrderMenu> orderMenus = orderMenuService.findOrderMenusByCartId(request.getCartId());
-        orderMenuService.existsOrderMenus(orderMenus);
+//        List<OrderMenu> orderMenus = orderMenuService.findOrderMenusByCartId(request.getCartId());
+//        orderMenuService.existsOrderMenus(orderMenus);
 
         Order newOrder = orderRepository.save(CreateOrderRequest.from(request));
 
@@ -67,23 +71,5 @@ public class OrderService {
         newOrder.setDeliveryId(deliveryId);
 
         return newOrder.getId();
-    }
-
-    private void validateCart(Long cartId) {
-        if (!cartRepository.existsById(cartId)) {
-            throw new IllegalStateException();
-        }
-    }
-
-    private void validateUser(Long userId) {
-        if (!userRepository.existsById(userId) || userRepository.findStatusById(userId).isBan()) {
-            throw new IllegalStateException();
-        }
-    }
-
-    private void validateShop(Long shopId) {
-        if (!shopRepository.existsById(shopId) || !shopRepository.isOpenById(shopId)) {
-            throw new IllegalStateException();
-        }
     }
 }
