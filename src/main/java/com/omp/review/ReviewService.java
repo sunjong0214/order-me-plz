@@ -52,7 +52,7 @@ public class ReviewService {
     )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener
     public void updateAverageRating(final CreateReviewEvent event) {
         Shop shop = shopRepository.findByIdWithOptimisticLock(event.getShopId()).orElseThrow();
         shop.updateRatingAverage(event.getReviewRating());
