@@ -1,6 +1,7 @@
 package com.omp.order;
 
 import com.omp.cart.CartRepository;
+import com.omp.delivery.DeliveryRepository;
 import com.omp.delivery.DeliveryService;
 import com.omp.delivery.dto.CreateDeliveryEvent;
 import com.omp.order.dto.CreateOrderRequest;
@@ -10,6 +11,7 @@ import com.omp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
@@ -22,12 +24,14 @@ public class OrderService {
     private final ShopRepository shopRepository;
     private final OrderMenuService orderMenuService;
     private final DeliveryService deliveryService;
+    private final DeliveryRepository deliveryRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Order findOrderBy(final Long id) {
         return orderRepository.findById(id).orElseThrow();
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Long saveOrderBy(final CreateOrderRequest request) {
         Long ordererId = request.getOrdererId();
 //        userRepository.findById(ordererId)
@@ -62,10 +66,11 @@ public class OrderService {
             todo : 배달 생성 로직 분리 -> 배달은 다른 로직도 필요? (ex. 배달 기사 배정)
                    그럼 order에 delivery는 언제 설정? (그냥 delivery에 orderId를 넣을까?)
         */
-//        eventPublisher.publishEvent(request);
-//        eventPublisher.publishEvent(new CreateDeliveryEvent(newOrder.getId()));
-//        Long deliveryId = deliveryService.saveDeliveryBy(new CreateDeliveryEvent(newOrder.getId()));
-//        newOrder.setDeliveryId(deliveryId);
+        eventPublisher.publishEvent(new CreateDeliveryEvent(newOrder.getId()));
+
+//        Delivery delivery = new Delivery(newOrder.getId());
+//        deliveryRepository.save(delivery);
+//        newOrder.setDeliveryId(delivery.getId());
 
         return newOrder.getId();
     }
