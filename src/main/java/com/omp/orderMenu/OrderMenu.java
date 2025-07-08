@@ -19,11 +19,13 @@ public class OrderMenu {
     @Getter
     private Long menuId;
     private Long cartId;
+    private int orderedPrice;
     private int quantity;
 
-    public OrderMenu(Long menuId, Long cartId, int quantity) {
+    public OrderMenu(Long menuId, Long cartId, int orderedPrice, int quantity) {
         this.menuId = menuId;
         this.cartId = cartId;
         this.quantity = quantity;
+        this.orderedPrice = orderedPrice;
     }
 }
