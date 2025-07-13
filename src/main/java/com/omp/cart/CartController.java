@@ -27,8 +27,8 @@ public class CartController {
         if (cartId == null) {
             cartId = cartService.saveCartBy(request);
         }
-        return cartService.addOrderMenu(new OrderMenuRequest(request.getMenuId(), cartId, request.getQuantity()));
-
+        return cartService.addOrderMenu(new OrderMenuRequest(request.getMenuId(), cartId, request.getQuantity(),
+                request.getOrderedPrice()));
 
     }
 }

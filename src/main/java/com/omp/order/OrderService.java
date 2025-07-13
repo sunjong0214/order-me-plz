@@ -3,7 +3,6 @@ package com.omp.order;
 import com.omp.cart.CartRepository;
 import com.omp.delivery.DeliveryRepository;
 import com.omp.delivery.DeliveryService;
-import com.omp.delivery.dto.CreateDeliveryEvent;
 import com.omp.order.dto.CreateOrderRequest;
 import com.omp.orderMenu.OrderMenuService;
 import com.omp.shop.ShopRepository;
@@ -31,7 +30,7 @@ public class OrderService {
         return orderRepository.findById(id).orElseThrow();
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+//    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Long saveOrderBy(final CreateOrderRequest request) {
         Long ordererId = request.getOrdererId();
 //        userRepository.findById(ordererId)
@@ -61,13 +60,16 @@ public class OrderService {
             throw new IllegalStateException();
         }
 
+        // 배달 로직은 분리
+        // 오더를 이벤트 발행 후 처리
+        // 202 accept 를 리턴 후 주기적으로 폴링
+        // 만약 complete 가 된다면 그때 제대로 된 리소스 주소 리턴w
         Order newOrder = orderRepository.save(CreateOrderRequest.from(request));
         /*
             todo : 배달 생성 로직 분리 -> 배달은 다른 로직도 필요? (ex. 배달 기사 배정)
                    그럼 order에 delivery는 언제 설정? (그냥 delivery에 orderId를 넣을까?)
         */
-        eventPublisher.publishEvent(new CreateDeliveryEvent(newOrder.getId()));
-
+//        eventPublisher.publishEvent(new CreateDeliveryEvent(newOrder.getId()));
 //        Delivery delivery = new Delivery(newOrder.getId());
 //        deliveryRepository.save(delivery);
 //        newOrder.setDeliveryId(delivery.getId());
