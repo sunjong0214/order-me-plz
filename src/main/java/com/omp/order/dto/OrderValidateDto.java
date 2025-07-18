@@ -1,4 +1,4 @@
-package com.omp.order;
+package com.omp.order.dto;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

@@ -4,9 +4,7 @@ import static com.omp.cart.QCart.cart;
 import static com.omp.shop.QShop.shop;
 import static com.omp.user.QUser.user;
 
-import com.omp.cart.Cart;
-import com.omp.shop.Shop;
-import com.omp.user.User;
+import com.omp.order.dto.OrderValidateDto;
 import com.omp.user.UserStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;

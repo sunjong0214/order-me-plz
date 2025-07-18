@@ -1,6 +1,6 @@
 package com.omp.delivery;
 
-import com.omp.delivery.dto.CreateDeliveryEvent;
+import com.omp.delivery.dto.CreateAsyncOrderEvent;
 import com.omp.order.Order;
 import com.omp.order.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +24,9 @@ public class DeliveryService {
     @Async
     @TransactionalEventListener
 //    @Transactional
-    public void saveDeliveryBy(final CreateDeliveryEvent event) {
-        Order order = orderRepository.findById(event.getOrderId()).orElseThrow();
-        Long deliveryId = deliveryRepository.save(CreateDeliveryEvent.from(event)).getId();
-        order.setDeliveryId(deliveryId);
+    public void saveDeliveryBy(final CreateAsyncOrderEvent event) {
+//        Order order = orderRepository.findById(event.getOrderId()).orElseThrow();
+//        Long deliveryId = deliveryRepository.save(CreateAsyncOrderEvent.from(event)).getId();
+//        order.setDeliveryId(deliveryId);
     }
 }
