@@ -20,6 +20,7 @@ public class AsyncOrderWorker {
     private final ShopRepository shopRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final OrderCreateWebhook webhook;
     private final AsyncOrderManager asyncOrderManager;
 
     private static final Log log = LogFactory.getLog(AsyncOrderWorker.class);
@@ -28,39 +29,61 @@ public class AsyncOrderWorker {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void asyncCreateOrder(CreateAsyncOrderEvent event) {
+        long start = System.currentTimeMillis();
         // validation
         try {
             Long ordererId = event.getOrdererId();
-            userRepository.findById(ordererId)
-                    .ifPresentOrElse(u -> {
-                        if (u.isBan()) {
-                            throw new IllegalStateException();
-                        }
-                    }, IllegalStateException::new);
+            validateOrder(ordererId);
 
             Long shopId = event.getShopId();
-            shopRepository.findById(shopId)
-                    .ifPresentOrElse(s -> {
-                        if (!s.isOpen()) {
-                            throw new IllegalStateException();
-                        }
-                    }, IllegalStateException::new);
+            validateShop(shopId);
 
             Long cartId = event.getCartId();
-            cartRepository.findById(cartId)
-                    .ifPresentOrElse(c -> {
-                        if (!c.validateUserAndShop(ordererId, shopId)) {
-                            throw new IllegalStateException();
-                        }
-                    }, IllegalStateException::new);
+            validateCart(cartId, ordererId, shopId);
 
-//      insert
             Order newOrder = orderRepository.save(CreateAsyncOrderEvent.from(event));
             asyncOrderManager.complete(event.getUuid(), newOrder.getId());
+
+            // 웹훅은 tcp 연결과 같이 오래 걸리는 작업 -> 트랜잭션에서 분리할 필요성
+            Boolean b = webhook.sendOrderWebhook(
+                    new OrderWebhookRequest(event.getUuid(), OrderJobStatus.COMPLETED, newOrder.getId()));
+//                    .thenAccept(success -> {
+//                        if (!success) {
+//                            // 예외처리 방법
+//                        }
+//                    });
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             asyncOrderManager.fail(event.getUuid());
         }
+        System.out.println("경과 시간: " + (System.currentTimeMillis() - start) + "ms");
+    }
+
+    private void validateCart(Long cartId, Long ordererId, Long shopId) {
+        cartRepository.findById(cartId)
+                .ifPresentOrElse(c -> {
+                    if (!c.validateUserAndShop(ordererId, shopId)) {
+                        throw new IllegalStateException();
+                    }
+                }, IllegalStateException::new);
+    }
+
+    private void validateShop(Long shopId) {
+        shopRepository.findById(shopId)
+                .ifPresentOrElse(s -> {
+                    if (!s.isOpen()) {
+                        throw new IllegalStateException();
+                    }
+                }, IllegalStateException::new);
+    }
+
+    private void validateOrder(Long ordererId) {
+        userRepository.findById(ordererId)
+                .ifPresentOrElse(u -> {
+                    if (u.isBan()) {
+                        throw new IllegalStateException();
+                    }
+                }, IllegalStateException::new);
     }
 }
