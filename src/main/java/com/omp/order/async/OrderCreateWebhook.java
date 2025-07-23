@@ -29,7 +29,7 @@ public class OrderCreateWebhook {
         var responseEntity = restClient.post()
                 .uri(clientUrl)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.LOCATION, "/api/v1/order" + orderWebhookRequest.getOrderId())
+                .header(HttpHeaders.LOCATION, "/api/v1/order/" + orderWebhookRequest.getOrderId())
                 .body(orderWebhookRequest)
                 .retrieve()
                 .toBodilessEntity();
