@@ -9,11 +9,13 @@ import com.omp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @RequiredArgsConstructor
+@Component
 @Slf4j
 public class AsyncOrderWorker {
     private final OrderRepository orderRepository;
@@ -36,7 +38,7 @@ public class AsyncOrderWorker {
             validateShop(shopId);
 
             Long cartId = event.getCartId();
-            validateCart(cartId, ordererId, shopId);
+//            validateCart(cartId, ordererId, shopId);
 
             Order newOrder = orderRepository.save(CreateAsyncOrderEvent.from(event));
             asyncOrderManager.complete(event.getUuid(), newOrder.getId());

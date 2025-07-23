@@ -54,20 +54,20 @@ public class OrderService {
         return newOrder.getId();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public String asyncOrder(CreateOrderRequest request) {
         Long ordererId = request.getOrdererId();
-        if (userRepository.existsById(ordererId)) {
+        if (!userRepository.existsById(ordererId)) {
             throw new IllegalArgumentException();
         }
 
         Long shopId = request.getShopId();
-        if (shopRepository.existsById(shopId)) {
+        if (!shopRepository.existsById(shopId)) {
             throw new IllegalArgumentException();
         }
 
         Long cartId = request.getCartId();
-        if (cartRepository.existsById(cartId)) {
+        if (!cartRepository.existsById(cartId)) {
             throw new IllegalArgumentException();
         }
 

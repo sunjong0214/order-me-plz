@@ -21,8 +21,8 @@ public class DeliveryService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Async
-    @TransactionalEventListener
+//    @Async
+//    @TransactionalEventListener
 //    @Transactional
     public void saveDeliveryBy(final CreateAsyncOrderEvent event) {
 //        Order order = orderRepository.findById(event.getOrderId()).orElseThrow();
