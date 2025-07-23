@@ -7,14 +7,14 @@ import com.omp.order.OrderRepository;
 import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @RequiredArgsConstructor
+@Slf4j
 public class AsyncOrderWorker {
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
@@ -23,14 +23,11 @@ public class AsyncOrderWorker {
     private final OrderCreateWebhook webhook;
     private final AsyncOrderManager asyncOrderManager;
 
-    private static final Log log = LogFactory.getLog(AsyncOrderWorker.class);
-
     @TransactionalEventListener
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void asyncCreateOrder(CreateAsyncOrderEvent event) {
         long start = System.currentTimeMillis();
-        // validation
         try {
             Long ordererId = event.getOrdererId();
             validateOrder(ordererId);
@@ -47,15 +44,19 @@ public class AsyncOrderWorker {
             // 웹훅은 tcp 연결과 같이 오래 걸리는 작업 -> 트랜잭션에서 분리할 필요성
             Boolean b = webhook.sendOrderWebhook(
                     new OrderWebhookRequest(event.getUuid(), OrderJobStatus.COMPLETED, newOrder.getId()));
+            if (!b) {
+                log.error("webhook 전송 실패");
+            }
 //                    .thenAccept(success -> {
 //                        if (!success) {
 //                            // 예외처리 방법
-//                        }
+//                        }z
 //                    });
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error("async order insert fail: {}", e.getMessage());
             asyncOrderManager.fail(event.getUuid());
+            throw new RuntimeException();
         }
         System.out.println("경과 시간: " + (System.currentTimeMillis() - start) + "ms");
     }
