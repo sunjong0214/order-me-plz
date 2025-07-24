@@ -8,6 +8,7 @@ import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,6 +25,7 @@ public class AsyncOrderWorker {
     private final UserRepository userRepository;
     private final OrderCreateWebhook webhook;
     private final AsyncOrderManager asyncOrderManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     @TransactionalEventListener
     @Async
@@ -44,16 +46,9 @@ public class AsyncOrderWorker {
             asyncOrderManager.complete(event.getUuid(), newOrder.getId());
 
             // 웹훅은 tcp 연결과 같이 오래 걸리는 작업 -> 트랜잭션에서 분리할 필요성
-            Boolean b = webhook.sendOrderWebhook(
-                    new OrderWebhookRequest(event.getUuid(), OrderJobStatus.COMPLETED, newOrder.getId()));
-            if (!b) {
-                log.error("webhook 전송 실패");
-            }
-//                    .thenAccept(success -> {
-//                        if (!success) {
-//                            // 예외처리 방법
-//                        }z
-//                    });
+            eventPublisher.publishEvent(
+                    new OrderWebhookRequest(event.getUuid(), OrderJobStatus.COMPLETED, newOrder.getId())
+            );
 
         } catch (Exception e) {
             log.error("async order insert fail: {}", e.getMessage());

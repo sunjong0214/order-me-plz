@@ -15,11 +15,10 @@ public class AsyncThreadPoolConfig {
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(10);
-        taskExecutor.setMaxPoolSize(50);
+        taskExecutor.setMaxPoolSize(30);
         taskExecutor.setQueueCapacity(100);
         taskExecutor.setThreadNamePrefix("AsyncTask-");
         taskExecutor.setRejectedExecutionHandler(new CallerRunsPolicy());
-        taskExecutor.initialize();
         return taskExecutor;
     }
 }

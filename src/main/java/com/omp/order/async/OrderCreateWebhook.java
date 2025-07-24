@@ -8,7 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.RestClient;
 
 @RequiredArgsConstructor
@@ -22,10 +24,14 @@ public class OrderCreateWebhook {
 
     @Retryable(
             recover = "recoverWebhook",
-            retryFor = Exception.class,
-            backoff = @Backoff(multiplier = 2.0, random = true, maxDelay = 6000L)
+            retryFor = IllegalStateException.class,
+            backoff = @Backoff(
+                    multiplier = 2.0, random = true, maxDelay = 6000L
+            )
     )
-    public Boolean sendOrderWebhook(final OrderWebhookRequest orderWebhookRequest) {
+    @Async("webhookTaskExecutor")
+    @TransactionalEventListener
+    public void sendOrderWebhook(final OrderWebhookRequest orderWebhookRequest) {
         var responseEntity = restClient.post()
                 .uri(clientUrl)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -34,7 +40,9 @@ public class OrderCreateWebhook {
                 .retrieve()
                 .toBodilessEntity();
 
-        return responseEntity.getStatusCode().is2xxSuccessful();
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("Could not send order webhook: " + responseEntity.getBody());
+        }
     }
 
 
