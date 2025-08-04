@@ -4,15 +4,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
-@EnableAsync
 public class AsyncThreadPoolConfig {
 
-    @Bean(name = "taskExecutor")
-    public Executor taskExecutor() {
+    @Bean(name = "insertTaskExecutor")
+    public Executor insertTaskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(10);
         taskExecutor.setMaxPoolSize(30);

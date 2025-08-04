@@ -1,14 +1,11 @@
-package com.omp.delivery.dto;
+package com.omp.order.async;
 
-import com.omp.order.Order;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@Data
-public class CreateAsyncOrderEvent {
+public class OrderFailedWebhookRequest {
     @Positive
     private final Long ordererId;
     @Positive
@@ -17,8 +14,6 @@ public class CreateAsyncOrderEvent {
     private final Long shopId;
     @NotBlank
     private final String uuid;
-
-    public static Order from (CreateAsyncOrderEvent event) {
-        return new Order(event.ordererId, event.cartId, event.shopId);
-    }
+    @NotBlank
+    private final String exceptionMessage;
 }

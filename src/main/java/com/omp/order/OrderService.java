@@ -14,6 +14,8 @@ import com.omp.orderMenu.OrderMenuService;
 import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class OrderService {
     private final DeliveryRepository deliveryRepository;
     private final AsyncOrderManager asyncOrderManager;
     private final ApplicationEventPublisher eventPublisher;
+    private final Executor insertTaskExecutor;
 
     public Order findOrderBy(final Long id) {
         return orderRepository.findById(id).orElseThrow();

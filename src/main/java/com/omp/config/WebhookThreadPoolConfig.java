@@ -9,7 +9,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class WebhookThreadPoolConfig {
 
     @Bean(name = "webhookTaskExecutor")
-    public Executor webhookTasExecutor() {
+    public Executor webhookTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(10);
         executor.setMaxPoolSize(50);

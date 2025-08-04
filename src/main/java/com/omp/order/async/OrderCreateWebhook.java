@@ -1,16 +1,14 @@
 package com.omp.order.async;
 
+import com.omp.delivery.dto.CreateAsyncOrderEvent;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.RestClient;
 
 @RequiredArgsConstructor
@@ -18,38 +16,64 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 public class OrderCreateWebhook {
     private final RestClient restClient;
+    private final Executor webhookTaskExecutor;
 
     @Value("${client-url}")
     private String clientUrl;
 
-    @Retryable(
-            recover = "recoverWebhook",
-            retryFor = IllegalStateException.class,
-            backoff = @Backoff(
-                    multiplier = 2.0, random = true, maxDelay = 6000L
-            )
-    )
-    @Async("webhookTaskExecutor")
-    @TransactionalEventListener
     public void sendOrderWebhook(final OrderWebhookRequest orderWebhookRequest) {
-        var responseEntity = restClient.post()
-                .uri(clientUrl)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.LOCATION, "/api/v1/order/" + orderWebhookRequest.getOrderId())
-                .body(orderWebhookRequest)
-                .retrieve()
-                .toBodilessEntity();
-
-        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            throw new IllegalStateException("Could not send order webhook: " + responseEntity.getBody());
+        try {
+            CompletableFuture
+                    .supplyAsync(() ->
+                                    restClient.post()
+                                            .uri(clientUrl)
+                                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                            .header(HttpHeaders.LOCATION, "/api/v1/order/" + orderWebhookRequest.getOrderId())
+                                            .body(orderWebhookRequest)
+                                            .retrieve()
+                                            .toBodilessEntity(),
+                            webhookTaskExecutor)
+                    .whenComplete((responseEntity, exception) -> {
+                        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+                            log.warn("order webhook fail :{}, {}", responseEntity.getStatusCode(),
+                                    exception.getMessage());
+                        } else {
+                            log.info("order webhook success :{}", responseEntity.getStatusCode());
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("webhook client connect fail", e);
         }
     }
 
-
-    @Recover
-    public void recoverWebhook(final Exception ex, final OrderWebhookRequest orderWebhookRequest) {
-        log.error("order webhook send fail: uuid={}, orderId={}", orderWebhookRequest.getJobUuid(),
-                orderWebhookRequest.getOrderId());
-        log.error(ex.getMessage(), ex);
+    public void sendFailedOrderWebhook(final CreateAsyncOrderEvent event,
+                                       final Throwable throwable) {
+        try {
+            CompletableFuture
+                    .supplyAsync(() ->
+                                    restClient.post()
+                                            .uri(clientUrl)
+                                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                            .body(
+                                                    new OrderFailedWebhookRequest(
+                                                            event.getOrdererId(), event.getCartId(), event.getShopId(),
+                                                            event.getUuid(),
+                                                            throwable.getMessage()
+                                                    )
+                                            )
+                                            .retrieve()
+                                            .toBodilessEntity(),
+                            webhookTaskExecutor)
+                    .whenComplete((responseEntity, exception) -> {
+                        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+                            log.warn("fail order webhook fail : {}, {}", responseEntity.getStatusCode(),
+                                    exception.getMessage());
+                        } else {
+                            log.info("fail order webhook success :{}", responseEntity.getStatusCode());
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("fail webhook client connect fail", e);
+        }
     }
 }
