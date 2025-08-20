@@ -10,11 +10,13 @@ import com.omp.order.async.OrderJobState;
 import com.omp.order.async.OrderProcessingContext;
 import com.omp.order.dto.CreateOrderRequest;
 import com.omp.order.dto.OrderValidateDto;
+import com.omp.orderMenu.OrderMenu;
 import com.omp.orderMenu.OrderMenuService;
 import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
+
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -53,6 +55,8 @@ public class OrderService {
         }
 
         Order newOrder = orderRepository.save(CreateOrderRequest.from(request));
+
+        List<OrderMenu> orderMenus = orderMenuService.createOrderMenus(CreateOrderRequest.from(request.getOrderMenus()));
 
         return newOrder.getId();
     }
