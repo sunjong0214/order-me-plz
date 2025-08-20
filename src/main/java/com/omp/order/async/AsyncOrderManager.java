@@ -26,6 +26,10 @@ public class AsyncOrderManager {
         });
     }
 
+    public void remove(String key) {
+        map.remove(key);
+    }
+
     public OrderJobState getJobState(String key) {
         return get(key).getOrderJobState();
     }

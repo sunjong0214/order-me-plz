@@ -14,15 +14,16 @@ import com.omp.orderMenu.OrderMenu;
 import com.omp.orderMenu.OrderMenuService;
 import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @RequiredArgsConstructor
 @Service
@@ -37,7 +38,7 @@ public class OrderService {
     private final DeliveryRepository deliveryRepository;
     private final AsyncOrderManager asyncOrderManager;
     private final ApplicationEventPublisher eventPublisher;
-    private final Executor insertTaskExecutor;
+    private final Executor orderEventExecutor;
 
     public Order findOrderBy(final Long id) {
         return orderRepository.findById(id).orElseThrow();
@@ -63,26 +64,31 @@ public class OrderService {
 
     @Transactional
     public String asyncOrder(CreateOrderRequest request) {
-        Long ordererId = request.getOrdererId();
-        if (!userRepository.existsById(ordererId)) {
-            throw new IllegalArgumentException();
-        }
-
-        Long shopId = request.getShopId();
-        if (!shopRepository.existsById(shopId)) {
-            throw new IllegalArgumentException();
-        }
-
-        Long cartId = request.getCartId();
-        if (!cartRepository.existsById(cartId)) {
-            throw new IllegalArgumentException();
-        }
-
         String uuid = UUID.randomUUID().toString();
 
-        eventPublisher.publishEvent(new CreateAsyncOrderEvent(ordererId, cartId, shopId, uuid));
-        asyncOrderManager.put(uuid, new OrderProcessingContext(new OrderIdentifier(ordererId, shopId, cartId)));
+        CompletableFuture.runAsync(() -> {
+            Long ordererId = request.getOrdererId();
+            if (!userRepository.existsById(ordererId)) {
+                throw new IllegalArgumentException();
+            }
 
+            Long shopId = request.getShopId();
+            if (!shopRepository.existsById(shopId)) {
+                throw new IllegalArgumentException();
+            }
+
+            Long cartId = request.getCartId();
+            if (!cartRepository.existsById(cartId)) {
+                throw new IllegalArgumentException();
+            }
+
+            eventPublisher.publishEvent(new CreateAsyncOrderEvent(ordererId, cartId, shopId, uuid));
+            asyncOrderManager.put(uuid, new OrderProcessingContext(new OrderIdentifier(ordererId, shopId, cartId)));
+        }, orderEventExecutor).whenComplete((v, ex) -> {
+            if (ex != null) {
+                throw new IllegalStateException();
+            }
+        });
         return uuid;
     }
 

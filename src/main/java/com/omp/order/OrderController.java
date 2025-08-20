@@ -10,6 +10,7 @@ import static org.springframework.http.ResponseEntity.accepted;
 import com.omp.order.async.OrderJobState;
 import com.omp.order.dto.CreateOrderRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,12 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/order")
 public class OrderController {
     private final OrderService orderService;
+    private final SseEmitterService sseEmitterService;
 
     @GetMapping("/{id}")
     public Order getOrder(final @PathVariable Long id) {
@@ -40,8 +43,13 @@ public class OrderController {
     public ResponseEntity<String> asyncCreateOrder(final @RequestBody CreateOrderRequest request) {
         String uuid = orderService.asyncOrder(request);
         return accepted()
-                .header("Location", "/api/v1/order/" + uuid)
+                .header("Location", "/api/v1/order/sse/" + uuid)
                 .build();
+    }
+
+    @GetMapping(value = "/sse/{orderUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter orderStream(final @PathVariable String orderUuid) {
+        return sseEmitterService.createOrderSse(orderUuid);
     }
 
     @GetMapping("/async/{uuid}")

@@ -72,7 +72,7 @@ public class SseEmitterService {
         CompletableFuture.runAsync(() -> {
                     SseEmitter sseEmitter = orderSseEmitterMap.get(orderUuid);
                     if (sseEmitter == null) {
-                        log.warn("sse emitter is not connected : {}", orderUuid);
+//                        log.warn("sse emitter is not connected : {}", orderUuid);
                         return;
                     }
                     sendOrderState(orderUuid);
