@@ -34,9 +34,12 @@ public class OrderCreateWebhook {
                                             .toBodilessEntity(),
                             webhookTaskExecutor)
                     .whenComplete((responseEntity, exception) -> {
-                        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-                            log.warn("order webhook fail :{}, {}", responseEntity.getStatusCode(),
-                                    exception.getMessage());
+                        if (exception != null) {
+                            log.warn("order webhook exception : {}", exception.getMessage());
+                        } else if (responseEntity == null) {
+                            log.warn("order webhook response fail");
+                        } else if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+                            log.warn("order webhook fail :{}", responseEntity.getStatusCode());
                         } else {
                             log.info("order webhook success :{}", responseEntity.getStatusCode());
                         }
