@@ -20,8 +20,8 @@ public class OrderMenuService {
                         .toList());
     }
 
-    public OrderMenu createOrderMenu(final OrderMenuRequest orderMenuRequest) {
-        return orderMenuRepository.save(OrderMenuRequest.from(orderMenuRequest));
+    public List<OrderMenu> createOrderMenus(final List<OrderMenu> orderMenus) {
+        return orderMenuRepository.saveAll(orderMenus);
     }
 
     public void existsOrderMenus(List<OrderMenu> orderMenus) {

@@ -35,16 +35,4 @@ public class CartService {
 
         return cartRepository.save(newCart).getId();
     }
-
-    public CartResponse addOrderMenu(final OrderMenuRequest orderMenuRequest) {
-        Cart cart = cartRepository.findById(orderMenuRequest.getCartId()).orElseThrow();
-
-        if (!menuRepository.existsById(orderMenuRequest.getMenuId())) {
-            throw new IllegalStateException();
-        }
-
-        OrderMenu orderMenu = orderMenuService.createOrderMenu(orderMenuRequest);
-
-        return new CartResponse(cart.getId(), orderMenu.getId());
-    }
 }
