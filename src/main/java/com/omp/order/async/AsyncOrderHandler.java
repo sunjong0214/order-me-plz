@@ -1,14 +1,14 @@
 package com.omp.order.async;
 
 import com.omp.delivery.dto.CreateAsyncOrderEvent;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
 import com.omp.order.SseEmitterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @RequiredArgsConstructor
 @Component
@@ -22,13 +22,7 @@ public class AsyncOrderHandler {
     @TransactionalEventListener
     public void asyncCreateOrder(CreateAsyncOrderEvent event) {
         CompletableFuture
-                .supplyAsync(() -> {
-                    try {
-                        return asyncOrderProcessor.processOrderTask(event);
-                    } catch (Exception e) {
-                        throw new IllegalStateException("Order inset fail", e);
-                    }
-                }, insertTaskExecutor)
+                .supplyAsync(() -> asyncOrderProcessor.processOrderTask(event), insertTaskExecutor)
                 .whenComplete((orderId, orderException) -> {
                     if (orderException == null) {
                         asyncOrderManager.complete(event.getUuid(), orderId);

@@ -21,11 +21,12 @@ public class CreateAsyncOrderEvent {
     private final Long shopId;
     @NotBlank
     private final String uuid;
-    private List<OrderMenuRequest> orderMenus;
+    private final List<OrderMenuRequest> orderMenus;
 
     public static Order from (CreateAsyncOrderEvent event) {
         return new Order(event.ordererId, event.cartId, event.shopId);
     }
+
     public static List<OrderMenu> from(final List<OrderMenuRequest> orderMenus) {
         return orderMenus.stream()
                 .map(OrderMenuRequest::from)

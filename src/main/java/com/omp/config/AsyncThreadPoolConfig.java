@@ -23,9 +23,9 @@ public class AsyncThreadPoolConfig {
     @Bean(name = "orderEventExecutor")
     public Executor orderEventExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(10);
-        taskExecutor.setMaxPoolSize(30);
-        taskExecutor.setQueueCapacity(200);
+        taskExecutor.setCorePoolSize(20);
+        taskExecutor.setMaxPoolSize(50);
+        taskExecutor.setQueueCapacity(300);
         taskExecutor.setThreadNamePrefix("OrderEventTask-");
         taskExecutor.setRejectedExecutionHandler(new CallerRunsPolicy());
         return taskExecutor;

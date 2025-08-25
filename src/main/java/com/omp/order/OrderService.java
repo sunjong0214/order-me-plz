@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @RequiredArgsConstructor
@@ -64,31 +63,25 @@ public class OrderService {
 
     @Transactional
     public String asyncOrder(CreateOrderRequest request) {
+
+        Long ordererId = request.getOrdererId();
+        if (!userRepository.existsById(ordererId)) {
+            throw new IllegalArgumentException();
+        }
+
+        Long shopId = request.getShopId();
+        if (!shopRepository.existsById(shopId)) {
+            throw new IllegalArgumentException();
+        }
+
+        Long cartId = request.getCartId();
+        if (!cartRepository.existsById(cartId)) {
+            throw new IllegalArgumentException();
+        }
+
         String uuid = UUID.randomUUID().toString();
-
-        CompletableFuture.runAsync(() -> {
-            Long ordererId = request.getOrdererId();
-            if (!userRepository.existsById(ordererId)) {
-                throw new IllegalArgumentException();
-            }
-
-            Long shopId = request.getShopId();
-            if (!shopRepository.existsById(shopId)) {
-                throw new IllegalArgumentException();
-            }
-
-            Long cartId = request.getCartId();
-            if (!cartRepository.existsById(cartId)) {
-                throw new IllegalArgumentException();
-            }
-
-            eventPublisher.publishEvent(new CreateAsyncOrderEvent(ordererId, cartId, shopId, uuid));
-            asyncOrderManager.put(uuid, new OrderProcessingContext(new OrderIdentifier(ordererId, shopId, cartId)));
-        }, orderEventExecutor).whenComplete((v, ex) -> {
-            if (ex != null) {
-                throw new IllegalStateException();
-            }
-        });
+        eventPublisher.publishEvent(new CreateAsyncOrderEvent(ordererId, cartId, shopId, uuid, request.getOrderMenus()));
+        asyncOrderManager.put(uuid, new OrderProcessingContext(new OrderIdentifier(ordererId, shopId, cartId)));
         return uuid;
     }
 

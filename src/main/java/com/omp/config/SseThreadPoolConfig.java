@@ -7,7 +7,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 @Configuration
-public class SseTaskExecutor {
+public class SseThreadPoolConfig {
 
     @Bean(name = "sseTaskExecutor")
     public Executor sseTaskExecutor() {
