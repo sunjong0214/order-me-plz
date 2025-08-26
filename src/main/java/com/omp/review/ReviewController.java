@@ -2,12 +2,9 @@ package com.omp.review;
 
 import com.omp.review.dto.CreateReviewRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,7 +18,8 @@ public class ReviewController {
     }
 
     @PostMapping
-    public Long createReview(final @RequestBody CreateReviewRequest request) {
-        return reviewService.saveReviewBy(CreateReviewRequest.from(request));
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Long> createReview(final @RequestBody CreateReviewRequest request) {
+        return ResponseEntity.ok(reviewService.saveReviewBy(CreateReviewRequest.from(request)));
     }
 }

@@ -38,25 +38,4 @@ public class ReviewService {
 
         return review.getId();
     }
-
-    @Retryable(
-            recover = "recoverSaveReviewBy",
-            retryFor = {OptimisticLockingFailureException.class},
-            backoff = @Backoff(
-                    multiplier = 2.0,
-                    random = true,
-                    maxDelay = 6000
-            )
-    )
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Async
-    @TransactionalEventListener
-    public void updateAverageRating(final CreateReviewEvent event) {
-        Shop shop = shopRepository.findByIdWithOptimisticLock(event.getShopId()).orElseThrow();
-        shop.updateRatingAverage(event.getReviewRating());
-    }
-
-    @Recover
-    public void recoverSaveReviewBy(final OptimisticLockingFailureException e, final CreateReviewEvent event) {
-    }
 }
