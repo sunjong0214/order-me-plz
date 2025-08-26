@@ -1,4 +1,4 @@
-package com.omp.menu;
+package com.omp.menu.dto;
 
 public class MenuResponse {
 }

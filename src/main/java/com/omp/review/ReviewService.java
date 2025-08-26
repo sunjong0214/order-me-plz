@@ -1,20 +1,14 @@
 package com.omp.review;
 
 import com.omp.review.dto.CreateReviewDto;
+import com.omp.review.dto.CreateReviewEvent;
 import com.omp.shop.Shop;
 import com.omp.shop.ShopRepository;
 import com.omp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @RequiredArgsConstructor
 @Service

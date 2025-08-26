@@ -1,7 +1,7 @@
 package com.omp.shop;
 
 import com.omp.shop.dto.ShopInfo;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.omp.shop.dto.ShopUpdateRequest;
 import jakarta.validation.constraints.Positive;
 import org.springframework.data.domain.Slice;
 

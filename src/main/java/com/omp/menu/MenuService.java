@@ -1,6 +1,7 @@
 package com.omp.menu;
 
 import com.omp.menu.dto.CreateMenuDto;
+import com.omp.menu.dto.MenuResponse;
 import com.omp.menu.dto.UpdateMenuDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;

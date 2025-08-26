@@ -3,6 +3,7 @@ package com.omp.shop;
 import com.omp.review.ReviewRepository;
 import com.omp.shop.dto.CreateShopDto;
 import com.omp.shop.dto.ShopInfo;
+import com.omp.shop.dto.ShopUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;

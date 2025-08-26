@@ -2,6 +2,7 @@ package com.omp.shop;
 
 import com.omp.shop.dto.CreateShopRequest;
 import com.omp.shop.dto.ShopInfo;
+import com.omp.shop.dto.ShopUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Slice;

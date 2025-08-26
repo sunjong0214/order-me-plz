@@ -1,5 +1,6 @@
-package com.omp.shop;
+package com.omp.shop.dto;
 
+import com.omp.shop.ShopCategory;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 

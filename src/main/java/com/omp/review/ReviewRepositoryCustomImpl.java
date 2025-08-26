@@ -2,6 +2,7 @@ package com.omp.review;
 
 import static com.omp.review.QReview.review;
 
+import com.omp.review.dto.ReviewDetail;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;

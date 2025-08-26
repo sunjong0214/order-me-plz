@@ -4,6 +4,7 @@ package com.omp.shop;
 import static com.omp.shop.QShop.shop;
 
 import com.omp.shop.dto.ShopInfo;
+import com.omp.shop.dto.ShopUpdateRequest;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;

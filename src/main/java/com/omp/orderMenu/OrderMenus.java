@@ -1,4 +1,4 @@
-package com.omp.cart;
+package com.omp.orderMenu;
 
 import com.omp.orderMenu.OrderMenu;
 import jakarta.persistence.Embeddable;

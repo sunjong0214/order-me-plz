@@ -1,5 +1,6 @@
 package com.omp.review;
 
+import com.omp.review.dto.CreateReviewEvent;
 import com.omp.shop.Shop;
 import com.omp.shop.ShopRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class ReviewUpdateService {
                     maxDelay = 6000
             )
     )
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Async
     @TransactionalEventListener
     public void updateAverageRating(final CreateReviewEvent event) {

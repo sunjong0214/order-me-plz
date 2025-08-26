@@ -1,4 +1,4 @@
-package com.omp.review;
+package com.omp.review.dto;
 
 import java.math.BigDecimal;
 import lombok.Getter;

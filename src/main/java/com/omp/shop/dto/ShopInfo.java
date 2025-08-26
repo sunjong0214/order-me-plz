@@ -1,6 +1,6 @@
 package com.omp.shop.dto;
 
-import com.omp.review.ReviewDetail;
+import com.omp.review.dto.ReviewDetail;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.Data;
