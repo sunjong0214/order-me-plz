@@ -63,14 +63,14 @@ public class OrderController {
         } else if (orderState.status() == PROCESSING) {
             return ResponseEntity
                     .status(ACCEPTED)
-                    .header("Location", "/api/v1/order/async" + uuid)
+                    .header("Location", "/api/v1/order/async/" + uuid)
                     .body(orderState);
         }
 
         // COMPLETED
         return ResponseEntity
                 .status(SEE_OTHER)
-                .header("Location", "/api/v1/order" + orderState.orderId())
+                .header("Location", "/api/v1/order/" + orderState.orderId())
                 .body(orderState);
     }
 }

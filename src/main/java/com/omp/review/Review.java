@@ -43,6 +43,7 @@ public class Review {
     public Review(final String title, final Long writerId, final String detail,
                   final BigDecimal rating, final Shop shop) {
         this.title = title;
+        this.writerId = writerId;
         this.detail = detail;
         this.rating = rating;
         this.shop = shop;
