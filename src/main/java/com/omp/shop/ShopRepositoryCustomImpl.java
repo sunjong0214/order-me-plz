@@ -2,6 +2,7 @@ package com.omp.shop;
 
 
 import static com.omp.shop.QShop.shop;
+import static com.omp.shop.QShopReviewStats.shopReviewStats;
 
 import com.omp.shop.dto.ShopInfo;
 import com.omp.shop.dto.ShopUpdateRequest;
@@ -31,11 +32,14 @@ public class ShopRepositoryCustomImpl implements ShopRepositoryCustom {
     @Override
     public Slice<ShopInfo> findBy(final ShopCategory category, final Long cursor, final int pageSize) {
         List<ShopInfo> shops = queryFactory.select(
-                        Projections.constructor(ShopInfo.class,
+                        Projections.fields(ShopInfo.class,
                                 shop.id.as("shopId"),
                                 shop.name,
-                                shop.isOpen))
+                                shop.isOpen,
+                                shopReviewStats.averageRating,
+                                shopReviewStats.reviewCount))
                 .from(shop)
+                .leftJoin(shopReviewStats).on(shopReviewStats.shopId.eq(shop.id))
                 .where(shop.category.eq(category))
                 .where(checkCursor(cursor))
                 .limit(pageSize + 1)
@@ -44,7 +48,7 @@ public class ShopRepositoryCustomImpl implements ShopRepositoryCustom {
         boolean hasNext = false;
         if (shops.size() > pageSize) {
             hasNext = true;
-            shops.remove(shops.removeLast());
+            shops.removeLast();
         }
 
         PageRequest pageRequest = PageRequest.ofSize(pageSize);
@@ -61,10 +65,12 @@ public class ShopRepositoryCustomImpl implements ShopRepositoryCustom {
                                 shop.id.as("shopId"),
                                 shop.name,
                                 shop.isOpen,
-                                shop.averageRating
+                                shopReviewStats.averageRating,
+                                shopReviewStats.reviewCount
                         )
                 )
                 .from(shop)
+                .leftJoin(shopReviewStats).on(shopReviewStats.shopId.eq(shop.id))
                 .where(shop.id.eq(id))
                 .fetchOne();
     }

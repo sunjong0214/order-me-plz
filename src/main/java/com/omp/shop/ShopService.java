@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ShopService {
     private final ShopRepository shopRepository;
+    private final ShopReviewStatsRepository shopReviewStatsRepository;
     private final ReviewRepository reviewRepository;
 
     public Slice<ShopInfo> findShopsBy(final ShopCategory category, final Long cursor, final int pageSize) {
@@ -21,7 +22,9 @@ public class ShopService {
     }
 
     public Long saveShopBy(final CreateShopDto dto) {
-        return shopRepository.save(CreateShopDto.from(dto)).getId();
+        Shop shop = shopRepository.save(CreateShopDto.from(dto));
+        shopReviewStatsRepository.save(new ShopReviewStats(shop.getId()));
+        return shop.getId();
     }
 
     public ShopInfo findShopBy(final Long id) {

@@ -30,4 +30,17 @@ public class AsyncThreadPoolConfig {
         taskExecutor.setRejectedExecutionHandler(new CallerRunsPolicy());
         return taskExecutor;
     }
+
+    // 리뷰 통계 갱신 전용 풀. @Async 기본 executor(SimpleAsyncTaskExecutor)는
+    // 요청마다 새 스레드를 만들어 부하 시 스레드가 무한정 늘어나므로 반드시 명시적으로 지정한다.
+    @Bean(name = "reviewStatsExecutor")
+    public Executor reviewStatsExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(10);
+        taskExecutor.setMaxPoolSize(20);
+        taskExecutor.setQueueCapacity(2000);
+        taskExecutor.setThreadNamePrefix("ReviewStats-");
+        taskExecutor.setRejectedExecutionHandler(new CallerRunsPolicy());
+        return taskExecutor;
+    }
 }

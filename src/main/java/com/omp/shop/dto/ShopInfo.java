@@ -13,5 +13,6 @@ public class ShopInfo {
     private String name;
     private boolean isOpen;
     private BigDecimal averageRating;
+    private Long reviewCount;
     private List<ReviewDetail> recentlyReviewDetail;
 }
