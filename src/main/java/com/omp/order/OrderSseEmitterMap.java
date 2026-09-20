@@ -2,12 +2,11 @@ package com.omp.order;
 
 import com.omp.order.async.OrderJobStatus;
 import com.omp.order.async.OrderProcessingContext;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Component
 public class OrderSseEmitterMap {
@@ -25,27 +24,34 @@ public class OrderSseEmitterMap {
         return map.get(uuid);
     }
 
+    public boolean contains(String uuid) {
+        return map.containsKey(uuid);
+    }
+
+    /**
+     * 현재 상태를 전송한다. 종료 상태(COMPLETED/FAILED)면 해당 이벤트를 보내고 emitter를 완료·제거한다(null 반환).
+     * 진행 중이면 orderCreateNotComplete를 보내고 emitter를 유지한다.
+     * 클라이언트가 작업 종료 뒤에 늦게 연결해도 결과를 받도록 두 종료 상태를 모두 처리한다.
+     */
     public SseEmitter checkOrderStateThenSend(final String uuid, final OrderProcessingContext context) {
         return map.computeIfPresent(uuid, (key, emitter) -> {
-            if (context.getOrderJobState().status() == OrderJobStatus.COMPLETED) {
-                try {
-                    emitter.send(SseEmitter.event()
-                            .name("orderCreateComplete")
-                            .data(context.getOrderJobState()));
-                    emitter.complete();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                return null;
-            }
+            OrderJobStatus status = context.getOrderJobState().status();
             try {
-                emitter.send(SseEmitter.event()
-                        .name("orderCreateNotComplete")
-                        .data(context.getOrderIdentifier()));
+                if (status == OrderJobStatus.COMPLETED) {
+                    emitter.send(SseEmitter.event().name("orderCreateComplete").data(context.getOrderJobState()));
+                    emitter.complete();
+                    return null;
+                }
+                if (status == OrderJobStatus.FAILED) {
+                    emitter.send(SseEmitter.event().name("orderCreateFail").data(context.getOrderIdentifier()));
+                    emitter.complete();
+                    return null;
+                }
+                emitter.send(SseEmitter.event().name("orderCreateNotComplete").data(context.getOrderIdentifier()));
+                return emitter;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return emitter;
         });
     }
 
@@ -53,12 +59,10 @@ public class OrderSseEmitterMap {
         map.computeIfPresent(orderUuid, (key, emitter) -> {
             if (context.getOrderJobState().status() == OrderJobStatus.FAILED) {
                 try {
-                    emitter.send(SseEmitter.event()
-                            .name("orderCreateFail")
-                            .data(context.getOrderIdentifier()));
+                    emitter.send(SseEmitter.event().name("orderCreateFail").data(context.getOrderIdentifier()));
                     emitter.complete();
                 } catch (Exception e) {
-                    throw new RuntimeException();
+                    throw new RuntimeException(e);
                 }
             }
             return null;

@@ -11,6 +11,6 @@ public class OrderValidateDto {
     private final boolean validCart;
 
     public boolean isValid() {
-        return validOrderer || validShop || validCart;
+        return validOrderer && validShop && validCart;
     }
 }

@@ -98,9 +98,12 @@ while ($true) { $v = (Invoke-RestMethod "http://<서버IP>:8080/actuator/metrics
 
 해석 노트:
 - 바닥값 p95가 5ms인데 API p95가 180ms → 차이는 서버 처리 시간.
-- 비동기 주문에서 p95가 이중 분포(일부만 크게 느림)면 insertTaskExecutor의 CallerRunsPolicy 백프레셔
-  (포화 시 톰캣 스레드가 직접 INSERT)가 원인 — 버그가 아니라 동작이며, 그 시점 rate가 실질 용량이다.
-- `iterations`(접수) vs `completed_orders`(저장 완료) vs 큐 소진 시간 → 접수 성능과 실제 완료를 분리해 보고.
+- 비동기 주문에서 503이 나오기 시작하면 insertTaskExecutor 포화 → 접수 거절(백프레셔). 503이 0인 최대 rate가 이 구조의 접수 용량이다.
+  k6 `orders_rejected`(503 수)와 서버 `/actuator/metrics/omp.order.async.rejected`가 일치해야 한다.
+  (CallerRunsPolicy는 제거됨. 포화 시 톰캣 스레드가 몰래 INSERT하는 구간은 이제 없다.)
+- 유실 검증: k6 `orders_accepted`(202 수) == 종료 후 `SELECT COUNT(*) FROM orders`.
+  리뷰는 `omp.review.stats.rejected`, `omp.review.stats.failed`가 0이어야 verify.sql 0행이 의미를 가진다.
+- `iterations`(시도) vs `orders_accepted`(접수) vs `completed_orders`(저장 완료) vs 큐 소진 시간 → 접수 성능과 실제 완료를 분리해 보고.
 
 ## 6. 매 측정 기록 환경 표 (결과 문서에 복사)
 
@@ -113,7 +116,9 @@ while ($true) { $v = (Invoke-RestMethod "http://<서버IP>:8080/actuator/metrics
 | JVM | 버전, -Xms/-Xmx |
 | MySQL | 버전, innodb_buffer_pool_size, 앱과 동거 |
 | 커넥션 풀 | HikariCP 20 (단일 풀) |
-| 스레드 풀 | insert 10/30/q100, reviewStats 10/20/q2000 |
+| 스레드 풀 | `omp.executor.*` 값 (기본 insert 10/30/q100, reviewStats 10/20/q2000), 거절 정책 Abort |
+| 리뷰 통계 모드 | `omp.review.stats.mode` = sync / async |
+| 거절·실패 카운터 | omp.order.async.rejected, omp.review.stats.rejected, omp.review.stats.failed (시작 전/종료 후) |
 | 데이터 | seed.sql (users 10만, shops 1천, carts 10만), 회차마다 reset-round.sql |
 | 부하 | executor, rate, duration, maxVUs |
 | 바닥값 | /ping p95 = X ms |

@@ -1,29 +1,18 @@
 package com.omp.order.async;
 
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
-public class OrderProcessingContext {
-    private final OrderIdentifier orderIdentifier;
-    private final OrderJobState orderJobState;
+/** 접수된 주문 작업 하나의 불변 컨텍스트. 상태 전이는 새 인스턴스로 교체한다. */
+public record OrderProcessingContext(OrderIdentifier orderIdentifier, OrderJobState orderJobState) {
 
     public OrderProcessingContext(OrderIdentifier orderIdentifier) {
-        this.orderIdentifier = orderIdentifier;
-        this.orderJobState = new OrderJobState();
+        this(orderIdentifier, OrderJobState.processing());
     }
 
-    public OrderJobState jobFail() {
-        orderJobState.fail();
-        return orderJobState;
+    public OrderProcessingContext completed(Long orderId) {
+        return new OrderProcessingContext(orderIdentifier, OrderJobState.completed(orderId));
     }
 
-    public OrderJobState jobComplete() {
-        orderJobState.complete();
-        return orderJobState;
-    }
-
-    public OrderJobState checkStatus() {
-        return orderJobState;
+    public OrderProcessingContext failed() {
+        return new OrderProcessingContext(orderIdentifier, OrderJobState.failed());
     }
 
     public OrderJobState getOrderJobState() {

@@ -1,14 +1,19 @@
 package com.omp.order;
 
-import com.omp.order.async.*;
+import com.omp.order.async.AsyncOrderManager;
+import com.omp.order.async.OrderProcessingContext;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
+/**
+ * 주문 완료 알림 SSE.
+ * 이 클래스는 emitter의 수명만 관리한다. 주문 상태(AsyncOrderManager)는 TTL로 만료되므로
+ * SSE 연결 유무·전송 성공 여부에 따라 상태를 지우지 않는다. (지우면 SSE 연결 전 완료된 주문의 폴링이 실패한다.)
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -23,25 +28,19 @@ public class SseEmitterService {
         CompletableFuture.runAsync(() -> {
                     orderSseEmitterMap.put(orderUuid, emitter);
 
-                    emitter.onCompletion(() -> {
-                        orderSseEmitterMap.remove(orderUuid);
-                        asyncOrderManager.remove(orderUuid);
-                    });
+                    emitter.onCompletion(() -> orderSseEmitterMap.remove(orderUuid));
                     emitter.onTimeout(() -> {
                         log.warn("order emitter timeout : {}", orderUuid);
                         orderSseEmitterMap.remove(orderUuid);
-                        asyncOrderManager.remove(orderUuid);
                     });
                     emitter.onError((e) -> {
                         log.error("order emitter error : {}, {}", orderUuid, e.getMessage());
                         orderSseEmitterMap.remove(orderUuid);
-                        asyncOrderManager.remove(orderUuid);
                     });
 
                     sendOrderState(orderUuid);
                 }, sseTaskExecutor)
                 .whenComplete((v, e) -> {
-                    // 스케줄러를 통해 실패한 전송 다시 ? 혹은 그냥 에러?
                     if (e != null) {
                         log.error("order emitter error : {}", orderUuid);
                         orderCreateFail(orderUuid);
@@ -59,11 +58,6 @@ public class SseEmitterService {
                 .whenComplete((emitter, e) -> {
                     if (e != null) {
                         log.error("order send fail : {}", e.getMessage());
-                    } else {
-                        log.info("order send success!");
-                    }
-                    if (emitter == null || e != null) {
-                        asyncOrderManager.remove(orderUuid);
                     }
                 });
     }
@@ -72,18 +66,14 @@ public class SseEmitterService {
         CompletableFuture.runAsync(() -> {
                     SseEmitter sseEmitter = orderSseEmitterMap.get(orderUuid);
                     if (sseEmitter == null) {
-//                        log.warn("sse emitter is not connected : {}", orderUuid);
-                        return;
+                        return;   // 아직 SSE 미연결. 상태는 TTL 동안 유지되므로 연결 시 또는 폴링으로 확인 가능.
                     }
                     sendOrderState(orderUuid);
                 }, sseTaskExecutor)
                 .whenComplete((v, e) -> {
                     if (e != null) {
                         log.error("order send fail : {}", e.getMessage());
-                    } else {
-                        log.info("order send success!");
                     }
-                    asyncOrderManager.remove(orderUuid);
                 });
     }
 
@@ -91,7 +81,6 @@ public class SseEmitterService {
         CompletableFuture.runAsync(() -> {
                     SseEmitter sseEmitter = orderSseEmitterMap.get(orderUuid);
                     if (sseEmitter == null) {
-                        log.warn("sse emitter is not connected : {}", orderUuid);
                         return;
                     }
                     OrderProcessingContext context = asyncOrderManager.get(orderUuid);
@@ -100,11 +89,7 @@ public class SseEmitterService {
                 .whenComplete((v, e) -> {
                     if (e != null) {
                         log.error("order send fail : {}", e.getMessage());
-                    } else {
-                        log.info("order send success!");
                     }
-                    asyncOrderManager.remove(orderUuid);
                 });
-        ;
     }
 }

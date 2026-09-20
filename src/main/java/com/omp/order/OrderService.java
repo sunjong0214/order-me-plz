@@ -1,43 +1,32 @@
 package com.omp.order;
 
-import com.omp.cart.CartRepository;
-import com.omp.delivery.DeliveryRepository;
-import com.omp.delivery.DeliveryService;
 import com.omp.delivery.dto.CreateAsyncOrderEvent;
+import com.omp.order.async.AsyncOrderHandler;
 import com.omp.order.async.AsyncOrderManager;
 import com.omp.order.async.OrderIdentifier;
 import com.omp.order.async.OrderJobState;
 import com.omp.order.async.OrderProcessingContext;
 import com.omp.order.dto.CreateOrderRequest;
 import com.omp.order.dto.OrderValidateDto;
-import com.omp.orderMenu.OrderMenu;
 import com.omp.orderMenu.OrderMenuService;
-import com.omp.shop.ShopRepository;
-import com.omp.user.UserRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Executor;
-
+/**
+ * 동기·비동기 주문은 검증 규칙·격리 수준·저장 데이터가 같고 "INSERT를 요청 스레드에서 하느냐, 워커에서 하느냐"만 다르다.
+ * 검증은 두 경로 모두 validateOrder 단일 쿼리 1회.
+ */
 @RequiredArgsConstructor
 @Service
 @Transactional
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final CartRepository cartRepository;
-    private final ShopRepository shopRepository;
     private final OrderMenuService orderMenuService;
-    private final DeliveryService deliveryService;
-    private final DeliveryRepository deliveryRepository;
     private final AsyncOrderManager asyncOrderManager;
-    private final ApplicationEventPublisher eventPublisher;
-    private final Executor orderEventExecutor;
+    private final AsyncOrderHandler asyncOrderHandler;
 
     public Order findOrderBy(final Long id) {
         return orderRepository.findById(id).orElseThrow();
@@ -45,44 +34,37 @@ public class OrderService {
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Long saveOrderBy(final CreateOrderRequest request) {
-        Long ordererId = request.getOrdererId();
-        Long shopId = request.getShopId();
-        Long cartId = request.getCartId();
-
-        OrderValidateDto validDto = orderRepository.validateOrder(ordererId, shopId, cartId);
-        if (!validDto.isValid()) {
-            throw new IllegalStateException();
-        }
+        validate(request.getOrdererId(), request.getShopId(), request.getCartId());
 
         Order newOrder = orderRepository.save(CreateOrderRequest.from(request));
-
-        List<OrderMenu> orderMenus = orderMenuService.createOrderMenus(CreateOrderRequest.from(request.getOrderMenus()));
+        orderMenuService.createOrderMenus(CreateOrderRequest.from(request.getOrderMenus()));
 
         return newOrder.getId();
     }
 
-    @Transactional
+    /**
+     * 접수: 검증 후 INSERT 작업을 워커 풀에 제출하고 작업 식별자를 반환한다. 이 트랜잭션은 검증 SELECT만 수행한다.
+     * 제출은 이벤트가 아닌 직접 호출이다. 풀 포화 거절이 예외로 전파되어 503이 되어야 하기 때문(AsyncOrderHandler 참고).
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public String asyncOrder(CreateOrderRequest request) {
-
         Long ordererId = request.getOrdererId();
-        if (!userRepository.existsById(ordererId)) {
-            throw new IllegalArgumentException();
-        }
-
         Long shopId = request.getShopId();
-        if (!shopRepository.existsById(shopId)) {
-            throw new IllegalArgumentException();
-        }
-
         Long cartId = request.getCartId();
-        if (!cartRepository.existsById(cartId)) {
-            throw new IllegalArgumentException();
-        }
+        validate(ordererId, shopId, cartId);
 
         String uuid = UUID.randomUUID().toString();
-        eventPublisher.publishEvent(new CreateAsyncOrderEvent(ordererId, cartId, shopId, uuid, request.getOrderMenus()));
         asyncOrderManager.put(uuid, new OrderProcessingContext(new OrderIdentifier(ordererId, shopId, cartId)));
+        asyncOrderHandler.submit(new CreateAsyncOrderEvent(ordererId, cartId, shopId, uuid, request.getOrderMenus()));
         return uuid;
+    }
+
+    private void validate(Long ordererId, Long shopId, Long cartId) {
+        OrderValidateDto validDto = orderRepository.validateOrder(ordererId, shopId, cartId);
+        // 세 행 중 하나라도 없으면 조인 결과가 없어 null이 온다.
+        if (validDto == null || !validDto.isValid()) {
+            throw new InvalidOrderException(ordererId, shopId, cartId);
+        }
     }
 
     public OrderJobState getOrderState(String uuid) {

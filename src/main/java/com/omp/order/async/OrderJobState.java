@@ -1,30 +1,20 @@
 package com.omp.order.async;
 
-public class OrderJobState {
-    private volatile OrderJobStatus status;
-    private volatile Long orderId;
+/**
+ * 주문 작업 상태 스냅샷. 불변이므로 status와 orderId가 항상 함께 관측되고, record라 JSON 직렬화 계약이 명확하다.
+ * (기존 가변 객체는 status 변경과 orderId 대입이 두 단계라 COMPLETED + null orderId 조합이 노출될 수 있었고, getter가 없어 직렬화가 실패했다.)
+ */
+public record OrderJobState(OrderJobStatus status, Long orderId) {
 
-    public OrderJobState () {
-        status = OrderJobStatus.PROCESSING;
+    public static OrderJobState processing() {
+        return new OrderJobState(OrderJobStatus.PROCESSING, null);
     }
 
-    public void complete() {
-        status = OrderJobStatus.COMPLETED;
+    public static OrderJobState completed(Long orderId) {
+        return new OrderJobState(OrderJobStatus.COMPLETED, orderId);
     }
 
-    public void fail() {
-        status = OrderJobStatus.FAILED;
-    }
-
-    public OrderJobStatus status() {
-        return status;
-    }
-
-    public Long orderId() {
-        return orderId;
-    }
-
-    public void setOrderId(Long id) {
-        this.orderId = id;
+    public static OrderJobState failed() {
+        return new OrderJobState(OrderJobStatus.FAILED, null);
     }
 }

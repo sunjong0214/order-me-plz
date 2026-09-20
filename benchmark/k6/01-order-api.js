@@ -27,6 +27,7 @@ const SHOP_POOL = Number(__ENV.SHOP_POOL || 1000);
 
 const PATH = MODE === 'sync' ? '/api/v1/order' : '/api/v1/order/async';
 const accepted = new Counter('orders_accepted');
+const rejected = new Counter('orders_rejected'); // 503: insertTaskExecutor 포화로 접수 거절 (백프레셔)
 
 export const options = {
   scenarios: {
@@ -92,6 +93,7 @@ export default function () {
       });
 
   if (ok) accepted.add(1);
+  if (res.status === 503) rejected.add(1);
 }
 
 export function handleSummary(data) {
@@ -108,8 +110,9 @@ export function handleSummary(data) {
 //      (회차 시작 전 sql/reset-round.sql로 비웠으므로 COUNT 자체가 완료량)
 //   2. Executor 큐 소진 시간: 큐 잔여량이 0이 될 때까지 걸린 시간
 //      /actuator/metrics/executor.queued?tag=name:insertTaskExecutor 를 5초 간격 폴링 (README 참고)
-//   3. 실패/거절 건수: "order create fail" 로그 카운트
+//   3. 거절 건수: k6 orders_rejected(503) = 서버 /actuator/metrics/omp.order.async.rejected 와 일치해야 함
+//      실패 건수: "order create fail" 로그 카운트 (접수 후 INSERT 실패)
 // 접수량(k6 iterations) vs 저장 완료량(1) 비교가 비동기 측정의 핵심.
-// 참고: insertTaskExecutor는 CallerRunsPolicy라 포화 시 톰캣 스레드가 직접 INSERT를 수행한다.
-//       p95가 이중 분포로 나오면 이 백프레셔 동작이 원인 (버그 아님, 해석에 반영).
+// 참고: insertTaskExecutor는 포화 시 거절한다(503 + Retry-After). 유실 검증: 202 건수 == orders 행 수.
+//       503 비율이 오르기 시작하는 rate가 이 구조의 접수 용량이다.
 // ────────────────────────────────────────────────

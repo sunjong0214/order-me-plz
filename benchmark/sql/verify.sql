@@ -28,3 +28,17 @@ SELECT COUNT(*) AS completed_orders FROM orders;
 --        (SELECT COUNT(*) FROM reviews r WHERE r.shop_id = s.shop_id) AS actual_count
 -- FROM shops s
 -- WHERE s.review_count <> (SELECT COUNT(*) FROM reviews r WHERE r.shop_id = s.shop_id);
+
+-- 2-b) 리뷰는 있는데 통계 행이 아예 없는 가게 (2번 쿼리는 통계 테이블 기준 LEFT JOIN이라 이 경우를 놓친다). 0행이어야 함.
+SELECT r.shop_id, COUNT(*) AS reviews_without_stats_row
+FROM reviews r
+LEFT JOIN shop_review_stats s ON s.shop_id = r.shop_id
+WHERE s.shop_id IS NULL
+GROUP BY r.shop_id;
+
+-- 2-c) 평균 검증. average_rating은 DECIMAL(38,2), 매 UPDATE마다 (sum + r) / (count + 1)을 소수 2자리로 저장하므로
+--      최종값은 sum/count를 소수 2자리로 반올림한 값과 같아야 한다. 0행이어야 함.
+SELECT s.shop_id, s.average_rating, ROUND(s.rating_sum / s.review_count, 2) AS expected_average
+FROM shop_review_stats s
+WHERE s.review_count > 0
+  AND s.average_rating <> ROUND(s.rating_sum / s.review_count, 2);
