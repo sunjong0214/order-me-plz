@@ -35,9 +35,9 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 바닥값 | main | | `00-network-floor.js` | `/ping`. 해석 참고선. 1회 |
 | 주문 · 개선 전 (동기) | main | | `01-order-api.js -e MODE=sync` | 같은 빌드에 두 엔드포인트 공존 |
 | 주문 · 개선 후 (비동기 접수) | main | | `01-order-api.js` (MODE=async) | |
-| 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
-| 리뷰 ② 별도 통계 + 같은 트랜잭션 | main | `--omp.review.stats.mode=sync` | `02-review-api.js -e TAG=sync` | ①→② = 모델 분리 효과 |
-| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 | main | (기본) | `02-review-api.js -e TAG=async` | ②→③ = 비동기 효과 (지연 격리 vs 정합성 창) |
+| 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e MODEL=closed -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
+| 리뷰 ② 별도 통계 + 같은 트랜잭션 | main | `--omp.review.stats.mode=sync` | `02-review-api.js -e MODEL=closed -e TAG=sync` | ①→② = 모델 분리 효과 |
+| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 | main | (기본) | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 비동기 효과 (지연 격리 vs 정합성 창) |
 
 - 주문 전/후는 checkout 없이 같은 서버에서 URL만 바꾼다. 단, 동기 응답은 **저장 완료**까지, 비동기 응답은 **접수**까지라 계약이 다르다. 접수 지연과 커밋 완료량을 따로 기록하고 "저장 속도 개선"으로 쓰지 않는다.
 - `bench/review-before`는 **main에서 분기**해 `Shop`의 통계 필드 3개와 `ReviewService.saveReviewBy`만 바꾼 재구성 브랜치다. 스레드 풀·검증·예외 처리·설정은 main과 같으므로 차이는 리뷰 갱신 설계 하나다. 옛 05ad2d8 기반 브랜치는 `bench/review-before-legacy-05ad2d8`로 남겨 두었고 측정에 쓰지 않는다 (CallerRuns 풀·Spring Retry·writerId 미할당이 섞여 비교가 오염된다).
@@ -46,7 +46,8 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 ## 2. 측정 유형
 
 1. **고정 rate** (`SCENARIO=fixed`, 기본): "초당 N건 유입 시 p95/p99와 에러율". 전/후 **모두 감당 가능한 rate**로 고정해야 비교가 성립한다.
-2. **용량**: "측정 조건에서 503(또는 p95>200ms) 없이 유지한 최대 유입률". k6 summary의 p95는 전체 집계라 램프 한 번으로는 한계 시점을 읽을 수 없다.
+2. **고정 동시 사용자** (`MODEL=closed`, 리뷰 ①②③): VUS명이 응답을 받는 즉시 다음 요청을 보낸다(nGrinder vUser 방식). 동시 요청 수가 항상 VUS로 고정되어 같은 가게 경합이 확실히 생기고, 서버가 빨라지면 15분 처리량이 늘어난다. 리뷰는 "같은 동시 사용자 수에서 처리량·p95·실패·정합성"을 비교하므로 이 방식을 쓴다. 주문은 유입량 목표가 있으므로 고정 rate(open)를 쓴다.
+3. **용량**: "측정 조건에서 503(또는 p95>200ms) 없이 유지한 최대 유입률". k6 summary의 p95는 전체 집계라 램프 한 번으로는 한계 시점을 읽을 수 없다.
    - 탐색: `-e SCENARIO=ramp -e THRESHOLDS=off --out csv=...` (단계마다 RAMP 상승 + HOLD 유지). 시계열에서 HOLD 구간별 p95·503을 계산해 후보 구간을 본다.
    - 확정: 후보 rate마다 `SCENARIO=fixed`를 3~5분씩 따로 돌려 rate별 p95·503 표를 만든다 (계단식 고정 run). 15분 본측정은 확정 rate에서.
 
@@ -80,17 +81,17 @@ k6 run -e BASE_URL=$S -e RATE=1000 -e DURATION=15m -e TAG=r1 -e OUT_DIR=$OUT --o
 #   동기 회차에서 p95 threshold가 깨지면 그것이 비교 결과다. 503 탐색·용량 회차는 -e THRESHOLDS=off.
 
 # 리뷰 ③ async(main 기본 기동) / ② sync(main, --omp.review.stats.mode=sync 기동) / ① before(bench/review-before)
-k6 run -e BASE_URL=$S -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=async  -e OUT_DIR=$OUT k6/02-review-api.js
-k6 run -e BASE_URL=$S -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=sync   -e OUT_DIR=$OUT k6/02-review-api.js
-k6 run -e BASE_URL=$S -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=before -e OUT_DIR=$OUT -e THRESHOLDS=off k6/02-review-api.js
-#   RATE·SHOP_POOL·MODEL 은 ①~③ 동일. 값은 아래 파일럿으로 확정한 뒤 세 명령에 같이 넣는다.
+#   closed model: VUS 명이 쉬지 않고 요청. 처리량 = reviews_created / 15m. VUS·SHOP_POOL 은 파일럿으로 확정한 값을 세 줄에 동일하게.
+k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async  -e OUT_DIR=$OUT k6/02-review-api.js
+k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=sync   -e OUT_DIR=$OUT k6/02-review-api.js
+k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=before -e OUT_DIR=$OUT -e THRESHOLDS=off k6/02-review-api.js
 ```
 
 ### 리뷰 ① (개선 전, `bench/review-before`) 회차
 - `git checkout bench/review-before` → `./gradlew bootJar` → 기동. 첫 기동에서 ddl-auto=update가 `shops`에 `review_count`, `rating_sum`, `average_rating`을 추가한다.
 - 기존 행의 DECIMAL 컬럼은 NULL이라 `reset-round.sql` 하단 `UPDATE shops SET ... = 0`을 주석 해제해 실행해야 갱신 시 NPE가 나지 않는다.
-- **파일럿 1분 먼저.** `RATE=20, SHOP_POOL=10` open model은 요청이 잘 겹치지 않아 데드락이 거의 안 날 수 있다.
-  `-e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot`로 데드락이 나는 조건(VUS·SHOP_POOL)을 찾고, 그 조건을 ①~③ 본측정에 동일 적용한다. closed model을 본측정에 쓰면 ②·③도 같은 MODEL·VUS로.
+- **파일럿 1분 먼저.** `-e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot`로 시작해 `lock_deadlocks` 증가분이 두 자릿수 이상 나오는 VUS·SHOP_POOL 을 찾는다. 안 나오면 SHOP_POOL 을 1로, 그래도 안 나오면 VUS 를 100으로 올린다. 확정한 값을 ①~③ 본측정 세 줄에 동일하게 넣는다.
+- closed model 에서는 ①의 데드락 롤백(500)이 빠르게 끝나 처리량이 오히려 높게 보일 수 있다. 처리량은 반드시 `reviews_created`(2xx) 기준으로 비교하고 `iterations` 를 쓰지 않는다.
 - **판정은 threshold가 아니다.** `http_req_failed`가 1% 미만이어도 데드락은 발생한다. 근거는 `lock_deadlocks` 증가분, k6 `reviews_5xx` 건수(≈ 데드락 수), `verify.sql` 4-a)의 유실 행, `SHOW ENGINE INNODB STATUS`의 LATEST DETECTED DEADLOCK 1회 캡처다.
 - 이 회차에서 `verify.sql` 2)·2-b)·2-c)는 `shop_review_stats`를 갱신하지 않으므로 전부 불일치로 나온다. 근거로 쓰지 않는다.
 - 이 브랜치에서 main의 정합성 테스트(`ReviewStats*Test`)는 실패한다. 벤치마크 전용 브랜치다.
@@ -119,6 +120,7 @@ done
 |---|---|
 | `iterations` | **시도** 수. 실패·503 포함. 접수량이 아니다 |
 | `orders_accepted` / `reviews_created` | 검증 통과 응답 수 (202+Location / 2xx). **접수량** |
+| 리뷰 15분 처리량 | `reviews_created` ÷ 15분 (closed model). ①②③ 같은 VUS 에서 비교 |
 | `orders_rejected` | 503 수. 서버 `omp.order.async.rejected` **증가분**과 같아야 한다 |
 | `orders_failed_other` / `reviews_5xx` | 그 외 실패. 리뷰 ①에서 5xx = 데드락 롤백 |
 | `completed_orders` (verify 3) | 커밋 완료량. **완료 시점 이후** 값 |
@@ -165,6 +167,7 @@ done
 - **IP 변동**: WiFi↔유선 전환 시 IP 바뀜. 회차마다 확인.
 - **① 회차 준비**: shops 통계 컬럼 0 초기화(reset 하단) 없이 기동하면 NPE로 전부 500이 난다. 데드락과 구분되지 않으므로 반드시 먼저 실행.
 - **① 회차 판정**: threshold 통과·실패로 판정하지 않는다. lock_deadlocks 증가분과 5xx 건수로.
+- **closed model 처리량 착시**: 실패 응답이 빨리 돌아오면 iterations 가 부풀어 보인다. 처리량은 2xx(`reviews_created`)만 센다.
 - **테스트 실행 금지(OMP)**: 통합 테스트는 마스터 테이블을 전부 지운다. 8절대로 OMP_TEST에서만.
 - **actuator 노출**: 현재 `management.endpoints.web.exposure.include=*` — 벤치마크 편의용이므로 외부 배포 시 축소.
 - **테이블명 대소문자**: Windows MySQL은 대소문자 무시. 서버를 Linux로 옮기면 소문자 테이블명 기준으로 SQL 확인.

@@ -9,11 +9,10 @@
 //   ③ 별도 통계 + AFTER_COMMIT 비동기  : main, 기본 기동                          → -e TAG=async
 //
 // 환경변수
-//   MODEL      open(기본): constant-arrival-rate 로 RATE/s 유지. 전·후 지연·에러율 비교용.
-//              closed    : constant-vus 로 VUS(기본 50)명이 쉬지 않고 요청. 요청이 항상 겹치므로
-//                          ①에서 데드락이 나는 조건을 찾는 1분 파일럿용. 찾은 조건을 ①~③에 동일 적용한다.
-//   SHOP_POOL  작을수록 경합 심함 (기본 10). RATE=20·SHOP_POOL=10 open model 은 요청이 잘 겹치지 않아
-//              ①에서도 데드락이 거의 안 날 수 있다 → 파일럿으로 먼저 확정할 것.
+//   MODEL      closed    : constant-vus 로 VUS(기본 50)명이 응답 즉시 다음 요청(nGrinder vUser 방식). 동시 요청이 항상 VUS 로 고정되어
+//                          경합이 확실하고, 15분 처리량(reviews_created)이 결과로 나온다. **리뷰 ①②③ 본측정은 이 모드로 한다.**
+//              open(기본): constant-arrival-rate 로 RATE/s 유지. 유입량을 고정한 지연 비교가 필요할 때만.
+//   SHOP_POOL  작을수록 경합 심함 (기본 10, 본측정 권장 3). 파일럿 1분으로 ①에서 데드락이 나는 VUS·SHOP_POOL 을 확정하고 세 단계에 동일 적용.
 //   THRESHOLDS strict(기본): 실패 0, check 100%, p95<500ms. ②·③용.
 //              off        : threshold 없음. ①은 500이 나는 게 정상이므로 off. 판정은 threshold가 아니라
 //                          lock_deadlocks 증가분(verify.sql 1)과 reviews_5xx 건수로 한다. 실패율이 1% 미만이어도 데드락은 발생한다.
@@ -21,7 +20,8 @@
 //
 // 스모크:  k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=5 -e DURATION=30s 02-review-api.js
 // 파일럿:  k6 run -e BASE_URL=http://<서버IP>:8080 -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot 02-review-api.js
-// 본측정:  k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=async -e OUT_DIR=benchmark/results 02-review-api.js
+// 본측정:  k6 run -e BASE_URL=http://<서버IP>:8080 -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async -e OUT_DIR=benchmark/results 02-review-api.js
+//          처리량은 iterations 가 아니라 reviews_created(2xx) 로 비교한다. ①의 빠른 500 응답이 iterations 를 부풀린다.
 
 import http from 'k6/http';
 import { check } from 'k6';
