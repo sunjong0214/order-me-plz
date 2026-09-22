@@ -33,8 +33,8 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 측정 | 브랜치 | 기동 옵션 | 스크립트·옵션 | 목적 |
 |---|---|---|---|---|
 | 바닥값 | main | | `00-network-floor.js` | `/ping`. 해석 참고선. 1회 |
-| 주문 · 개선 전 (동기) | main | | `01-order-api.js -e MODE=sync` | 같은 빌드에 두 엔드포인트 공존 |
-| 주문 · 개선 후 (비동기 접수) | main | | `01-order-api.js` (MODE=async) | |
+| 주문 · 개선 전 (동기) | main | | `01-order-api.js -e MODE=sync` | 회차 A~C. 같은 빌드에 두 엔드포인트 공존 |
+| 주문 · 개선 후 (비동기 접수) | main | | `01-order-api.js` (MODE=async) | 회차 A~D. 초안 [PORTFOLIO-1-2-draft.md](PORTFOLIO-1-2-draft.md) |
 | 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e MODEL=closed -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
 | 리뷰 ② 별도 통계 + 같은 트랜잭션 | main | `--omp.review.stats.mode=sync` | `02-review-api.js -e MODEL=closed -e TAG=sync` | ①→② = 모델 분리 효과 |
 | 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 | main | (기본) | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 비동기 효과 (지연 격리 vs 정합성 창) |
@@ -70,15 +70,36 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 7. 종료 후 **완료 대기**: `queued=0`·`active=0`이 되고 `COUNT(*)`가 더 변하지 않을 때까지. 제한 5분 초과 시 "미완료"로 기록한다.
 8. `verify.sql` 전체 실행, 서버 로그 카운트(`order create fail`, `review stats update fail`), k6 JSON·CSV·폴링 CSV를 `benchmark/results/<날짜>-<TAG>-r<N>/`로 이동.
 9. 같은 조건 **3회** → 성능은 중앙값과 범위, 오류·불일치는 **모든 회차의 건수**를 기록. 회차 사이 5분 휴식(노트북 온도).
+10. 주문 회차 A(계단식)는 탐색용이라 1~5 를 rate 계단마다 반복하지 않는다. 시작 시 한 번 하고, 계단 사이에는 폴링으로 `queued=0`·`active=0` 만 확인한다. B·C·리뷰 ①②③은 1~9 전부.
 
 ### 본측정 명령 (데스크탑, 리포 루트에서)
 ```bash
 S=http://<서버IP>:8080; OUT=benchmark/results
 
-# 주문 (async / sync). 같은 서버, URL만 다름.
-k6 run -e BASE_URL=$S -e RATE=1000 -e DURATION=15m -e TAG=r1 -e OUT_DIR=$OUT --out csv=$OUT/order_async_r1.csv k6/01-order-api.js
-k6 run -e BASE_URL=$S -e RATE=1000 -e DURATION=15m -e TAG=r1 -e OUT_DIR=$OUT --out csv=$OUT/order_sync_r1.csv  -e MODE=sync k6/01-order-api.js
-#   동기 회차에서 p95 threshold가 깨지면 그것이 비교 결과다. 503 탐색·용량 회차는 -e THRESHOLDS=off.
+# ── 주문: 회차 A~D (PORTFOLIO-1-2-draft.md 검증 방법). 전부 open model. 모드는 MODE=sync / async, 같은 서버에서 URL만 다름.
+
+# A. 접수 용량 — 계단식 고정 run. rate 마다 3~5분, sync·async 각각. THRESHOLDS=off (한계를 넘기는 게 목적. 판정은 결과값으로)
+#    "p95 < 200ms, 실패 0, 503 0" 을 지키는 최대 rate = 모드별 접수 용량. A 는 워밍업·reset 을 rate 계단마다 반복하지 않고 한 번만 한다.
+for R in 300 500 800 1000 1500; do
+  k6 run -e BASE_URL=$S -e RATE=$R -e DURATION=4m -e MODE=sync  -e THRESHOLDS=off -e TAG=A-r$R -e OUT_DIR=$OUT k6/01-order-api.js
+done
+for R in 300 500 800 1000 1500; do
+  k6 run -e BASE_URL=$S -e RATE=$R -e DURATION=4m -e MODE=async -e THRESHOLDS=off -e TAG=A-r$R -e OUT_DIR=$OUT k6/01-order-api.js
+done
+#    (탐색만 빠르게 하려면 -e SCENARIO=ramp --out csv=... 로 한 번 훑고, 후보 rate 만 위 고정 run 으로 확정)
+
+# B. 같은 유입량 비교 — B_RATE = A 에서 확인한 sync 용량 근처. 15분 × 3회(TAG 의 r1~r3). THRESHOLDS=strict(기본): 둘 다 지켜야 비교 성립
+B_RATE=<A에서 확정>
+k6 run -e BASE_URL=$S -e RATE=$B_RATE -e DURATION=15m -e MODE=sync  -e TAG=B-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_sync_B-r1.csv  k6/01-order-api.js
+k6 run -e BASE_URL=$S -e RATE=$B_RATE -e DURATION=15m -e MODE=async -e TAG=B-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_async_B-r1.csv k6/01-order-api.js
+
+# C. 초과 유입 — C_RATE > sync 용량 (예: sync 용량의 1.5배). 15분. THRESHOLDS=off. MAX_VUS 를 넉넉히 (dropped 가 서버 포화인지 부하기 한계인지 구분).
+#    sync: p95·max·dropped·5xx 로 붕괴 양상. async: orders_rejected(503) == omp.order.async.rejected 증가분, orders_accepted == completed_orders.
+C_RATE=<A에서 확정>
+k6 run -e BASE_URL=$S -e RATE=$C_RATE -e DURATION=15m -e MODE=sync  -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=C-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_sync_C-r1.csv  k6/01-order-api.js
+k6 run -e BASE_URL=$S -e RATE=$C_RATE -e DURATION=15m -e MODE=async -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=C-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_async_C-r1.csv k6/01-order-api.js
+
+# D. 완료 추적 — 별도 명령 없음. B·C 의 async 회차 동안 4절 폴링 CSV 를 켜 두고, k6 종료 후 queued=0·active=0 시각과 COUNT(*) 정지, hikari_pending 최대를 기록.
 
 # 리뷰 ③ async(main 기본 기동) / ② sync(main, --omp.review.stats.mode=sync 기동) / ① before(bench/review-before)
 #   closed model: VUS 명이 쉬지 않고 요청. 처리량 = reviews_created / 15m. VUS·SHOP_POOL 은 파일럿으로 확정한 값을 세 줄에 동일하게.
@@ -141,7 +162,7 @@ done
 ```
 | 항목 | 값 |
 |---|---|
-| 측정일시 / 회차 / TAG | 2026-XX-XX / N회차 (3회 중) / async-r1 |
+| 측정일시 / 회차 / TAG | 2026-XX-XX / N회차 (3회 중) / 예: B-r1 (주문 A~D, 리뷰 before·sync·async) |
 | 커밋 SHA / 브랜치 | main <sha> 또는 bench/review-before <sha> |
 | 서버 | 노트북 모델, CPU, RAM, 전원 연결+최고 성능 모드, 클럭(HWiNFO) |
 | 네트워크 | 서버 유선/무선, 부하기 유선 |
