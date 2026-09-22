@@ -1,134 +1,180 @@
 # k6 재측정 가이드 (Order-Me-Plz)
 
-부하 생성기 = **데스크탑(유선)**, 서버+MySQL = **노트북(유선 연결)** 기준.
-k6는 데스크탑에만 설치한다.
+부하 생성기 = **데스크탑(유선)**, 서버+MySQL = **노트북(유선 연결)** 기준. k6는 데스크탑에만 설치한다.
 
 ```bash
 winget install k6 --source winget   # 또는 choco install k6
-k6 version
+k6 version                          # 환경 표에 기록
 ```
+
+선행 문서: [REVIEW-2026-09-08.md](REVIEW-2026-09-08.md) (측정 설계 검토), [STEP1-2026-09-19.md](STEP1-2026-09-19.md) (측정 전 코드 수정).
+2026-09-22에 두 문서의 지적(워밍업 순서, threshold, 판정 기준, 지표 정의, 리뷰 3단계)을 이 가이드와 스크립트·SQL에 반영했다.
 
 ---
 
+## 0. 빌드·기동 (서버 노트북)
+
+| 항목 | 값 |
+|---|---|
+| JDK | 21 (`java -version` 확인. 빌드 toolchain도 21) |
+| 빌드 | `./gradlew bootJar`. `gradle/wrapper/`는 gitignore 대상이라 클론에 없으면 `gradle wrapper --gradle-version 8.14.3`으로 생성하거나 시스템 Gradle 사용 |
+| DB 비밀번호 | `OMP_DB_PASSWORD` 환경변수 (미지정 시 1234) |
+| 리뷰 통계 모드 | `omp.review.stats.mode` = `async`(기본) / `sync`. 기동 인자로 덮어쓴다 |
+| 힙 | `-Xms2g -Xmx2g` 고정 (리사이즈 노이즈 제거) |
+
+```bash
+./gradlew bootJar
+OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar
+# 리뷰 ② 회차만: 위 명령 끝에  --omp.review.stats.mode=sync
+```
+
 ## 1. 무엇을 무엇과 비교하는가
 
-| 측정 | 브랜치 | 스크립트 | 비고 |
-|---|---|---|---|
-| 바닥값 (네트워크+프레임워크) | main | `k6/00-network-floor.js` | `/ping`, 딱 1회 |
-| 주문 · 개선 전 (동기) | **main** | `k6/01-order-api.js -e MODE=sync` | 같은 빌드에 두 엔드포인트가 공존 |
-| 주문 · 개선 후 (비동기) | **main** | `k6/01-order-api.js` (MODE=async) | |
-| 리뷰 · 개선 전 (단일 트랜잭션) | `bench/review-before` | `k6/02-review-api.js` | 데드락 재현이 목적 |
-| 리뷰 · 개선 후 (통계 분리+이벤트) | main | `k6/02-review-api.js` | 정합성 0건 불일치가 목적 |
+| 측정 | 브랜치 | 기동 옵션 | 스크립트·옵션 | 목적 |
+|---|---|---|---|---|
+| 바닥값 | main | | `00-network-floor.js` | `/ping`. 해석 참고선. 1회 |
+| 주문 · 개선 전 (동기) | main | | `01-order-api.js -e MODE=sync` | 같은 빌드에 두 엔드포인트 공존 |
+| 주문 · 개선 후 (비동기 접수) | main | | `01-order-api.js` (MODE=async) | |
+| 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
+| 리뷰 ② 별도 통계 + 같은 트랜잭션 | main | `--omp.review.stats.mode=sync` | `02-review-api.js -e TAG=sync` | ①→② = 모델 분리 효과 |
+| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 | main | (기본) | `02-review-api.js -e TAG=async` | ②→③ = 비동기 효과 (지연 격리 vs 정합성 창) |
 
-- 주문 전/후는 **checkout 없이** 같은 서버에서 URL만 바꿔 측정한다 (빌드·스키마·JVM 동일 → 단일 변수 비교).
-- 옛 nGrinder 수치와는 도구가 다르므로 비교하지 않는다. 전/후 모두 k6로 새로 잰다.
+- 주문 전/후는 checkout 없이 같은 서버에서 URL만 바꾼다. 단, 동기 응답은 **저장 완료**까지, 비동기 응답은 **접수**까지라 계약이 다르다. 접수 지연과 커밋 완료량을 따로 기록하고 "저장 속도 개선"으로 쓰지 않는다.
+- `bench/review-before`는 **main에서 분기**해 `Shop`의 통계 필드 3개와 `ReviewService.saveReviewBy`만 바꾼 재구성 브랜치다. 스레드 풀·검증·예외 처리·설정은 main과 같으므로 차이는 리뷰 갱신 설계 하나다. 옛 05ad2d8 기반 브랜치는 `bench/review-before-legacy-05ad2d8`로 남겨 두었고 측정에 쓰지 않는다 (CallerRuns 풀·Spring Retry·writerId 미할당이 섞여 비교가 오염된다).
+- 옛 nGrinder 수치와는 도구가 다르므로 비교하지 않는다.
 
-## 2. 측정 유형 2가지 — 목적에 맞게 사용
+## 2. 측정 유형
 
-1. **고정 rate (constant-arrival-rate)**: "초당 N건 유입 시 p95/p99와 에러율" — 지연 비교용.
-   전/후 **모두 감당 가능한 rate**로 고정해야 비교가 성립한다.
-2. **용량 램프 (ramping-arrival-rate)**: rate를 계단식으로 올려 **p95가 목표(200ms)를 뚫는 지점의 rate = 용량**.
-   "처리량 개선" 주장의 근거는 이 방식으로 만든다 (01 스크립트 주석의 시나리오로 교체).
+1. **고정 rate** (`SCENARIO=fixed`, 기본): "초당 N건 유입 시 p95/p99와 에러율". 전/후 **모두 감당 가능한 rate**로 고정해야 비교가 성립한다.
+2. **용량**: "측정 조건에서 503(또는 p95>200ms) 없이 유지한 최대 유입률". k6 summary의 p95는 전체 집계라 램프 한 번으로는 한계 시점을 읽을 수 없다.
+   - 탐색: `-e SCENARIO=ramp -e THRESHOLDS=off --out csv=...` (단계마다 RAMP 상승 + HOLD 유지). 시계열에서 HOLD 구간별 p95·503을 계산해 후보 구간을 본다.
+   - 확정: 후보 rate마다 `SCENARIO=fixed`를 3~5분씩 따로 돌려 rate별 p95·503 표를 만든다 (계단식 고정 run). 15분 본측정은 확정 rate에서.
 
 ## 3. 실행 순서
 
 ### 사전 준비 (1회)
 1. 노트북: 전원 연결 + "최고 성능" 전원 계획, 방화벽 8080 인바운드 허용, `ipconfig`로 IP 확인.
-2. 서버 빌드·기동 (힙 고정 — 리사이즈 노이즈 제거):
-   ```bash
-   ./gradlew bootJar
-   java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar
-   ```
-3. 새 스키마로 1회 기동해 테이블 생성 확인 후 `sql/seed.sql` 실행.
-4. 스모크: `k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=10 -e DURATION=30s k6/01-order-api.js`
-   → check 실패 0 확인. 02도 동일하게 스모크.
+2. MySQL: `SET GLOBAL innodb_print_all_deadlocks = ON` (에러 로그에 데드락 전건 기록). `verify.sql` 1)의 `status`가 `enabled`인지 확인.
+3. 새 스키마(OMP)로 main 서버 1회 기동 → 테이블 생성 확인 → `sql/seed.sql`.
+4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0.
+5. 결과 폴더 `benchmark/results/`가 있는지 확인. k6는 폴더를 만들지 않으므로 `OUT_DIR`는 존재하는 경로여야 한다.
 
-### 매 회차 공통 절차
-1. `sql/reset-round.sql` 실행 (데이터 조건 동일화)
-2. 서버 재시작 → **워밍업**: 본측정과 같은 스크립트를 RATE 낮춰 1~2분 실행하고 결과는 버린다 (JIT)
-3. `sql/verify.sql`의 데드락 카운터를 실행해 **시작 전 값 기록**
-4. 본측정 실행 (아래 명령)
-5. 종료 후: verify.sql 실행(리뷰는 1~2분 뒤), 로그 카운트, 결과 JSON을 `benchmark/results/`에 보관
-6. **같은 조건으로 3회 반복** → 중앙값 사용. 회차 사이 5분 휴식(노트북 온도).
+### 매 회차 공통 절차 (순서가 결과를 좌우한다)
+1. 서버 재시작 (해당 브랜치·기동 옵션).
+2. **워밍업**: 본측정과 같은 스크립트를 RATE 낮춰 1~2분 실행 (JIT). 결과는 버린다.
+3. 워밍업 작업 **소진 확인**: 4절 폴링에서 `queued=0` **그리고** `active=0`.
+4. `sql/reset-round.sql` 실행 (워밍업 쓰기 제거). ① 회차는 하단 `UPDATE shops ...`도 실행.
+5. **시작 전 값 기록**: `verify.sql` 1)·1-b) (lock_deadlocks, row lock) + 카운터 3종 (`omp.order.async.rejected`, `omp.review.stats.rejected`, `omp.review.stats.failed`). 모두 기동 후 누적값이라 **증가분**으로 쓴다.
+6. 4절 폴링 시작 → 본측정 실행.
+7. 종료 후 **완료 대기**: `queued=0`·`active=0`이 되고 `COUNT(*)`가 더 변하지 않을 때까지. 제한 5분 초과 시 "미완료"로 기록한다.
+8. `verify.sql` 전체 실행, 서버 로그 카운트(`order create fail`, `review stats update fail`), k6 JSON·CSV·폴링 CSV를 `benchmark/results/<날짜>-<TAG>-r<N>/`로 이동.
+9. 같은 조건 **3회** → 성능은 중앙값과 범위, 오류·불일치는 **모든 회차의 건수**를 기록. 회차 사이 5분 휴식(노트북 온도).
 
-### 본측정 명령
+### 본측정 명령 (데스크탑, 리포 루트에서)
 ```bash
-# 주문 (async / sync)
-k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=1000 -e DURATION=15m k6/01-order-api.js
-k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=1000 -e DURATION=15m -e MODE=sync k6/01-order-api.js
+S=http://<서버IP>:8080; OUT=benchmark/results
 
-# 리뷰 (개선 후 = main, 개선 전 = bench/review-before 로 checkout 후 재빌드·재기동)
-k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 k6/02-review-api.js
+# 주문 (async / sync). 같은 서버, URL만 다름.
+k6 run -e BASE_URL=$S -e RATE=1000 -e DURATION=15m -e TAG=r1 -e OUT_DIR=$OUT --out csv=$OUT/order_async_r1.csv k6/01-order-api.js
+k6 run -e BASE_URL=$S -e RATE=1000 -e DURATION=15m -e TAG=r1 -e OUT_DIR=$OUT --out csv=$OUT/order_sync_r1.csv  -e MODE=sync k6/01-order-api.js
+#   동기 회차에서 p95 threshold가 깨지면 그것이 비교 결과다. 503 탐색·용량 회차는 -e THRESHOLDS=off.
+
+# 리뷰 ③ async(main 기본 기동) / ② sync(main, --omp.review.stats.mode=sync 기동) / ① before(bench/review-before)
+k6 run -e BASE_URL=$S -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=async  -e OUT_DIR=$OUT k6/02-review-api.js
+k6 run -e BASE_URL=$S -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=sync   -e OUT_DIR=$OUT k6/02-review-api.js
+k6 run -e BASE_URL=$S -e RATE=20 -e DURATION=15m -e SHOP_POOL=10 -e TAG=before -e OUT_DIR=$OUT -e THRESHOLDS=off k6/02-review-api.js
+#   RATE·SHOP_POOL·MODEL 은 ①~③ 동일. 값은 아래 파일럿으로 확정한 뒤 세 명령에 같이 넣는다.
 ```
 
-### 리뷰 "개선 전" 회차 주의
-- `git checkout bench/review-before` → bootJar 재빌드 → 기동.
-  첫 기동 시 ddl-auto=update가 shops에 구 설계 컬럼(average_rating 등)을 추가한다.
-- 기동 후 `reset-round.sql` 하단의 주석 처리된 `UPDATE shops SET average_rating=0, ...`을 실행해야
-  평점 갱신 시 NPE가 나지 않는다.
-- 이 회차는 데드락으로 500이 섞이는 게 **정상이며 그것이 증거**다. `http_req_failed` 비율과
-  lock_deadlocks 증가분을 기록한다.
+### 리뷰 ① (개선 전, `bench/review-before`) 회차
+- `git checkout bench/review-before` → `./gradlew bootJar` → 기동. 첫 기동에서 ddl-auto=update가 `shops`에 `review_count`, `rating_sum`, `average_rating`을 추가한다.
+- 기존 행의 DECIMAL 컬럼은 NULL이라 `reset-round.sql` 하단 `UPDATE shops SET ... = 0`을 주석 해제해 실행해야 갱신 시 NPE가 나지 않는다.
+- **파일럿 1분 먼저.** `RATE=20, SHOP_POOL=10` open model은 요청이 잘 겹치지 않아 데드락이 거의 안 날 수 있다.
+  `-e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot`로 데드락이 나는 조건(VUS·SHOP_POOL)을 찾고, 그 조건을 ①~③ 본측정에 동일 적용한다. closed model을 본측정에 쓰면 ②·③도 같은 MODEL·VUS로.
+- **판정은 threshold가 아니다.** `http_req_failed`가 1% 미만이어도 데드락은 발생한다. 근거는 `lock_deadlocks` 증가분, k6 `reviews_5xx` 건수(≈ 데드락 수), `verify.sql` 4-a)의 유실 행, `SHOW ENGINE INNODB STATUS`의 LATEST DETECTED DEADLOCK 1회 캡처다.
+- 이 회차에서 `verify.sql` 2)·2-b)·2-c)는 `shop_review_stats`를 갱신하지 않으므로 전부 불일치로 나온다. 근거로 쓰지 않는다.
+- 이 브랜치에서 main의 정합성 테스트(`ReviewStats*Test`)는 실패한다. 벤치마크 전용 브랜치다.
 
-## 4. 서버 측 지표 수집 (k6가 못 재는 것)
+## 4. 서버 측 지표 폴링 (k6가 못 재는 것)
 
-비동기 주문 측정 중 데스크탑에서 큐 잔여량 폴링 (5초 간격):
+5초 간격 CSV. 두 풀의 queued·active, 거절·실패 카운터, Hikari 대기를 함께 본다. (Git Bash, 종료는 Ctrl+C)
 
 ```bash
-# bash (Git Bash)
-while true; do echo "$(date +%T) $(curl -s 'http://<서버IP>:8080/actuator/metrics/executor.queued?tag=name:insertTaskExecutor' | grep -o '"value":[0-9.]*')"; sleep 5; done | tee executor-queue.log
-```
-```powershell
-# PowerShell
-while ($true) { $v = (Invoke-RestMethod "http://<서버IP>:8080/actuator/metrics/executor.queued?tag=name:insertTaskExecutor").measurements[0].value; "$(Get-Date -Format HH:mm:ss) queued=$v" | Tee-Object -FilePath executor-queue.log -Append; Start-Sleep 5 }
+S=http://<서버IP>:8080
+m() { curl -s "$S/actuator/metrics/$1" | grep -o '"value":[0-9.E+-]*' | head -1 | cut -d: -f2; }
+echo "time,insert_queued,insert_active,stats_queued,stats_active,order_rejected,stats_rejected,stats_failed,hikari_active,hikari_pending" > server-metrics.csv
+while true; do
+  echo "$(date +%T),$(m 'executor.queued?tag=name:insertTaskExecutor'),$(m 'executor.active?tag=name:insertTaskExecutor'),$(m 'executor.queued?tag=name:reviewStatsExecutor'),$(m 'executor.active?tag=name:reviewStatsExecutor'),$(m omp.order.async.rejected),$(m omp.review.stats.rejected),$(m omp.review.stats.failed),$(m hikaricp.connections.active),$(m hikaricp.connections.pending)" | tee -a server-metrics.csv
+  sleep 5
+done
 ```
 
-- 테스트 종료 시각부터 queued=0이 될 때까지의 시간 = **큐 소진 시간** (End-to-End 근거).
-- 저장 완료량 / 정합성 / 데드락은 `sql/verify.sql`.
-- 실패 건수: 서버 로그에서 `order create fail`, `review stats update fail` 카운트.
+- **완료 시점** = k6 종료 후 해당 풀의 `queued=0`이고 `active=0`이 된 첫 시각. 이후 `COUNT(*)`가 변하지 않아야 한다.
+  큐 크기가 100이라 "큐 소진 시간"은 1초 미만이고 지표로서 의미가 거의 없다. 대신 **거절 건수**(증가분)와 **완료 시점까지의 지연**을 기록한다.
+- `hikari_pending`이 0 이상 지속되면 단일 커넥션 풀(20)을 조회·INSERT가 공유하며 경쟁하는 구간이다. 지연 해석에 기록한다.
 
 ## 5. 결과 읽는 법
 
-| 지표 | 의미 | 기록할 것 |
-|---|---|---|
-| `http_req_duration` | 요청-응답 시간 | avg, p90, **p95, p99**, max |
-| `http_req_failed` | 실패율 | rate |
-| `iterations` | 총 요청 수 | count → "15분 접수량" |
-| `dropped_iterations` | k6가 목표 rate를 못 맞춰 버린 요청 | **0이어야** "초당 N건 유입 유지" 주장 성립. 쌓이면 maxVUs 부족 또는 서버 포화 |
-| `checks` | 검증 통과율 | 100%인지 |
+| 지표 | 의미 |
+|---|---|
+| `iterations` | **시도** 수. 실패·503 포함. 접수량이 아니다 |
+| `orders_accepted` / `reviews_created` | 검증 통과 응답 수 (202+Location / 2xx). **접수량** |
+| `orders_rejected` | 503 수. 서버 `omp.order.async.rejected` **증가분**과 같아야 한다 |
+| `orders_failed_other` / `reviews_5xx` | 그 외 실패. 리뷰 ①에서 5xx = 데드락 롤백 |
+| `completed_orders` (verify 3) | 커밋 완료량. **완료 시점 이후** 값 |
+| `http_req_duration` p95/p99 | 주문 sync는 저장 완료까지, async는 접수까지의 응답 시간 |
+| `dropped_iterations` | **0**이어야 "초당 N건 유입 유지" 주장 성립. 쌓이면 `MAX_VUS` 부족 또는 서버 포화 |
+| `checks` | strict 회차에서 100% |
 
 해석 노트:
-- 바닥값 p95가 5ms인데 API p95가 180ms → 차이는 서버 처리 시간.
-- 비동기 주문에서 503이 나오기 시작하면 insertTaskExecutor 포화 → 접수 거절(백프레셔). 503이 0인 최대 rate가 이 구조의 접수 용량이다.
-  k6 `orders_rejected`(503 수)와 서버 `/actuator/metrics/omp.order.async.rejected`가 일치해야 한다.
-  (CallerRunsPolicy는 제거됨. 포화 시 톰캣 스레드가 몰래 INSERT하는 구간은 이제 없다.)
-- 유실 검증: k6 `orders_accepted`(202 수) == 종료 후 `SELECT COUNT(*) FROM orders`.
-  리뷰는 `omp.review.stats.rejected`, `omp.review.stats.failed`가 0이어야 verify.sql 0행이 의미를 가진다.
-- `iterations`(시도) vs `orders_accepted`(접수) vs `completed_orders`(저장 완료) vs 큐 소진 시간 → 접수 성능과 실제 완료를 분리해 보고.
+- 바닥값은 참고선이다. **"API p95 − ping p95 = 서버 처리 시간"** 같은 뺄셈은 하지 않는다 (서로 다른 분포의 백분위수는 뺄 수 없다). 서버 내부 구간 시간은 별도 계측이 필요하다.
+- 비동기 주문에서 503이 나오면 insertTaskExecutor 포화 → 접수 거절(백프레셔). "측정 조건에서 503 없이 유지한 유입률"이 접수 용량이다. dropped_iterations·p95·다른 오류·완료 결과를 함께 확인한다. (CallerRunsPolicy는 제거됨. 포화 시 톰캣 스레드가 몰래 INSERT하는 구간은 없다.)
+- 유실 판정: `orders_accepted == completed_orders`(총건수)는 기본 점검이다. 누락과 중복이 상쇄될 수 있으므로 요청별 대조는 3단계 과제.
+- 리뷰 ②·③: `verify.sql` 2)·2-b)·2-c) 0행 + `omp.review.stats.rejected`·`failed` 증가분 0. 거절·실패가 N이면 2)에 N건 불일치가 남아야 한다 (재처리 없음 = **불일치 지속**, "지연"이 아니다).
+- 리뷰 ①: `reviews_5xx` ≈ lock_deadlocks 증가분, 4-a) 유실 행 수, ①→② 응답 시간 차이.
+- 주문 측정은 POST 응답만 본다. SSE 연결·폴링을 포함한 전체 사용자 흐름의 성능은 아니다. 결과 표에 범위를 명시한다.
 
 ## 6. 매 측정 기록 환경 표 (결과 문서에 복사)
 
 ```
 | 항목 | 값 |
 |---|---|
-| 측정일시 / 회차 | 2026-XX-XX / N회차 (3회 중) |
-| 서버 | 노트북 모델, CPU, RAM, 전원 연결+최고 성능 모드 |
+| 측정일시 / 회차 / TAG | 2026-XX-XX / N회차 (3회 중) / async-r1 |
+| 커밋 SHA / 브랜치 | main <sha> 또는 bench/review-before <sha> |
+| 서버 | 노트북 모델, CPU, RAM, 전원 연결+최고 성능 모드, 클럭(HWiNFO) |
 | 네트워크 | 서버 유선/무선, 부하기 유선 |
-| JVM | 버전, -Xms/-Xmx |
-| MySQL | 버전, innodb_buffer_pool_size, 앱과 동거 |
-| 커넥션 풀 | HikariCP 20 (단일 풀) |
-| 스레드 풀 | `omp.executor.*` 값 (기본 insert 10/30/q100, reviewStats 10/20/q2000), 거절 정책 Abort |
-| 리뷰 통계 모드 | `omp.review.stats.mode` = sync / async |
-| 거절·실패 카운터 | omp.order.async.rejected, omp.review.stats.rejected, omp.review.stats.failed (시작 전/종료 후) |
-| 데이터 | seed.sql (users 10만, shops 1천, carts 10만), 회차마다 reset-round.sql |
-| 부하 | executor, rate, duration, maxVUs |
-| 바닥값 | /ping p95 = X ms |
-| 데드락 카운터 | 시작 N → 종료 M (차이 = 발생 건수) |
+| JVM | 21.x, -Xms2g -Xmx2g, GC 종류 |
+| MySQL | 8.0.36, innodb_buffer_pool_size, innodb_flush_log_at_trx_commit, 앱과 동거 |
+| 커넥션 풀 | HikariCP 20 (단일 풀, 조회·INSERT 공유) |
+| 스레드 풀 | omp.executor.* (기본 insert 10/30/q100, reviewStats 10/20/q2000, sse 10/30/q200), insert·reviewStats 거절 정책 Abort, sse CallerRuns |
+| 리뷰 통계 모드 | omp.review.stats.mode = sync / async (① 브랜치는 해당 없음) |
+| 카운터 (시작 전 → 종료 후) | omp.order.async.rejected, omp.review.stats.rejected, omp.review.stats.failed |
+| 데드락 카운터 (시작 전 → 종료 후) | lock_deadlocks N → M (차이 = 발생 건수), Innodb_row_lock_waits/time |
+| 데이터 | seed.sql (users 10만, shops 1천, carts 10만), 회차마다 reset-round.sql (워밍업 후) |
+| 부하 | k6 버전, SCENARIO/MODEL, RATE 또는 VUS, DURATION, SHOP_POOL, MAX_VUS, THRESHOLDS, dropped_iterations |
+| 바닥값 | /ping p95 = X ms (참고선) |
+| 완료 시점 | k6 종료 후 queued=0·active=0 까지 N초, COUNT 정지 확인 |
 ```
 
 ## 7. 흔한 함정
 
+- **절차 순서**: reset을 워밍업 앞에 두면 워밍업 쓰기가 남아 완료량·접수량 비교가 깨진다. 3절 순서대로.
+- **카운터는 누적값**: actuator 카운터와 lock_deadlocks는 기동 후 누적. 반드시 시작 전 값을 기록하고 증가분을 쓴다.
 - **부하기 모니터링**: k6 실행 중 데스크탑 CPU 90% 초과 시 부하기 병목 → 결과 무효.
 - **노트북 온도**: HWiNFO 등으로 클럭 기록, 스로틀링 회차는 표시.
 - **IP 변동**: WiFi↔유선 전환 시 IP 바뀜. 회차마다 확인.
+- **① 회차 준비**: shops 통계 컬럼 0 초기화(reset 하단) 없이 기동하면 NPE로 전부 500이 난다. 데드락과 구분되지 않으므로 반드시 먼저 실행.
+- **① 회차 판정**: threshold 통과·실패로 판정하지 않는다. lock_deadlocks 증가분과 5xx 건수로.
+- **테스트 실행 금지(OMP)**: 통합 테스트는 마스터 테이블을 전부 지운다. 8절대로 OMP_TEST에서만.
 - **actuator 노출**: 현재 `management.endpoints.web.exposure.include=*` — 벤치마크 편의용이므로 외부 배포 시 축소.
 - **테이블명 대소문자**: Windows MySQL은 대소문자 무시. 서버를 Linux로 옮기면 소문자 테이블명 기준으로 SQL 확인.
+
+## 8. 테스트 실행 (측정과 무관, 코드 수정 검증)
+
+```bash
+OMP_DB_PASSWORD=<비번> ./gradlew test --console=plain
+```
+
+- 프로필 `test` → `src/test/resources/application-test.properties` → DB **`OMP_TEST`** (`createDatabaseIfNotExist=true`, `ddl-auto=create`).
+- `TestFixtures.resetAndSeed`는 users/shops/carts를 전부 지우기 전에 `DATABASE()`가 `OMP_TEST`인지 확인하고 아니면 예외로 중단한다. 프로필 파일이 없으면 기본 설정(OMP)으로 붙으므로 이 가드가 seed 데이터를 지킨다.
+- `bench/review-before`에서는 `ReviewStats*Test`가 실패한다 (통계 테이블을 쓰지 않는 설계). 그 브랜치는 벤치마크 전용이다.
