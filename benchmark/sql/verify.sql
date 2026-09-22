@@ -1,6 +1,8 @@
 -- 측정 전·후 검증.
 --   시작 전 : 1) 1-b) 를 실행해 값을 기록한다. 종료 후 값과의 차이 = 측정 중 발생 건수.
---   종료 후 : 완료 조건(insert·reviewStats executor 의 queued=0·active=0, COUNT(*) 정지)을 확인한 뒤 전체 실행.
+--   종료 후 : 작업 종료 조건(executor queued=0·active=0, 원본 행 수·통계 안정)을 확인한 뒤 해당 설계의 쿼리 실행.
+--             ①은 1)·1-b)·주석 해제한 4), ②·③은 1)·1-b)·2)·2-b)·2-c), 주문은 3).
+--             리뷰는 SELECT COUNT(*) FROM reviews 를 따로 기록해 reviews_created(2xx)와 대조한다.
 --             "1~2분 대기"가 아니라 조건 충족까지 대기하고, 제한 시간(5분) 초과 시 "미완료"로 기록한다.
 USE OMP;
 
@@ -14,9 +16,12 @@ SHOW GLOBAL STATUS LIKE 'Innodb_row_lock%';
 
 -- ─────────────────────────────────────────────────────────────
 -- 2) 통계 정합성 [main 회차(②·③) 전용]
---    0행이면 접수된 모든 리뷰가 통계에 정확히 반영됨. count 와 sum 모두 완전 일치(exact) 검증 — 원자 증가 연산이므로 오차 허용이 필요 없다.
---    ③에서 omp.review.stats.rejected / failed 증가분이 N 이면 여기 N 건의 불일치가 남아야 한다 (재처리 없음 → 불일치 지속).
---    ① bench/review-before 회차에서는 shop_review_stats 를 갱신하지 않으므로 전부 불일치로 나온다. 그 회차는 4) 를 쓴다.
+--    2)·2-b)·2-c) 모두 0행이면 원본 리뷰 집계와 통계가 일치한다. 요청별 누락·중복 검증을 대신하지 않는다.
+--    이 쿼리의 행 수는 개수·합계가 불일치하는 가게 수다. ③의 rejected / failed 증가분(갱신 작업 수)과 같지 않다.
+--    예: 한 가게에 100건 미반영 → 불일치 1행. 부족분 = 여기의 max(actual_count-review_count,0) 합계 + 2-b)의 리뷰 수 합계.
+--    초과분 = 여기의 max(review_count-actual_count,0) 합계. 부족분과 초과분을 상쇄하지 않고 따로 기록한다.
+--    ③은 rejected / failed 증가분도 대조한다. 재처리가 없어 작업 종료 뒤 남은 불일치는 지속된 미반영이다.
+--    ① bench/review-before 회차는 shop_review_stats 를 갱신하지 않으므로 이 쿼리 대신 4) 를 쓴다.
 SELECT s.shop_id,
        s.review_count,
        COALESCE(r.actual_count, 0) AS actual_count,
@@ -51,8 +56,9 @@ SELECT (SELECT COUNT(*) FROM orders)     AS completed_orders,
 
 -- ─────────────────────────────────────────────────────────────
 -- 4) [bench/review-before 회차(①) 전용] 구 설계 검증. main 회차에서는 shops 에 컬럼이 없어 에러 → 주석 유지.
---    4-a) 저장된 리뷰 vs shops 통계. 불일치 행 = 읽고-계산-쓰기 유실(같은 가게 겹침) 결과.
---         데드락으로 롤백된 요청은 리뷰도 함께 롤백되므로 여기 잡히지 않고 5xx 건수와 lock_deadlocks 증가분으로 본다.
+--    4-a) 저장된 리뷰 vs shops 통계. 불일치 가게 수와 개수 부족/초과분 합계를 별도로 기록한다.
+--         읽고-계산-쓰기 유실 원인은 실행 순서를 제어한 별도 테스트로 확인한다. shops 평균도 별도로 확인한다.
+--         데드락으로 롤백된 요청은 리뷰도 함께 롤백된다. 데드락 카운터·락 로그와 5xx를 대조하되 모든 5xx를 데드락으로 세지 않는다.
 -- SELECT s.shop_id, s.review_count, COALESCE(r.actual_count, 0) AS actual_count,
 --        s.rating_sum, COALESCE(r.actual_sum, 0) AS actual_sum
 -- FROM shops s
