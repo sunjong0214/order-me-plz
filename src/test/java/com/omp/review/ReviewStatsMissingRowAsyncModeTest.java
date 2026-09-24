@@ -15,10 +15,12 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
-/** ASYNC 모드: 리뷰는 이미 커밋됐으므로 유지되고, 통계 실패는 카운터로 관측된다(재처리는 없다 = 불일치가 지속된다). */
+/** ASYNC 모드(비교군): 리뷰는 이미 커밋됐으므로 유지되고, 통계 실패는 카운터로 관측된다(재처리는 없다 = 불일치가 지속된다). */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@TestPropertySource(properties = "omp.review.stats.mode=async")
 class ReviewStatsMissingRowAsyncModeTest {
 
     @Autowired TestRestTemplate rest;

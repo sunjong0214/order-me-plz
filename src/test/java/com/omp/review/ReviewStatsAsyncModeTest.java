@@ -15,10 +15,12 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
-/** 기본 모드. 리뷰 커밋 후 별도 스레드·트랜잭션에서 통계를 갱신하므로 최종적으로 일치해야 한다. */
+/** ASYNC 모드(비교군). 리뷰 커밋 후 별도 스레드·트랜잭션에서 통계를 갱신하므로 최종적으로 일치해야 한다. */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@TestPropertySource(properties = "omp.review.stats.mode=async")
 class ReviewStatsAsyncModeTest {
 
     @Autowired TestRestTemplate rest;

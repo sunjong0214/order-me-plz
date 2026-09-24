@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * ASYNC 모드: 리뷰 커밋 후 통계 UPDATE를 reviewStatsExecutor에 제출한다.
+ * ASYNC 모드(비교군, 기본은 SYNC): 리뷰 커밋 후 통계 UPDATE를 reviewStatsExecutor에 제출한다.
  * 풀이 포화되면 몰래 인라인 실행하지 않고 거절을 기록한다(reviewId 로그 + 카운터).
  * 리뷰는 이미 커밋됐으므로 요청은 성공으로 끝나고, 통계 누락은 카운터로 관측된다.
  */

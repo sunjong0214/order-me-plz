@@ -30,10 +30,10 @@ public class ReviewService {
         Review review = reviewRepository.save(CreateReviewDto.from(dto, shop));
 
         if (statsProperties.isSync()) {
-            // 같은 트랜잭션에서 원자적으로 반영. 통계 테이블이 분리되어 shops 행의 S락→X락 승격이 없으므로 데드락 없음.
+            // 채택: 같은 트랜잭션에서 원자적으로 반영. 통계 행이 shops와 분리되어 기존 S락→X락 승격 경로가 없다.
             statsWriter.apply(review.getId(), shop.getId(), review.getRating());
         } else {
-            // 커밋 후 별도 스레드에서 반영. 응답에서 stats 행 락 대기를 격리한다.
+            // 비교군: 커밋 후 별도 스레드에서 반영. 응답에서 stats 행 락 대기를 빼는 대신 반영 지연·복구 없는 누락 경로가 생긴다.
             eventPublisher.publishEvent(
                     new CreateReviewEvent(review.getId(), shop.getId(), review.getRating()));
         }
