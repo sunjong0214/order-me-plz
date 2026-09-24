@@ -4,18 +4,19 @@
 //   데드락은 동시 요청 2건이면 발생 가능한 정합성·가용성 결함이므로 빈도가 아닌 결함 관점으로 측정한다.
 //
 // 비교 3단계 (README 1절). closed는 VUS, open은 RATE를 고정하고 SHOP_POOL·MODEL·DURATION도 비교군에 동일 적용한다.
-// ①→②는 통계 모델 분리 + 원자 갱신의 결합 효과, ②→③은 트랜잭션·실행 스레드 분리의 추가 효과다.
+// ①→②는 통계 모델 분리 + 원자 갱신의 결합 효과. ②가 채택 설계이고(README 2절 설계 판단 기준), ③은 비교군이다.
+// ②→③은 트랜잭션 분리 + 비동기 실행의 결합 효과(응답 지연 이득 vs 반영 지연·복구 없는 누락 경로)이며 채택 여부를 가르지 않는다.
 // TAG는 결과 식별자일 뿐 서버 모드를 바꾸지 않는다. 회차마다 서버 브랜치·기동 옵션과 초기화를 확인한다.
-//   ① shops 통계 + 같은 트랜잭션       : git checkout bench/review-before        → -e TAG=before -e THRESHOLDS=off
-//   ② 별도 통계 + 같은 트랜잭션        : main, --omp.review.stats.mode=sync 기동  → -e TAG=sync
-//   ③ 별도 통계 + AFTER_COMMIT 비동기  : main, 기본 기동                          → -e TAG=async
+//   ① shops 통계 + 같은 트랜잭션       : git checkout bench/review-before         → -e TAG=before -e THRESHOLDS=off
+//   ② 별도 통계 + 같은 트랜잭션 (채택) : main, 기본 기동                           → -e TAG=sync
+//   ③ 별도 통계 + AFTER_COMMIT 비동기  : main, --omp.review.stats.mode=async 기동  → -e TAG=async
 //
 // 환경변수
 //   MODEL      closed    : constant-vus 로 VUS(기본 50)명이 응답 뒤 다음 요청(nGrinder vUser 방식). VU 수가 고정되며 유입률은 응답 시간에 따라 바뀐다.
 //                          같은 VU 수에서의 성공 응답 수(reviews_created)·지연·정합성을 비교한다. **리뷰 ①②③ 본측정은 이 모드로 한다.**
 //              open(기본): constant-arrival-rate 로 RATE/s 유지. 유입량을 고정한 지연 비교가 필요할 때만.
 //   SHOP_POOL  작을수록 경합 심함 (기본 10, 파일럿 출발값 3). 1분 파일럿에서 원인·부하기 여유를 확인한 뒤 조건을 확정하고 세 단계에 동일 적용.
-//   THRESHOLDS strict(기본): 실패 0, check 100%, p95<500ms. ②·③용.
+//   THRESHOLDS strict(기본): 실패 0, check 100%, p95<500ms. ②·③용. 500ms는 리뷰 작성 응답의 허용 한도(README 2절)다.
 //              off        : threshold 없음. ①은 결함 재현 회차이므로 off. lock_deadlocks 증가분(verify.sql 1)과 락 로그를 확인하고 5xx 원인을 대조한다.
 //                          실패율이 1% 미만이어도 데드락은 발생한다. ②·③도 HTTP threshold 통과와 최종 통계 정합성은 별도로 확인한다.
 //   TAG        before | sync | async (+회차). OUT_DIR 결과 폴더(미리 존재해야 함).
@@ -111,7 +112,7 @@ export function handleSummary(data) {
 // 테스트 종료 후 검증:
 //   1. 완료 대기: reviewStatsExecutor 의 executor.queued=0·active=0 (③만 해당) 확인 후 sql/verify.sql 실행.
 //      "1~2분 뒤"가 아니라 조건 충족까지 기다리고, 제한 시간(5분) 초과면 미완료로 기록한다.
-//   2. ②·③: verify.sql 2)·2-b)·2-c) 모두 0행인지 확인. ③은 rejected / failed 증가분도 0인지 확인한다.
+//   2. ②·③: verify.sql 2)·2-b)·2-c) 실행. ②는 모두 0행이어야 한다(채택 검증). ③은 rejected / failed 증가분과 불일치를 건수로 기록한다(비교군).
 //      불일치 가게 수와 미반영 갱신 수를 구분한다. 개수 부족/초과분 집계는 verify.sql 주석 참고.
 //      한 가게에 여러 갱신이 누락될 수 있으므로 불일치 행 수 = rejected + failed 로 계산하지 않는다.
 //   3. ①: lock_deadlocks 증가분·락 로그, verify.sql 4-a) 불일치 가게·개수 차이를 기록하고 5xx 원인을 대조한다.

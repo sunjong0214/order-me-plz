@@ -9,6 +9,7 @@ k6 version                          # 환경 표에 기록
 
 선행 문서: [REVIEW-2026-09-08.md](REVIEW-2026-09-08.md) (측정 설계 검토), [STEP1-2026-09-19.md](STEP1-2026-09-19.md) (측정 전 코드 수정).
 2026-09-22 리뷰 포트폴리오 검토 반영: 책임 분리와 트랜잭션 분리의 구분, 결함별 재현 계획, 두 장비 유선 환경, 지표·판정 기준을 정리했다. 리뷰 원인 재현 테스트와 본측정은 아직 완료되지 않았다.
+2026-09-24 리뷰 통계 반영 방식을 요구사항 우선순위로 확정했다: **② 같은 트랜잭션 채택(기본 모드 sync), ③ 비동기는 비교군.** 근거와 검증 기준은 2절 "리뷰: 설계 판단 기준".
 
 ---
 
@@ -19,13 +20,13 @@ k6 version                          # 환경 표에 기록
 | JDK | 21 (`java -version` 확인. 빌드 toolchain도 21) |
 | 빌드 | `./gradlew bootJar`. `gradle/wrapper/`는 gitignore 대상이라 클론에 없으면 `gradle wrapper --gradle-version 8.14.3`으로 생성하거나 시스템 Gradle 사용 |
 | DB 비밀번호 | `OMP_DB_PASSWORD` 환경변수 (미지정 시 1234) |
-| 리뷰 통계 모드 | `omp.review.stats.mode` = `async`(기본) / `sync`. 기동 인자로 덮어쓴다 |
+| 리뷰 통계 모드 | `omp.review.stats.mode` = `sync`(기본, 채택) / `async`(비교군). 기동 인자로 덮어쓴다 |
 | 힙 | `-Xms2g -Xmx2g` 고정 (리사이즈 노이즈 제거) |
 
 ```bash
 ./gradlew bootJar
 OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar
-# 리뷰 ② 회차만: 위 명령 끝에  --omp.review.stats.mode=sync
+# 리뷰 ③ 회차만: 위 명령 끝에  --omp.review.stats.mode=async
 ```
 
 ## 1. 무엇을 무엇과 비교하는가
@@ -36,12 +37,12 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 주문 · 개선 전 (동기) | main | | `01-order-api.js -e MODE=sync` | 회차 A~C. 같은 빌드에 두 엔드포인트 공존 |
 | 주문 · 개선 후 (비동기 접수) | main | | `01-order-api.js` (MODE=async) | 회차 A~D. 초안 [PORTFOLIO-1-2-draft.md](PORTFOLIO-1-2-draft.md) |
 | 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e MODEL=closed -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
-| 리뷰 ② 별도 통계 + 같은 트랜잭션 | main | `--omp.review.stats.mode=sync` | `02-review-api.js -e MODEL=closed -e TAG=sync` | ①→② = 모델 분리 + 원자 갱신의 결합 효과 |
-| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 | main | (기본) | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 비동기 효과 (지연 격리 vs 정합성 창) |
+| 리뷰 ② 별도 통계 + 같은 트랜잭션 **(채택)** | main | (기본) | `02-review-api.js -e MODEL=closed -e TAG=sync` | ①→② = 모델 분리 + 원자 갱신의 결합 효과. 채택 검증(2절) |
+| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 (비교군) | main | `--omp.review.stats.mode=async` | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 트랜잭션 분리 + 비동기 실행의 결합 효과 (응답 지연 이득 vs 반영 지연·누락 경로). 채택 여부를 가르지 않음 |
 
 - 주문 전/후는 checkout 없이 같은 서버에서 URL만 바꾼다. 단, 동기 응답은 **저장 완료**까지, 비동기 응답은 **접수**까지라 계약이 다르다. 접수 지연과 커밋 완료량을 따로 기록하고 "저장 속도 개선"으로 쓰지 않는다.
 - `bench/review-before`는 **main에서 분기**해 `Shop`의 통계 필드 3개와 `ReviewService.saveReviewBy`를 바꾼 재구성 브랜치다. 애플리케이션의 스레드 풀·검증·예외 처리·설정은 같지만, ①→②에서는 통계 저장 위치와 갱신 방식이 함께 바뀐다. 모델 분리만의 성능 효과라고 해석하지 않는다. 옛 05ad2d8 기반 브랜치는 `bench/review-before-legacy-05ad2d8`로 남겨 두었고 측정에 쓰지 않는다 (CallerRuns 풀·Spring Retry·writerId 미할당이 섞여 비교가 오염된다).
-- 리뷰 작성의 성공 기준은 원본 저장이며, 파생 통계는 지연 반영을 허용하되 실패 시 별도 복구해야 한다. ③의 트랜잭션 분리는 통계 실패가 커밋된 리뷰를 롤백시키지 않도록 하는 정책에 근거한다. ②는 같은 트랜잭션에서도 기존 결함이 해결되는지 확인하는 비교 기준이며, 통계 실패 시 리뷰까지 롤백하므로 성공·실패 정책은 ③과 다르다. 성능 측정은 이 정책의 타당성을 응답 시간만으로 결정하기 위한 것이 아니라 성능 효과와 정합성 대가를 확인하기 위한 것이다.
+- 리뷰는 ②를 채택했다. ①→②에서 데드락·갱신 유실이 모델 분리와 원자 UPDATE로 해결되므로, ③의 분리는 결함 해결 수단이 아니라 별도의 선택이다. 그 선택은 응답 시간이 아니라 요구사항 우선순위(2절)로 판단했고, 측정은 ②가 그 요구를 만족하는지 검증하고 ③의 이득·대가를 기록하는 데 쓴다.
 - 옛 nGrinder 수치와는 도구가 다르므로 비교하지 않는다.
 
 ## 2. 측정 유형
@@ -51,6 +52,36 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 3. **용량**: "측정 조건에서 503(또는 p95>200ms) 없이 유지한 최대 유입률". k6 summary의 p95는 전체 집계라 램프 한 번으로는 한계 시점을 읽을 수 없다.
    - 탐색: `-e SCENARIO=ramp -e THRESHOLDS=off --out csv=...` (단계마다 RAMP 상승 + HOLD 유지). 시계열에서 HOLD 구간별 p95·503을 계산해 후보 구간을 본다.
    - 확정: 후보 rate마다 `SCENARIO=fixed`를 3~5분씩 따로 돌려 rate별 p95·503 표를 만든다 (계단식 고정 run). 15분 본측정은 확정 rate에서.
+
+### 리뷰: 설계 판단 기준 (2026-09-24 확정)
+
+리뷰 작성에서 지켜야 할 것을 우선순위로 정하고, 그 순서로 ②·③을 판단했다.
+
+| 순위 | 대상 | 요구 수준 |
+|---|---|---|
+| 1 | 리뷰 원본 | 저장된 리뷰는 유실·중복 없이 남아야 한다 |
+| 2 | 통계의 최종 정합성 | 개수·합계·평균이 최종적으로 원본과 정확히 일치해야 한다. 가게 평판·노출에 직결되며, 틀린 값이 지속되면 안 된다 |
+| 3 | 통계 신선도 | 즉시 반영까지는 필요 없다 (수 초~수 분 지연 허용) |
+| 4 | 작성 응답 지연 | 사용자가 불편하지 않은 수준이면 충분하다. 허용 한도 **성공 응답 p95 ≤ 500ms** (주문 접수의 200ms보다 완화) |
+
+| 기준 | ② 같은 트랜잭션 | ③ 커밋 후 비동기 |
+|---|---|---|
+| 1. 원본 | 충족 | 충족 |
+| 2. 최종 정합성 | 원자적으로 항상 일치 | 거절·실패·재시작 시 복구되지 않는 불일치 (재처리 없음) |
+| 3. 신선도 | 즉시 반영 | 지연 반영 (허용 범위) |
+| 4. 응답 지연 | 핫 가게 stats 행 락 대기 포함 → 한도 안인지 검증 | 더 짧음 |
+
+**결정: ② 채택.** ③이 앞서는 것은 4순위 항목뿐이고 2순위에서 뒤진다. ③에 남는 근거인 "통계 장애가 리뷰 작성을 막으면 안 된다"는 복구 경로가 있어야 성립하며, ②에서 통계만 실패하는 경우는 통계 행 누락 같은 데이터 결함이나 극단적 락 대기 타임아웃뿐이다.
+
+**채택 검증 (측정 전 고정):** 리뷰 본측정(`MODEL=closed`, 파일럿 확정 VUS·SHOP_POOL, 15분 × 3회)의 ② **모든 회차**에서
+- 데드락 증가분 0, `verify.sql` 2)·2-b)·2-c) 0행, 5xx·기타 실패 0
+- 성공 응답 p95 ≤ 500ms
+
+이 조건을 만족하면 ②를 확정한다. closed model의 지연은 VU 수에 비례해 커지므로, 이 판정은 "가게당 동시 작성 수십 건"이라는 과장된 경합에서도 한도 안인지 확인하는 여유 검증이다. p95만 한도를 넘으면 같은 VUS에서 `SHOP_POOL=1000`(분산) 회차를 3회 추가한다. 분산에서 한도 안이면 ②를 유지하고 "핫 가게 집중 시 지연"을 한계로 기록한다. 분산에서도 넘으면 결정을 다시 연다(③ + 복구 경로 구현 검토).
+
+**③의 역할:** 비교군. "비동기로 바꾸면 응답 지연은 X→Y로 줄지만, 반영 지연과 거절·실패 N건이 생긴다"를 기록한다. ③의 결과는 채택 여부를 가르지 않는다. closed model에서는 ③의 응답이 빨라 유입이 더 커지므로, 같은 유입률에서의 대가를 보이려면 3절 끝의 open model 회차를 추가한다.
+
+**③으로 전환할 조건:** 통계 장애와 무관하게 리뷰 작성이 성공해야 한다는 요구가 생기거나, 랭킹·검색 색인·알림처럼 리뷰에 딸린 후속 작업이 늘어나면 Outbox 기반 비동기와 재처리를 함께 도입한다.
 
 ### 리뷰: 측정 전 확정할 항목
 
@@ -72,9 +103,9 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 본측정 | 파일럿에서 확정한 VUS·SHOP_POOL, 동일한 요청 크기·평점 1~5 분포, 15분 × 설계별 3회 |
 | JVM·DB | JDK 21, `-Xms2g -Xmx2g`, HikariCP 20. 실제 MySQL 버전·격리 수준·주요 DB 설정 기록 |
 | ③ 통계 풀 | core 10 / max 20 / queue 2000, AbortPolicy. 첫 비교에서는 풀 크기를 튜닝하지 않음 |
-| 정상 부하 판정 | ②는 모든 회차 데드락·최종 통계 불일치 0이 목표. ③은 여기에 거절·실패 0도 확인. HTTP threshold 통과만으로 성공 처리하지 않음 |
+| 정상 부하 판정 | ②는 위 "채택 검증" 조건(모든 회차 데드락·불일치·실패 0, 성공 p95 ≤ 500ms). ③은 비교군이라 거절·실패·불일치를 회차별 건수로 기록하되 합격 기준으로 쓰지 않음. HTTP threshold 통과만으로 성공 처리하지 않음 |
 
-트랜잭션 분리는 두 작업의 성공·실패 범위를 정하는 선택이고, 비동기는 통계 갱신 완료를 리뷰 응답이 기다리지 않게 하는 별도의 선택이다. ③도 요청과 워커가 같은 HikariCP·DB를 쓰므로 자원 경쟁은 남는다. 현재는 실패를 기록할 뿐 자동 재처리·재집계가 없어 통계 누락이 지속될 수 있다. 허용 반영 지연을 수치화하고 복구를 구현·검증하는 과제가 남아 있으며, 정상 부하에서 오류가 없다는 결과만으로 장애 후 최종 정합성을 보장한다고 쓰지 않는다.
+③을 해석할 때: ③도 요청과 워커가 같은 HikariCP·DB를 쓰므로 자원 경쟁은 남는다. 워커가 핫 행 락을 기다리는 동안에도 커넥션을 쥔다. ③은 거절·실패를 기록할 뿐 재처리·재집계가 없어 누락이 지속된다. 따라서 ③의 정상 부하 무오류 결과를 장애 후 최종 정합성 보장으로 쓰지 않는다.
 
 ## 3. 실행 순서
 
@@ -131,12 +162,13 @@ k6 run -e BASE_URL=$S -e RATE=$C_RATE -e DURATION=15m -e MODE=async -e THRESHOLD
 #   아래는 r1 예시. r2·r3도 각각 초기화 후 실행하며, CSV는 성공 응답 지연을 따로 집계하기 위해 저장한다.
 # ① bench/review-before
 k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=before-r1 -e OUT_DIR=$OUT -e THRESHOLDS=off --out csv=$OUT/review_before_r1.csv benchmark/k6/02-review-api.js
-# ② main, --omp.review.stats.mode=sync
+# ② main, 기본 기동 (채택. 2절 채택 검증 조건으로 판정)
 k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=sync-r1 -e OUT_DIR=$OUT --out csv=$OUT/review_sync_r1.csv benchmark/k6/02-review-api.js
-# ③ main, --omp.review.stats.mode=async
+# ③ main, --omp.review.stats.mode=async (비교군)
 k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async-r1 -e OUT_DIR=$OUT --out csv=$OUT/review_async_r1.csv benchmark/k6/02-review-api.js
-# 추가 고정 유입률 비교가 필요하면 ②·③의 MODEL=closed와 VUS 대신 MODEL=open과 RATE=<파일럿 확정값>을 사용한다.
-# 두 모드 모두 감당 가능한 같은 RATE·SHOP_POOL·DURATION을 사용하고 dropped_iterations=0을 확인한다.
+# ②의 p95만 한도를 넘으면 2절대로 같은 VUS에서 -e SHOP_POOL=1000 회차를 3회 추가한다.
+# ③의 대가를 같은 유입률에서 보이려면(선택) ②·③에 MODEL=closed·VUS 대신 MODEL=open과 같은 RATE를 쓴다.
+#   RATE는 ②가 감당하는 값(② closed 성공 처리량 이하), SHOP_POOL·DURATION 동일, dropped_iterations=0 확인.
 ```
 
 ### 리뷰 ① (개선 전, `bench/review-before`) 회차
@@ -184,12 +216,12 @@ done
 - 바닥값은 참고선이다. **"API p95 − ping p95 = 서버 처리 시간"** 같은 뺄셈은 하지 않는다 (서로 다른 분포의 백분위수는 뺄 수 없다). 서버 내부 구간 시간은 별도 계측이 필요하다.
 - 비동기 주문에서 503이 나오면 insertTaskExecutor 포화 → 접수 거절(백프레셔). "측정 조건에서 503 없이 유지한 유입률"이 접수 용량이다. dropped_iterations·p95·다른 오류·완료 결과를 함께 확인한다. (CallerRunsPolicy는 제거됨. 포화 시 톰캣 스레드가 몰래 INSERT하는 구간은 없다.)
 - 유실 판정: `orders_accepted == completed_orders`(총건수)는 기본 점검이다. 누락과 중복이 상쇄될 수 있으므로 요청별 대조는 3단계 과제.
-- 리뷰 ②·③: `verify.sql` 2)·2-b)·2-c)가 모두 0행이어야 최종 집계가 일치한다. rejected·failed는 ③의 비동기 카운터이며, ②의 실패는 HTTP·롤백·로그로 확인한다. ③은 두 카운터 증가분도 0인지 확인한다.
+- 리뷰 ②·③: `verify.sql` 2)·2-b)·2-c)가 모두 0행이어야 최종 집계가 일치한다. rejected·failed는 ③의 비동기 카운터이며, ②의 실패는 HTTP·롤백·로그로 확인한다. ②는 이 조건이 채택 검증의 일부이고, ③(비교군)은 두 카운터 증가분과 불일치를 건수로 기록한다.
 - **불일치 가게 수와 누락 갱신 수는 다르다.** 한 가게에 100건이 누락되면 2)의 결과는 1행이다. 개수 부족분은 2)의 가게별 `max(actual_count-review_count, 0)` 합계에 2-b)의 `reviews_without_stats_row` 합계를 더한다. 초과분은 2)의 `max(review_count-actual_count, 0)`을 별도로 합산한다. 부족분·초과분·불일치 가게 수·거절/실패 증가분을 따로 기록한다. 종료 후 남은 불일치는 **지속된 미반영**이며 단순 지연으로 설명하지 않는다.
 - 리뷰 ①: 데드락 증가분·락 로그, 4-a)의 불일치 가게 수와 개수 부족/초과분을 별도로 기록한다. ①→②는 모델 분리와 원자 갱신의 결합 효과다.
 - 리뷰 지연: k6 요약의 `http_req_duration`은 실패 응답까지 포함한다. CSV에서 `metric_name=http_req_duration`의 전체 표본과 `200 <= status < 300` 표본을 구분해 p95·p99를 계산한다. 성공 표본이 없으면 0ms 대신 "측정 불가"로 기록한다.
 - 리뷰 저장 수: `reviews_created`와 `SELECT COUNT(*) FROM reviews`를 함께 기록한다. 응답 유실·타임아웃이 있으면 서버 커밋 수와 클라이언트 성공 응답 수가 달라질 수 있으며, 총건수 일치는 요청별 대조를 대신하지 않는다.
-- 설계 해석: ②는 모델 분리·원자 갱신의 효과를 확인하는 기준이다. ③의 트랜잭션 분리는 통계 실패가 원본 저장을 취소하지 않도록 하는 정책에 근거하므로, p95 개선 폭만으로 정당화하거나 기각하지 않는다. 정상 부하의 최종 집계, 실패 주입 시 원본 유지·실패 기록, 미구현된 자동 복구를 나누어 설명한다. closed model의 지연 차이는 같은 VU 수에서의 결과이며 같은 유입률의 비교가 아니다.
+- 설계 해석: ①→②는 결함 제거의 근거, ② 단독 결과는 채택 검증(2절), ②→③은 비교군 기록이다. ③의 p95가 더 낮아도 채택 근거가 되지 않는다(2절 우선순위상 4순위 항목). closed model의 지연 차이는 같은 VU 수에서의 결과이며 같은 유입률의 비교가 아니다.
 - 주문 측정은 POST 응답만 본다. SSE 연결·폴링을 포함한 전체 사용자 흐름의 성능은 아니다. 결과 표에 범위를 명시한다.
 
 ## 6. 매 측정 기록 환경 표 (결과 문서에 복사)
@@ -206,7 +238,7 @@ done
 | MySQL | 실제 버전, transaction_isolation(리뷰 경로의 실제 적용값 확인), innodb_buffer_pool_size, innodb_flush_log_at_trx_commit, 앱과 동거 |
 | 커넥션 풀 | HikariCP 20 (단일 풀, 조회·INSERT 공유) |
 | 스레드 풀 | omp.executor.* (기본 insert 10/30/q100, reviewStats 10/20/q2000, sse 10/30/q200), insert·reviewStats 거절 정책 Abort, sse CallerRuns |
-| 리뷰 통계 모드 | omp.review.stats.mode = sync / async (① 브랜치는 해당 없음) |
+| 리뷰 통계 모드 | omp.review.stats.mode = sync(기본·채택) / async(비교군) (① 브랜치는 해당 없음) |
 | 카운터 (시작 전 → 종료 후) | omp.order.async.rejected, omp.review.stats.rejected, omp.review.stats.failed |
 | 데드락 카운터 (시작 전 → 종료 후) | lock_deadlocks N → M (차이 = 발생 건수), Innodb_row_lock_waits/time |
 | 데이터 | seed.sql (users 10만, shops 1천, carts 10만), 회차마다 reset-round.sql (워밍업 후) |
