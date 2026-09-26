@@ -22,9 +22,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShopController {
     private final ShopService shopService;
 
+    /**
+     * 카테고리별 가게 목록(커서 페이지, shop_id 내림차순). 첫 페이지는 cursor 없이, 다음 페이지는 이전 페이지의 마지막 shopId를 cursor로.
+     * 캐시 키 = (category, cursor, pageSize). sync = true: 만료된 같은 키에 동시에 들어온 요청은 한 요청만 DB를 조회하고 나머지는 그 결과를 기다린다.
+     */
     @GetMapping
-    @Cacheable(cacheNames = "shops")
-    public Slice<ShopInfo> getShops(final @RequestParam ShopCategory category, final @RequestParam Long cursor, final @RequestParam int pageSize) {
+    @Cacheable(cacheNames = "shops", sync = true)
+    public Slice<ShopInfo> getShops(final @RequestParam ShopCategory category,
+                                    final @RequestParam(required = false) Long cursor,
+                                    final @RequestParam int pageSize) {
         return shopService.findShopsBy(category, cursor, pageSize);
     }
 

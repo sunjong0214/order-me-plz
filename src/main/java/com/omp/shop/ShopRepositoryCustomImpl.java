@@ -42,6 +42,7 @@ public class ShopRepositoryCustomImpl implements ShopRepositoryCustom {
                 .leftJoin(shopReviewStats).on(shopReviewStats.shopId.eq(shop.id))
                 .where(shop.category.eq(category))
                 .where(checkCursor(cursor))
+                .orderBy(shop.id.desc())   // 커서 조건(id < cursor)과 같은 방향으로 정렬해야 페이지 경계가 고정된다
                 .limit(pageSize + 1)
                 .fetch();
 
