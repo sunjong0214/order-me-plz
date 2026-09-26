@@ -98,10 +98,12 @@
 
 **상태 전달**
 - 상태는 SSE 연결 유무와 무관하게 TTL 동안 보관한다. 202를 받은 클라이언트가 SSE에 붙기 전에 작업이 끝나도, 연결 시 현재 상태를 먼저 확인해 `COMPLETED`·`FAILED`를 즉시 전달하고 종료한다
-- 폴링 `GET /api/v1/order/async/{uuid}`: 처리 중 202, 완료 303 + `Location: /api/v1/order/{orderId}`, 모르는 uuid 404. 실패는 현재 406인데, 406은 표현 형식 협상 실패라는 뜻이라 맞지 않아 200 + `FAILED` 상태로 바꿀 예정이다
+- 폴링 `GET /api/v1/order/async/{uuid}`: 처리 중 202, 완료 303 + `Location: /api/v1/order/{orderId}`, 실패 200 + `FAILED` 상태, 모르는 uuid 404. 실패는 조회 자체는 성공하고 작업 결과가 실패라는 뜻이라 200 본문으로 표현한다(처음에는 406을 썼으나 표현 형식 협상 실패라는 뜻이라 바꿨다)
 - 상태 전달 방식 비교(Polling / WebSocket / SSE)는 원문 표 유지
 
-(원문 시퀀스 그림 수정: 실제 경로와 Location 헤더, 저장 완료가 SSE 연결보다 먼저 오는 분기, 503 거절 분기 추가)
+![주문 비동기 접수 흐름](figures/1-2-order-async-sequence.svg)
+
+(원문 그림 교체. 실제 경로와 Location 헤더, 저장 완료가 SSE 연결보다 먼저 오는 분기, 503 거절 분기, 폴링 응답을 반영했다. Notion에는 `figures/1-2-order-async-sequence.mmd`를 Mermaid 코드 블록으로 붙여 넣는다.)
 
 ### 검증 방법
 
@@ -222,5 +224,6 @@
 | 한계 "Executor Queue 거절 정책 필요" | **해결됨으로 이동.** 503 + Retry-After + 거절 카운터. 큐 크기는 허용 지연 × 처리량으로 산정 |
 | 한계 "다시 측정한다면 p95·p99, 저장 완료 건수, Queue 잔여량, 모두 처리되는 시간" | 이번 측정으로 채움: 응답 종류별 지연, 제출→커밋 분포, 큐 길이 시계열, 건수 대조 |
 | 측정 범위 절 | POST 응답과 서버 저장까지로 명시. SSE 흐름은 기능 테스트 |
-| 시퀀스 그림 | 실제 경로·Location, SSE 연결 전 완료 분기, 503 거절 분기 추가 |
+| 시퀀스 그림 ("POST /orders", "202 Accepted + UUID") | `figures/1-2-order-async-sequence`(.mmd 원본, .svg 렌더)로 교체: 실제 경로·Location, SSE 연결 전 완료 분기, 503 거절 분기, 폴링 응답 |
+| 폴링 실패 응답 406 | 200 + `FAILED` 상태로 수정 (`AsyncOrderFailedStatusHttpTest`) |
 | 기간 2025.02~03 | 초기 개발 2025.02~03 / 비동기 확장 2025.07~08 / 재검증·개선 2026.08~09 |
