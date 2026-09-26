@@ -210,7 +210,7 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 1. 노트북: 전원 연결 + "최고 성능" 전원 계획, 방화벽 8080 인바운드 허용, `ipconfig`로 IP 확인.
 2. MySQL: `innodb_print_all_deadlocks`는 **OFF**로 둔다. ① 파일럿과 결정적 재현 테스트 때만 `SET GLOBAL innodb_print_all_deadlocks = ON`으로 켜서 락 정보를 캡처하고, 15분 본측정 전에 다시 끈다. ①은 요청 대부분이 데드락에 걸릴 수 있어 전건 로그가 ①에만 부하를 더해 ①②③ 성능 비교를 오염시키기 때문이다. 본측정의 데드락 수는 `verify.sql` 1)의 `lock_deadlocks` 증가분으로 센다(`status`가 `enabled`인지 확인).
 3. 새 스키마(OMP)로 main 서버 1회 기동 → 테이블 생성 확인 → `sql/seed.sql`.
-4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0.
+4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0. **대역폭 확인**: 요약의 (`data_sent` + `data_received`) ÷ `iterations` = 요청당 바이트. 이 값 × 스파이크 유입률(2W) × 1.3(TCP/IP 오버헤드) × 8이 링크 속도의 70% 미만이어야 한다(100 Mbps 링크면 70 Mbps). 두 장비의 링크 속도(`Get-NetAdapter | Select-Object Name, InterfaceDescription, LinkSpeed`)를 환경 표에 기록한다.
 5. 결과 폴더 `benchmark/results/`가 있는지 확인. k6는 폴더를 만들지 않으므로 `OUT_DIR`는 존재하는 경로여야 한다.
 6. 2절 "풀 크기 산정" 파일럿(P1·P2)으로 P·k·W·Q를 확정하고 `application.properties`에 반영한 뒤 다시 빌드한다. 이후 모든 회차는 이 값으로 고정한다.
 
@@ -378,6 +378,7 @@ done
 - **부하기 모니터링**: k6 실행 중 데스크탑 CPU 90% 초과 시 부하기 병목 → 결과 무효.
 - **노트북 온도**: HWiNFO 등으로 클럭 기록, 스로틀링 회차는 표시.
 - **IP 변동**: WiFi↔유선 전환 시 IP 바뀜. 회차마다 확인.
+- **네트워크 대역폭**: S·C처럼 유입이 가장 큰 회차 동안 노트북 작업 관리자 > 성능 > 이더넷의 송수신량을 본다. 링크의 70%(100 Mbps면 약 70 Mbps)를 넘으면 네트워크가 결과에 섞였을 수 있으므로 그 회차를 표시한다. 바닥값(`/ping`)의 p99가 수 ms 이내로 안정적인지도 함께 본다. 두 장비가 기가비트를 지원하는데 100 Mbps로 연결되면 케이블(Cat5e/Cat6)·포트를 먼저 의심한다.
 - **① 회차 준비**: shops 통계 컬럼 0 초기화(reset 하단) 없이 기동하면 NPE로 전부 500이 난다. 데드락과 구분되지 않으므로 반드시 먼저 실행.
 - **① 회차 판정**: threshold 통과·실패로 판정하지 않는다. lock_deadlocks 증가분과 5xx 건수로.
 - **closed model 처리량 착시**: 실패 응답이 빨리 돌아오면 iterations 가 부풀어 보인다. 처리량은 2xx(`reviews_created`)만 센다.
