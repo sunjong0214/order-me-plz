@@ -112,8 +112,8 @@ WHERE shop_id = :shopId
 | 도구 | k6 `[버전]`, closed model (`constant-vus`), `[VUS]` VU, 15분 × 3회. 성능은 중앙값·범위, 오류·불일치는 회차별 건수 |
 | 파일럿 | `VUS=50`, `SHOP_POOL=3`, 1분에서 시작. 원인·부하기 여유 확인 후 본측정 조건을 세 설계에 동일하게 고정 |
 | 경합 조건 | 리뷰 대상 가게 `[SHOP_POOL]`개에 집중, 평점 1~5. 결함 재현용 조건이며 실제 트래픽 분포나 서비스 전체 용량을 의미하지 않음 |
-| 서버 | JDK 21 `-Xms2g -Xmx2g`, MySQL `[실제 버전]` 동거, HikariCP 20. 리뷰 격리 수준·DB 주요 설정 기록 |
-| ③ 통계 풀 | core 10 / max 20 / queue 2000, AbortPolicy. 튜닝하지 않고 고정 |
+| 서버 | 물리 4코어·RAM 16GB, JDK 21 `-Xms2g -Xmx2g`, MySQL `[실제 버전]` 동거, HikariCP `[P]` (코어 수 기반 공식 + 파일럿으로 확정). 리뷰 격리 수준·DB 주요 설정 기록 |
+| ③ 통계 풀 | core = max = `[P/2]`, queue 2000, AbortPolicy. 커넥션 독점 방지 규칙으로 고정 |
 | 회차 준비 | 서버 재시작 → 워밍업 → 잔여 작업 종료 확인 → 리뷰·통계 초기화 → 카운터 시작값 기록 |
 | 데드락 판정 | `information_schema.INNODB_METRICS.lock_deadlocks` 증가분과 데드락 로그. 5xx를 전부 데드락으로 간주하지 않음 |
 | 정합성 판정 | 작업 종료 후 리뷰 원본 집계와 count·sum 일치, 통계 행 누락 0, 평균 = ROUND(sum/count, 2). ①은 shops, ②·③은 stats와 비교 |

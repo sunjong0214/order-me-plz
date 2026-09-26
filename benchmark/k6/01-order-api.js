@@ -12,6 +12,9 @@
 //                           RAMP(기본 1m) 동안 올리고 HOLD(기본 3m) 동안 유지. 용량 탐색용.
 //                           k6 summary의 p95는 전체 집계라 단계별 값은 --out csv 시계열로 계산해야 한다.
 //                           확정 수치는 후보 rate에서 SCENARIO=fixed 를 따로 돌려 만든다.
+//              saturate   : constant-vus. VUS(기본 64)명이 쉬지 않고 요청해 서버를 포화시킨다(closed model).
+//                           풀 크기 파일럿 P1 전용(README 2절 "풀 크기 산정"). 처리량 = orders_accepted ÷ 시간.
+//                           비동기에는 쓰지 않는다(503이 즉시 돌아와 요청이 폭주하므로 P2는 fixed + 높은 RATE).
 //   THRESHOLDS strict(기본): 실패 0, check 100%, p95<200ms, p99<500ms. 개선 후 정상 동작 회차용.
 //              off        : threshold 없음. 포화·용량 탐색 회차(503이 나는 게 정상)용. 판정은 카운터로.
 //   TAG        회차 표식(예: r1). OUT_DIR 결과 폴더(k6는 폴더를 만들지 않으므로 미리 존재해야 함).
@@ -33,7 +36,7 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 
 const BASE = __ENV.BASE_URL || 'http://localhost:8080';
 const MODE = (__ENV.MODE || 'async').toLowerCase();              // async | sync
-const SCENARIO = (__ENV.SCENARIO || 'fixed').toLowerCase();      // fixed | ramp
+const SCENARIO = (__ENV.SCENARIO || 'fixed').toLowerCase();      // fixed | ramp | saturate
 const THRESHOLDS = (__ENV.THRESHOLDS || 'strict').toLowerCase(); // strict | off
 const RATE = Number(__ENV.RATE || 1000);
 const DURATION = __ENV.DURATION || '15m';
@@ -50,6 +53,9 @@ const rejected = new Counter('orders_rejected');        // 503: insertTaskExecut
 const failedOther = new Counter('orders_failed_other'); // 503 이외의 실패 (4xx, 500, 타임아웃 등)
 
 function scenario() {
+  if (SCENARIO === 'saturate') {
+    return { executor: 'constant-vus', vus: Number(__ENV.VUS || 64), duration: DURATION };
+  }
   if (SCENARIO === 'ramp') {
     const steps = (__ENV.RAMP_STEPS || '500,1000,1500,2000').split(',').map((s) => Number(s.trim()));
     const stages = [];

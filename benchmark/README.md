@@ -52,6 +52,55 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 3. **용량**: "측정 조건에서 503(또는 p95>200ms) 없이 유지한 최대 유입률". k6 summary의 p95는 전체 집계라 램프 한 번으로는 한계 시점을 읽을 수 없다.
    - 탐색: `-e SCENARIO=ramp -e THRESHOLDS=off --out csv=...` (단계마다 RAMP 상승 + HOLD 유지). 시계열에서 HOLD 구간별 p95·503을 계산해 후보 구간을 본다.
    - 확정: 후보 rate마다 `SCENARIO=fixed`를 3~5분씩 따로 돌려 rate별 p95·503 표를 만든다 (계단식 고정 run). 15분 본측정은 확정 rate에서.
+4. **포화** (`SCENARIO=saturate`, 풀 크기 파일럿 전용): VUS명이 쉬지 않고 요청해 서버를 포화시킨 상태의 처리량을 잰다. 아래 "풀 크기 산정" 1단계에서만 쓴다.
+
+### 풀 크기 산정 (주문·리뷰 공통, 본측정 전 확정)
+
+서버 노트북: **물리 4코어 / 논리 8 / RAM 16GB.** 앱(JVM)과 MySQL이 같은 CPU를 나눠 쓴다.
+
+원칙
+- 풀 크기는 시나리오(평상시·저녁 피크·쿠폰 이벤트)마다 바꾸지 않는다. **하나의 고정 설정**으로 세 상황을 모두 돌려, 그 설정이 모두 감당하는지 검증한다.
+- 병목(DB)에서 거꾸로 정한다: 커넥션 총량 P → insert 워커 k → 저장 처리량 W(측정) → insert 큐 Q.
+- 공식은 출발점이고 확정은 파일럿 측정으로 한다. 확정값은 `application.properties`에 반영해 모든 본측정(동기 비교군·리뷰 포함)에 같은 값을 쓴다.
+
+| 단계 | 값 | 출발점과 근거 | 확정 방법 |
+|---|---|---|---|
+| 1 | 커넥션 총량 **P** | HikariCP 문서(About Pool Sizing)의 출발 공식 `물리 코어 × 2 + 유효 디스크 수` = 4 × 2 + 1 = 9 → **10**. 하이퍼스레딩 논리 코어는 세지 않는다(HikariCP 기본값도 10). 코어의 2배인 이유는 한 트랜잭션이 fsync·네트워크를 기다리는 동안 다른 트랜잭션이 CPU를 쓰게 하기 위해서이고, 그보다 많으면 컨텍스트 스위칭과 락·버퍼 경합만 는다. 이 노트북은 앱과 DB가 CPU를 나눠 쓰므로 실제 최적은 더 작을 수 있다 | 파일럿 P1: 동기 포화에서 P = 5 / 10 / 15 / 20. **최대 처리량의 95%에 도달하는 가장 작은 P** |
+| 2 | 접수 경로 몫 | Little의 법칙: 동시 필요 커넥션 = 유입률 × 커넥션 점유 시간. 스파이크(2W) 기준 예: 3000/s × 1ms × 여유 1.5 ≈ 4~5 | 따로 설정하지 않는다. P − k로 남는 몫이며 3단계의 접수 p95 조건으로 검증한다 |
+| 3 | insert 워커 **k** (core = max) | P − 접수 몫. 워커는 대부분 DB를 기다리므로 스레드 수 공식(코어 × (1 + 대기/계산))상 코어보다 많아도 되지만, 커넥션보다 많으면 커넥션을 기다릴 뿐이다. 상한은 코어가 아니라 워커에게 배정된 커넥션 수다 | 파일럿 P2: 비동기 포화에서 k = 4 / 6 / 8. **W가 더 오르지 않으면서 202 응답 p95 ≤ 200ms인 가장 작은 k**. 이때의 접수 처리량이 W |
+| 4 | insert 큐 **Q** | `W × 30초 × 0.8`. FIFO 큐의 최대 대기 ≈ Q ÷ W(Little의 법칙)이므로 저장 완료 30초 한도를 지키는 상한은 30W. 0.8은 스파이크 중 W 하락(접수 경로와의 경쟁, GC, fsync 편차)과 INSERT 시간 여유 | 계산값 |
+
+core = max로 두는 이유: ThreadPoolExecutor는 큐가 가득 차야 max까지 스레드를 늘리므로, 큐가 크면 max 설정은 의미가 없다.
+
+| 그 밖의 값 | 결정 | 근거 |
+|---|---|---|
+| Tomcat 스레드 | 기본 200 | 동기에서는 커넥션 앞의 대기열 역할이고, 스파이크 때 소진되는 것 자체가 비교 대상이다. 비동기 접수에 필요한 수는 약 3000/s × 20ms = 60 |
+| 한 스레드의 커넥션 동시 점유 | 1개 (확인) | CallerRuns 제거 후 모든 경로가 커넥션 1개만 쓴다. 스레드마다 커넥션을 여러 개 기다리는 풀 교착 조건이 없다 |
+| reviewStats 워커 (③ 비교군) | core = max = P/2, queue 2000 | 핫 가게 행 3개에서는 동시에 3건만 진행되고 나머지는 락을 기다리며 커넥션을 쥔다. 커넥션 독점을 막기 위해 절반 이하 |
+| sse 풀 | 현행 10/30/q200 | DB를 쓰지 않는 이벤트 전송이라 커넥션 예산과 무관 |
+| JVM 힙·메모리 | `-Xms2g -Xmx2g` | RAM 16GB에서 병목이 아니다. 큐 Q가 수만 건이어도 수십 MB. `innodb_buffer_pool_size`는 시드와 회차 데이터가 들어가는지 확인·기록 |
+
+**각 값이 겨냥하는 시나리오:** 커넥션 P와 워커 k는 저녁 피크(지속 처리량 W), 큐 Q는 쿠폰 이벤트(순간 흡수), 평상시는 여유와 비동기의 비용을 확인한다.
+
+**파일럿 절차 (본측정 전 1회).** 값은 기동 인자로만 바꾼다. run마다 서버 재시작 → 워밍업 1분 → `reset-round.sql` → 3분 측정. 측정 중 4절 폴링과 mysqld·java CPU 사용률을 함께 기록한다(처리량이 멈추는 원인이 CPU 공유인지 판단).
+
+```bash
+S=http://<서버IP>:8080; OUT=benchmark/results
+
+# P1. 커넥션 총량 — 서버: P만 바꿔 4번 기동
+#   OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar --spring.datasource.hikari.maximum-pool-size=<5|10|15|20>
+#   VUS 64: 최대 P(20)보다 충분히 커서 풀이 항상 포화되고, Tomcat 200보다 작아 Tomcat이 제한 요인이 되지 않는다.
+k6 run -e BASE_URL=$S -e MODE=sync -e SCENARIO=saturate -e VUS=64 -e DURATION=3m -e THRESHOLDS=off -e TAG=P1-p<P> -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+#   기록: orders_accepted ÷ 180초 = 처리량, p95, hikari_pending, CPU%.
+
+# P2. insert 워커 — 서버: P는 P1 확정값, 큐는 100으로 작게 둬서 접수량 = 완료량이 되게 한다
+#   ... --spring.datasource.hikari.maximum-pool-size=<P> --omp.executor.insert.core=<4|6|8> --omp.executor.insert.max=<같은 값> --omp.executor.insert.queue=100
+#   RATE: P1 처리량의 1.5배. 503이 나와야 포화된 것이며, 503이 없으면 RATE를 올린다.
+k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=P2-k<k> -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+#   기록: orders_accepted ÷ 180초 = W, http_req_duration{expected_response:true}의 p95(202만), 503 수, hikari_pending.
+
+# 확정: application.properties 에 hikari = P, insert core = max = k, insert queue = Q, reviewStats core = max = P/2 를 반영한다.
+```
 
 ### 리뷰: 설계 판단 기준 (2026-09-24 확정)
 
@@ -101,8 +150,8 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 장비 | 데스크탑 k6, 별도 노트북 Spring Boot + MySQL, 두 장비 모두 유선 LAN |
 | 파일럿 | `MODEL=closed`, `VUS=50`, `SHOP_POOL=3`, 1분에서 시작. 최적값이나 실서비스 트래픽으로 주장하지 않음 |
 | 본측정 | 파일럿에서 확정한 VUS·SHOP_POOL, 동일한 요청 크기·평점 1~5 분포, 15분 × 설계별 3회 |
-| JVM·DB | JDK 21, `-Xms2g -Xmx2g`, HikariCP 20. 실제 MySQL 버전·격리 수준·주요 DB 설정 기록 |
-| ③ 통계 풀 | core 10 / max 20 / queue 2000, AbortPolicy. 첫 비교에서는 풀 크기를 튜닝하지 않음 |
+| JVM·DB | JDK 21, `-Xms2g -Xmx2g`, HikariCP P (위 "풀 크기 산정" 확정값). 실제 MySQL 버전·격리 수준·주요 DB 설정 기록 |
+| ③ 통계 풀 | core = max = P/2, queue 2000, AbortPolicy ("풀 크기 산정" 규칙). 그 이상 튜닝하지 않음 |
 | 정상 부하 판정 | ②는 위 "채택 검증" 조건(모든 회차 데드락·불일치·실패 0, 성공 p95 ≤ 500ms). ③은 비교군이라 거절·실패·불일치를 회차별 건수로 기록하되 합격 기준으로 쓰지 않음. HTTP threshold 통과만으로 성공 처리하지 않음 |
 
 ③을 해석할 때: ③도 요청과 워커가 같은 HikariCP·DB를 쓰므로 자원 경쟁은 남는다. 워커가 핫 행 락을 기다리는 동안에도 커넥션을 쥔다. ③은 거절·실패를 기록할 뿐 재처리·재집계가 없어 누락이 지속된다. 따라서 ③의 정상 부하 무오류 결과를 장애 후 최종 정합성 보장으로 쓰지 않는다.
@@ -115,6 +164,7 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 3. 새 스키마(OMP)로 main 서버 1회 기동 → 테이블 생성 확인 → `sql/seed.sql`.
 4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0.
 5. 결과 폴더 `benchmark/results/`가 있는지 확인. k6는 폴더를 만들지 않으므로 `OUT_DIR`는 존재하는 경로여야 한다.
+6. 2절 "풀 크기 산정" 파일럿(P1·P2)으로 P·k·W·Q를 확정하고 `application.properties`에 반영한 뒤 다시 빌드한다. 이후 모든 회차는 이 값으로 고정한다.
 
 ### 매 회차 공통 절차 (순서가 결과를 좌우한다)
 1. 서버 재시작 (해당 브랜치·기동 옵션). ①을 처음 기동해 shops 통계 컬럼이 NULL이면 워밍업 전에 0으로 초기화한다. 본측정 초기화는 4번에서 다시 한다.
@@ -236,8 +286,8 @@ done
 | 네트워크 | 서버·부하기 모두 유선 LAN, 링크 속도·네트워크 경로 |
 | JVM | 21.x, -Xms2g -Xmx2g, GC 종류 |
 | MySQL | 실제 버전, transaction_isolation(리뷰 경로의 실제 적용값 확인), innodb_buffer_pool_size, innodb_flush_log_at_trx_commit, 앱과 동거 |
-| 커넥션 풀 | HikariCP 20 (단일 풀, 조회·INSERT 공유) |
-| 스레드 풀 | omp.executor.* (기본 insert 10/30/q100, reviewStats 10/20/q2000, sse 10/30/q200), insert·reviewStats 거절 정책 Abort, sse CallerRuns |
+| 커넥션 풀 | HikariCP P = <파일럿 확정값> (단일 풀, 조회·INSERT 공유). 파일럿 P1 처리량 표 첨부 |
+| 스레드 풀 | omp.executor.* (insert core = max = k, queue = Q / reviewStats core = max = P/2, q2000 / sse 10/30/q200), insert·reviewStats 거절 정책 Abort, sse CallerRuns. 파일럿 P2 W 표 첨부 |
 | 리뷰 통계 모드 | omp.review.stats.mode = sync(기본·채택) / async(비교군) (① 브랜치는 해당 없음) |
 | 카운터 (시작 전 → 종료 후) | omp.order.async.rejected, omp.review.stats.rejected, omp.review.stats.failed |
 | 데드락 카운터 (시작 전 → 종료 후) | lock_deadlocks N → M (차이 = 발생 건수), Innodb_row_lock_waits/time |
