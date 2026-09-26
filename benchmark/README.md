@@ -111,6 +111,19 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 # 확정: application.properties 에 hikari = P, insert core = max = k, insert queue = Q, reviewStats core = max = P/2 를 반영한다.
 ```
 
+**P1 결과 (2026-09-26): P = 10 확정.** 회차마다 직전 부하 종료 후 15분 휴식, 충전기 연결, 노트북 클럭 기록 조건에서 쟀다(상세·무효 회차는 [results/2026-09-26-P1/README.md](results/2026-09-26-P1/README.md)).
+
+| P | 처리량/s (회차별) | 평균 | 최대 평균 대비 | 노트북 CPU (mysqld / java) |
+|---|---|---|---|---|
+| 5 | 1,999 | 1,999 | 84.6% | 76% (43% / 27%) — 커넥션 대기 55건, CPU 여유 |
+| **10** | 2,266 · 2,363 | **2,314** | **97.9%** | 96~97% (58% / 32~33%) |
+| 15 | 2,398 · 2,329 | 2,364 | 100% | 96~97% (58% / 32~33%) |
+| 20 | 2,361 | 2,361 | 99.9% | 96% (58% / 32%) |
+
+- P=10부터 노트북 CPU가 포화돼 처리량이 평탄하다. P=10·15·20의 평균 차이(2% 이내)는 같은 P 반복 편차(3~4%)보다 작다. 동기 주문의 한계는 커넥션 수가 아니라 앱과 MySQL이 나눠 쓰는 CPU이고, CPU의 약 60%를 MySQL이 쓴다.
+- 규칙(최대 평균 2,364의 95% = 2,245 이상인 가장 작은 P)으로 P = 10. 출발 공식(4 × 2 + 1)과 같다.
+- 전 회차 실패 0, 부하 발생기 판정 통과, 노트북 클럭(기본 2.8GHz 대비) 부하 중 112%(P=5는 116%)로 회차 간 동일.
+
 ### 주문: 회차 구성 (B / A / S / C)
 
 설정은 위 "풀 크기 산정" 확정값으로 고정하고, 부하는 모두 파일럿 P2에서 잰 W 기준이다. 전부 open model이며 동기·비동기는 같은 서버에서 URL만 다르다.
@@ -207,7 +220,7 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 ## 3. 실행 순서
 
 ### 사전 준비 (1회)
-1. 노트북: 전원 연결 + "최고 성능" 전원 계획, 방화벽 8080 인바운드 허용, `ipconfig`로 IP 확인.
+1. 노트북: 전원 연결 + "최고 성능" 전원 계획, 방화벽 8080 인바운드 허용, `ipconfig`로 IP 확인. **Windows 업데이트는 설치를 끝낸 뒤(재부팅 포함) 측정 기간 동안 일시 중지**한다. 업데이트 설치(Windows Modules Installer Worker, TiWorker.exe)는 CPU를 대부분 잡아먹는다. **데스크톱(부하 발생기)도** 측정 중에는 게임·영상 등 무거운 프로그램을 끈다. k6가 CPU를 못 받으면 목표 부하를 못 내고, 그 결과가 서버 한계처럼 보인다.
 2. MySQL: `innodb_print_all_deadlocks`는 **OFF**로 둔다. ① 파일럿과 결정적 재현 테스트 때만 `SET GLOBAL innodb_print_all_deadlocks = ON`으로 켜서 락 정보를 캡처하고, 15분 본측정 전에 다시 끈다. ①은 요청 대부분이 데드락에 걸릴 수 있어 전건 로그가 ①에만 부하를 더해 ①②③ 성능 비교를 오염시키기 때문이다. 본측정의 데드락 수는 `verify.sql` 1)의 `lock_deadlocks` 증가분으로 센다(`status`가 `enabled`인지 확인).
 3. 새 스키마(OMP)로 main 서버 1회 기동 → 테이블 생성 확인 → `sql/seed.sql`.
 4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0. **대역폭 확인**: 요약의 (`data_sent` + `data_received`) ÷ `iterations` = 요청당 바이트. 이 값 × 스파이크 유입률(2W) × 1.3(TCP/IP 오버헤드) × 8이 링크 속도의 70% 미만이어야 한다(100 Mbps 링크면 70 Mbps). 두 장비의 링크 속도(`Get-NetAdapter | Select-Object Name, InterfaceDescription, LinkSpeed`)를 환경 표에 기록한다.
@@ -223,7 +236,7 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 6. 4절 폴링 시작 → 본측정 실행.
 7. 종료 후 **완료 대기**: `queued=0`·`active=0`이 되고 `COUNT(*)`가 더 변하지 않을 때까지. 제한 5분 초과 시 "미완료"로 기록한다.
 8. 해당 설계의 검증 SQL 실행: ①은 1)·1-b)와 주석 해제한 4-a)·4-b), ②·③은 1)·1-b)·2)·2-b)·2-c). 리뷰는 `SELECT COUNT(*) FROM reviews`도 기록한다. 주문은 3)을 사용한다. 서버 로그와 k6 JSON·CSV·폴링 CSV를 `benchmark/results/<날짜>-<TAG>-r<N>/`로 이동.
-9. 같은 조건 **3회** → 성능은 중앙값과 범위, 오류·불일치는 **모든 회차의 건수**를 기록. 회차 사이 5분 휴식하고 클럭·온도를 확인한다. 가능하면 리뷰 실행 순서를 ①②③ / ②③① / ③①②로 순환해 특정 설계가 항상 마지막에 측정되는 것을 피한다.
+9. 같은 조건 **3회** → 성능은 중앙값과 범위, 오류·불일치는 **모든 회차의 건수**를 기록. 회차 사이 **15분 휴식**(직전 부하 종료 기준)하고, 회차 전후로 충전기 연결(`Win32_Battery.BatteryStatus` = 2)과 노트북 클럭(`\Processor Information(_Total)\% Processor Performance`, 5초 간격)을 기록한다. 이 조건을 통제하지 않은 회차는 같은 설정에서 처리량이 통제 회차 평균 대비 −13%~+19%로 흔들렸다(7절). 가능하면 리뷰 실행 순서를 ①②③ / ②③① / ③①②로 순환해 특정 설계가 항상 마지막에 측정되는 것을 피한다.
 10. 주문 A(용량 계단)는 계단마다 재시작하지 않고 `reset-round.sql`과 잔여 작업 0 확인만 한다(명령의 read 프롬프트). 주문 B·S·C와 리뷰 ①②③은 1~9 전부. 주문 B·S도 모드 순서를 회차마다 번갈아 둔다.
 
 ### 본측정 명령 (데스크탑, 리포 루트에서)
@@ -296,11 +309,11 @@ k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -
 ```bash
 S=http://<서버IP>:8080
 m() { curl -s "$S/actuator/metrics/$1" | grep -o '"value":[0-9.E+-]*' | head -1 | cut -d: -f2; }
-echo "time,insert_queued,insert_active,stats_queued,stats_active,order_rejected,order_failed,stats_rejected,stats_failed,hikari_active,hikari_pending,tomcat_busy" > server-metrics.csv
+echo "time,insert_queued,insert_active,stats_queued,stats_active,order_rejected,order_failed,stats_rejected,stats_failed,hikari_active,hikari_pending,tomcat_busy,process_cpu,system_cpu" > server-metrics.csv
 : > server-hist.txt
 while true; do
   T=$(date +%T)
-  echo "$T,$(m 'executor.queued?tag=name:insertTaskExecutor'),$(m 'executor.active?tag=name:insertTaskExecutor'),$(m 'executor.queued?tag=name:reviewStatsExecutor'),$(m 'executor.active?tag=name:reviewStatsExecutor'),$(m omp.order.async.rejected),$(m omp.order.async.failed),$(m omp.review.stats.rejected),$(m omp.review.stats.failed),$(m hikaricp.connections.active),$(m hikaricp.connections.pending),$(m tomcat.threads.busy)" | tee -a server-metrics.csv
+  echo "$T,$(m 'executor.queued?tag=name:insertTaskExecutor'),$(m 'executor.active?tag=name:insertTaskExecutor'),$(m 'executor.queued?tag=name:reviewStatsExecutor'),$(m 'executor.active?tag=name:reviewStatsExecutor'),$(m omp.order.async.rejected),$(m omp.order.async.failed),$(m omp.review.stats.rejected),$(m omp.review.stats.failed),$(m hikaricp.connections.active),$(m hikaricp.connections.pending),$(m tomcat.threads.busy),$(m process.cpu.usage),$(m system.cpu.usage)" | tee -a server-metrics.csv
   curl -s "$S/actuator/prometheus" | grep -E '^omp_(order_async_(completion|queue_wait)|review_stats_lag)_seconds_(bucket|count)' | sed "s/^/$T /" >> server-hist.txt
   sleep 5
 done
@@ -317,6 +330,10 @@ done
 - 큐 용량만으로 큐가 비는 시간을 단정하지 않는다. 리뷰는 작업이 끝난 뒤에도 거절·실패로 통계가 누락될 수 있으므로 최종 SQL 검증을 함께 한다.
 - `hikari_pending`이 **0보다 큰 상태**로 관측되면 커넥션 획득 대기가 있다는 뜻이다. 지속 시간과 응답 지연을 함께 기록한다. 5초 표본의 최댓값은 순간 최대치를 보장하지 않는다.
 - `tomcat_busy`가 200(기본 최대)에 붙으면 요청 스레드가 소진된 상태다. 동기 방식의 붕괴 양상을 설명하는 근거로 쓴다.
+- `process_cpu`는 서버 JVM, `system_cpu`는 노트북 전체 CPU 사용률(0~1)이다. 차이가 대부분 MySQL 몫이며, 부하가 없는데 `system_cpu`가 높으면 다른 프로세스(Windows 업데이트 설치·백신 검사 등)가 CPU를 쓰는 것이므로 측정을 멈춘다. 회차 시작 전 10초 평균이 15% 미만인지 확인한다(2026-09-26 실제로 시스템 75~95% 상태에서 `/ping` p99가 35ms → 해소 후 5ms).
+- 부하 발생기 CPU도 함께 기록한다. 회차 시작 전 5초 평균 30% 미만, 측정 중 평균 80% 미만이면서 80% 이상 표본이 2번(10초) 연속 나오지 않아야 k6 결과를 서버 성능으로 읽을 수 있다. k6 요약의 `iteration_duration` − `http_req_duration` 평균(정상 0.2~0.3ms)도 함께 본다. 데스크톱 PowerShell에서 측정과 동시에 실행:
+  `Get-Counter "\Processor(_Total)\% Processor Time" -SampleInterval 5 -MaxSamples 42 | % { "{0:HH:mm:ss},{1:N1}" -f $_.Timestamp, $_.CounterSamples[0].CookedValue } > client-cpu.csv`
+  (2026-09-26 파일럿 P1 P=10: 데스크톱에서 게임이 CPU 47%를 쓰는 동안 측정 → 데스크톱 전체 83~97%, 처리량이 P=5보다 낮게 나오고 k6 전송·수신 최대 약 1초, 서버는 중간중간 요청이 0인 채 놀았다. 무효 처리하고 재측정)
 
 ## 5. 결과 읽는 법
 
@@ -375,8 +392,8 @@ done
 
 - **절차 순서**: reset을 워밍업 앞에 두면 워밍업 쓰기가 남아 완료량·접수량 비교가 깨진다. 3절 순서대로.
 - **카운터는 누적값**: actuator 카운터와 lock_deadlocks는 기동 후 누적. 반드시 시작 전 값을 기록하고 증가분을 쓴다.
-- **부하기 모니터링**: k6 실행 중 데스크탑 CPU 90% 초과 시 부하기 병목 → 결과 무효.
-- **노트북 온도**: HWiNFO 등으로 클럭 기록, 스로틀링 회차는 표시.
+- **부하기 모니터링**: k6 실행 중 데스크탑 CPU가 평균 80% 이상이거나 80% 이상이 2표본(10초) 연속이면 부하기 병목 → 결과 무효(4절). 2026-09-26 데스크톱에서 게임을 켠 채 잰 회차는 처리량이 P=5보다 낮게 나왔다.
+- **노트북 전원·상태**: 충전기를 뺀 회차(확인된 것은 20:07 P=15 2,163/s)와 뺀 것으로 보이는 18:45~19:20 회차는 같은 설정에서 통제 회차 평균보다 5~13% 낮았다. 반대로 휴식·기록 없이 잰 일부 회차(재부팅 11분 뒤 P=20 2,810/s 등)는 10~19% 높았는데, 클럭 기록이 없어 원인을 분리하지 못했다. 그래서 회차마다 15분 휴식·충전기 확인·클럭 기록(3절 9번)을 하고, 이 조건을 지킨 회차만 결과로 쓴다. 발열이 걱정되면 충전기를 빼지 말고 제조사 앱의 충전 한도(80%)와 통풍으로 대응한다.
 - **IP 변동**: WiFi↔유선 전환 시 IP 바뀜. 회차마다 확인.
 - **네트워크 대역폭**: S·C처럼 유입이 가장 큰 회차 동안 노트북 작업 관리자 > 성능 > 이더넷의 송수신량을 본다. 링크의 70%(100 Mbps면 약 70 Mbps)를 넘으면 네트워크가 결과에 섞였을 수 있으므로 그 회차를 표시한다. 바닥값(`/ping`)의 p99가 수 ms 이내로 안정적인지도 함께 본다. 두 장비가 기가비트를 지원하는데 100 Mbps로 연결되면 케이블(Cat5e/Cat6)·포트를 먼저 의심한다.
 - **① 회차 준비**: shops 통계 컬럼 0 초기화(reset 하단) 없이 기동하면 NPE로 전부 500이 난다. 데드락과 구분되지 않으므로 반드시 먼저 실행.

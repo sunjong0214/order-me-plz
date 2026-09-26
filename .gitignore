@@ -49,6 +49,8 @@ build/
 
 # Logs
 *.log
+# 측정 결과의 k6 실행 로그·회차 진행 기록은 근거 자료라 추적한다
+!benchmark/results/**/*.log
 
 # Java specific
 *.class

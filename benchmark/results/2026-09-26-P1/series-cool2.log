@@ -1,0 +1,63 @@
+[22:07:28] === 시리즈 cool2 시작: 순서 10 15, 휴식 900초 ===
+노트북 CPU 기록 시작 pid=7852 rc=0
+[22:07:33] P=10 전 휴식 458초 (끝 22:15:10)
+[22:15:12] 전원 상태 [P=10 기동 전] = 2 100 (첫 값 2 = 충전기)
+서버 기동 요청 P=10 rc=0 pid=3712
+[22:15:23] 서버 준비 완료 (풀 10.0, 3회 확인)
+서버 커넥션 풀 = 10.0 (기대 10)
+[1/1 22:15:39] 부하 전 노트북 CPU 평균 = 0.016 (기준 0.15 미만) / 데스크톱 = 14.9% (기준 30% 미만)
+워밍업 종료 22:16:40 exit=0
+워밍업 중 데스크톱 CPU 평균 35.6% / 최대 42.2% (기준 80% 미만)
+잔여 작업 0 (queued=0.0 active=0.0) → 노트북에서 reset-round.sql 실행
+reviews	orders	order_menus	stats_not_zero
+0	0	0	0
+[22:16:47] 전원 상태 [P=10 측정 전] = 2 100 (첫 값 2 = 충전기)
+서버 커넥션 풀 = 10.0 (기대 10)
+[1/8 22:17:03] 부하 전 노트북 CPU 평균 = 0.176 (기준 0.15 미만) / 데스크톱 = 15.8% (기준 30% 미만)
+[2/8 22:17:19] 부하 전 노트북 CPU 평균 = 0.018 (기준 0.15 미만) / 데스크톱 = 16% (기준 30% 미만)
+측정 종료 22:20:20 exit=0
+측정 중 데스크톱 CPU 평균 39.7% / 최대 57.3% / 80% 이상 최장 연속 0표본 → 통과
+[22:20:55] 전원 상태 [P=10 측정 후] = 2 100 (첫 값 2 = 충전기)
+서버 종료 pid=11984
+서버 종료 pid=9352
+10-cool2 22:17:19    2362.8   84.1%  425311     0    25.9    50.3    81.9  hikari_active=9.56/10.00 hikari_pending=44.19/53.00 tomcat_busy=54.33/65.00 process_cpu=0.33/0.37 system_cpu=0.96/1.00 client_cpu=0.43/0.57
+[22:20:58] P=15 전 휴식 896초 (끝 22:35:54)
+[22:35:55] 전원 상태 [P=15 기동 전] = 2 100 (첫 값 2 = 충전기)
+서버 기동 요청 P=15 rc=0 pid=1472
+[22:36:06] 서버 준비 완료 (풀 15.0, 3회 확인)
+서버 커넥션 풀 = 15.0 (기대 15)
+[1/1 22:36:23] 부하 전 노트북 CPU 평균 = 0.019 (기준 0.15 미만) / 데스크톱 = 12.6% (기준 30% 미만)
+워밍업 종료 22:37:23 exit=0
+워밍업 중 데스크톱 CPU 평균 32.3% / 최대 37.7% (기준 80% 미만)
+잔여 작업 0 (queued=0.0 active=0.0) → 노트북에서 reset-round.sql 실행
+reviews	orders	order_menus	stats_not_zero
+0	0	0	0
+[22:37:30] 전원 상태 [P=15 측정 전] = 2 100 (첫 값 2 = 충전기)
+서버 커넥션 풀 = 15.0 (기대 15)
+[1/8 22:37:46] 부하 전 노트북 CPU 평균 = 0.181 (기준 0.15 미만) / 데스크톱 = 12.5% (기준 30% 미만)
+[2/8 22:38:02] 부하 전 노트북 CPU 평균 = 0.020 (기준 0.15 미만) / 데스크톱 = 16.4% (기준 30% 미만)
+측정 종료 22:41:03 exit=0
+측정 중 데스크톱 CPU 평균 46.3% / 최대 69.8% / 80% 이상 최장 연속 0표본 → 통과
+[22:41:39] 전원 상태 [P=15 측정 후] = 2 100 (첫 값 2 = 충전기)
+서버 종료 pid=9328
+서버 종료 pid=13244
+15-cool2 22:38:03    2329.0   82.9%  419227     0    21.7    55.4   165.5  hikari_active=11.42/15.00 hikari_pending=8.08/47.00 tomcat_busy=35.15/64.00 process_cpu=0.33/0.35 system_cpu=1.00/1.00 client_cpu=0.47/0.70
+노트북 CPU 기록 종료 pid=7852
+[22:41:43] 노트북 CPU 기록 → benchmark/results/2026-09-26-P1/laptop-cpu-cool2.csv
+[22:41:43] === 시리즈 cool2 끝 ===
+      P       시작     처리량/s    최대대비      성공    실패     med     p95     p99  서버(평균/최대)
+ 5-cool 20:54:59    1999.2   71.1%  359862     0    31.0    36.1    60.7  hikari_active=4.86/5.00 hikari_pending=55.41/59.00 tomcat_busy=60.31/65.00 process_cpu=0.27/0.31 system_cpu=0.74/0.94 lap_clock=1.16/1.13 client_cpu=0.50/0.72
+   5-r1 17:41:31    1828.4   65.1%  329120     0    34.2    64.0    81.5  hikari_active=4.67/5.00 hikari_pending=51.33/59.00 tomcat_busy=58.22/65.00 process_cpu=0.26/0.30 system_cpu=0.96/1.00
+  10-ac 19:55:52    2321.8   82.6%  417932     0    25.3    47.8    94.9  hikari_active=8.68/10.00 hikari_pending=40.57/53.00 tomcat_busy=52.32/65.00 process_cpu=0.31/0.37 system_cpu=0.91/1.00 client_cpu=0.56/0.80
+10-cool 21:36:26    2265.9   80.6%  407855     0    25.6    63.8   131.2  hikari_active=9.00/10.00 hikari_pending=40.39/54.00 tomcat_busy=52.86/66.00 process_cpu=0.32/0.35 system_cpu=0.96/1.00 lap_clock=1.12/1.10 client_cpu=0.38/0.42
+10-cool2 22:17:19    2362.8   84.1%  425311     0    25.9    50.3    81.9  hikari_active=9.56/10.00 hikari_pending=44.19/53.00 tomcat_busy=54.33/65.00 process_cpu=0.33/0.37 system_cpu=0.96/1.00 lap_clock=1.12/1.09 client_cpu=0.43/0.57
+  10-r1 18:44:46    2070.7   73.7%  372718     0    28.2    52.5    74.0  hikari_active=8.50/10.00 hikari_pending=20.04/54.00 tomcat_busy=25.35/56.00 process_cpu=0.29/0.33 system_cpu=0.95/0.99 client_cpu=0.52/0.78
+  15-ac 20:07:14    2162.9   77.0%  389322     0    22.8    61.8   208.9  hikari_active=12.11/15.00 hikari_pending=16.00/49.00 tomcat_busy=38.96/65.00 process_cpu=0.31/0.36 system_cpu=0.92/1.00 client_cpu=0.46/0.52
+ 15-ac2 20:15:52    2242.0   79.8%  403559     0    20.1    65.7   238.0  hikari_active=12.19/15.00 hikari_pending=12.70/47.00 tomcat_busy=37.22/65.00 process_cpu=0.31/0.34 system_cpu=0.92/1.00 client_cpu=0.57/0.70
+15-cool 21:15:43    2398.2   85.3%  431674     0    22.8    51.7   116.7  hikari_active=11.81/15.00 hikari_pending=13.93/49.00 tomcat_busy=33.78/63.00 process_cpu=0.33/0.37 system_cpu=0.99/1.00 lap_clock=1.12/1.09 client_cpu=0.38/0.41
+15-cool2 22:38:03    2329.0   82.9%  419227     0    21.7    55.4   165.5  hikari_active=11.42/15.00 hikari_pending=8.08/47.00 tomcat_busy=35.15/64.00 process_cpu=0.33/0.35 system_cpu=1.00/1.00 lap_clock=1.12/1.09 client_cpu=0.47/0.70
+  15-r1 17:47:59    2601.9   92.6%  468343     0    21.7    40.8    92.7  hikari_active=14.31/15.00 hikari_pending=27.46/49.00 tomcat_busy=46.42/64.00 process_cpu=0.34/0.40 system_cpu=0.86/0.95
+  15-r2 19:20:39    2047.3   72.9%  368521     0    27.6    52.4   123.5  hikari_active=12.85/15.00 hikari_pending=14.93/49.00 tomcat_busy=31.59/64.00 process_cpu=0.30/0.36 system_cpu=0.88/0.99 client_cpu=0.50/0.74
+  20-ac 19:47:38    2810.1  100.0%  505820     0    20.3    33.4    66.8  hikari_active=18.07/20.00 hikari_pending=22.00/44.00 tomcat_busy=47.04/63.00 process_cpu=0.36/0.41 system_cpu=0.90/0.98 client_cpu=0.55/0.69
+20-cool 21:57:10    2360.8   84.0%  424944     0    22.9    47.8   124.0  hikari_active=15.44/20.00 hikari_pending=4.41/26.00 tomcat_busy=29.04/64.00 process_cpu=0.33/0.35 system_cpu=0.97/1.00 lap_clock=1.12/1.09 client_cpu=0.39/0.42
+  20-r1 19:11:07    2253.2   80.2%  405575     0    25.6    47.3   105.8  hikari_active=15.63/20.00 hikari_pending=14.70/44.00 tomcat_busy=25.48/65.00 process_cpu=0.30/0.38 system_cpu=0.88/0.99 client_cpu=0.52/0.67
