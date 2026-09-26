@@ -57,7 +57,7 @@ SELECT (SELECT COUNT(*) FROM orders)     AS completed_orders,
 -- ─────────────────────────────────────────────────────────────
 -- 4) [bench/review-before 회차(①) 전용] 구 설계 검증. main 회차에서는 shops 에 컬럼이 없어 에러 → 주석 유지.
 --    4-a) 저장된 리뷰 vs shops 통계. 불일치 가게 수와 개수 부족/초과분 합계를 별도로 기록한다.
---         읽고-계산-쓰기 유실 원인은 실행 순서를 제어한 별도 테스트로 확인한다. shops 평균도 별도로 확인한다.
+--         읽고-계산-쓰기 유실 원인은 실행 순서를 제어한 ReviewLockReproductionTest 로 확인했다. shops 평균도 별도로 확인한다.
 --         데드락으로 롤백된 요청은 리뷰도 함께 롤백된다. 데드락 카운터·락 로그와 5xx를 대조하되 모든 5xx를 데드락으로 세지 않는다.
 -- SELECT s.shop_id, s.review_count, COALESCE(r.actual_count, 0) AS actual_count,
 --        s.rating_sum, COALESCE(r.actual_sum, 0) AS actual_sum
