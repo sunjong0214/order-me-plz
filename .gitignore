@@ -62,9 +62,7 @@ application-*.yml
 # Windows
 Thumbs.db
 
-# Gradle Wrapper
-gradle/wrapper/gradle-wrapper.properties
-gradle/wrapper/gradle-wrapper.jar
+# Gradle Wrapper 는 추적한다: 새로 클론한 환경(벤치마크 서버 노트북 등)에서 JDK 21만으로 ./gradlew bootJar 가 되도록.
 
 # Debug and Test
 .testResults/
