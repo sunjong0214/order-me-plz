@@ -43,10 +43,6 @@ public class AsyncOrderManager {
         return get(key).getOrderJobState();
     }
 
-    public OrderIdentifier getOrderIdentifier(String key) {
-        return get(key).getOrderIdentifier();
-    }
-
     public OrderProcessingContext get(String key) {
         OrderProcessingContext info = map.getIfPresent(key);
         if (info == null) {

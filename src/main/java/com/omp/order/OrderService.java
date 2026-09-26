@@ -70,8 +70,4 @@ public class OrderService {
     public OrderJobState getOrderState(String uuid) {
         return asyncOrderManager.getJobState(uuid);
     }
-
-    public OrderIdentifier getOrderIdentifier(String uuid) {
-        return asyncOrderManager.getOrderIdentifier(uuid);
-    }
 }

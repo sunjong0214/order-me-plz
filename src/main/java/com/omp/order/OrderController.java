@@ -3,7 +3,6 @@ package com.omp.order;
 import static com.omp.order.async.OrderJobStatus.FAILED;
 import static com.omp.order.async.OrderJobStatus.PROCESSING;
 import static org.springframework.http.HttpStatus.ACCEPTED;
-import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.springframework.http.HttpStatus.SEE_OTHER;
 import static org.springframework.http.ResponseEntity.accepted;
 
@@ -52,14 +51,17 @@ public class OrderController {
         return sseEmitterService.createOrderSse(orderUuid);
     }
 
+    /**
+     * 폴링 계약: 처리 중 202(+ 자기 자신 Location), 완료 303(+ 주문 리소스 Location), 실패 200 + FAILED 상태, 모르는 uuid 404.
+     * 실패는 조회 자체는 성공했고 작업 결과가 실패라는 뜻이므로 200 본문의 상태로 표현한다.
+     * (이전의 406 Not Acceptable 은 표현 형식 협상 실패를 뜻해 의미가 맞지 않았다.)
+     */
     @GetMapping("/async/{uuid}")
-    public ResponseEntity<Object> checkOrderStatus(final @PathVariable String uuid) {
+    public ResponseEntity<OrderJobState> checkOrderStatus(final @PathVariable String uuid) {
         OrderJobState orderState = orderService.getOrderState(uuid);
 
         if (orderState.status() == FAILED) {
-            return ResponseEntity
-                    .status(NOT_ACCEPTABLE)
-                    .body(orderService.getOrderIdentifier(uuid));
+            return ResponseEntity.ok(orderState);
         } else if (orderState.status() == PROCESSING) {
             return ResponseEntity
                     .status(ACCEPTED)
