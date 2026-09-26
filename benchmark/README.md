@@ -34,8 +34,8 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 측정 | 브랜치 | 기동 옵션 | 스크립트·옵션 | 목적 |
 |---|---|---|---|---|
 | 바닥값 | main | | `00-network-floor.js` | `/ping`. 해석 참고선. 1회 |
-| 주문 · 개선 전 (동기) | main | | `01-order-api.js -e MODE=sync` | 회차 A~C. 같은 빌드에 두 엔드포인트 공존 |
-| 주문 · 개선 후 (비동기 접수) | main | | `01-order-api.js` (MODE=async) | 회차 A~D. 초안 [PORTFOLIO-1-2-draft.md](PORTFOLIO-1-2-draft.md) |
+| 주문 · 동기 (비교 기준) | main | | `01-order-api.js -e MODE=sync` | 회차 B·A·S·C (2절 "주문: 회차 구성"). 같은 빌드에 두 엔드포인트 공존 |
+| 주문 · 비동기 접수 | main | | `01-order-api.js` (MODE=async) | 회차 B·A·S·C. 헤드라인은 S(스파이크 흡수). 초안 [PORTFOLIO-1-2-draft.md](PORTFOLIO-1-2-draft.md) |
 | 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e MODEL=closed -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
 | 리뷰 ② 별도 통계 + 같은 트랜잭션 **(채택)** | main | (기본) | `02-review-api.js -e MODEL=closed -e TAG=sync` | ①→② = 모델 분리 + 원자 갱신의 결합 효과. 채택 검증(2절) |
 | 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 (비교군) | main | `--omp.review.stats.mode=async` | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 트랜잭션 분리 + 비동기 실행의 결합 효과 (응답 지연 이득 vs 반영 지연·누락 경로). 채택 여부를 가르지 않음 |
@@ -49,10 +49,19 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 
 1. **고정 rate** (`SCENARIO=fixed`, 기본): "초당 N건 유입 시 p95/p99와 에러율". 전/후 **모두 감당 가능한 rate**로 고정해야 비교가 성립한다.
 2. **고정 VU** (`MODEL=closed`, 리뷰 ①②③): VUS명이 응답을 받은 뒤 다음 요청을 보낸다(nGrinder vUser 방식). VU 수를 고정하며, 응답 시간과 스크립트 실행 시간에 따라 실제 유입률은 달라진다. 리뷰는 "같은 VU 수에서 성공 응답 수·p95·실패·정합성"을 비교한다. "같은 유입률에서 응답 지연 개선"을 주장하려면 ②·③에 같은 RATE의 open model을 추가한다.
-3. **용량**: "측정 조건에서 503(또는 p95>200ms) 없이 유지한 최대 유입률". k6 summary의 p95는 전체 집계라 램프 한 번으로는 한계 시점을 읽을 수 없다.
-   - 탐색: `-e SCENARIO=ramp -e THRESHOLDS=off --out csv=...` (단계마다 RAMP 상승 + HOLD 유지). 시계열에서 HOLD 구간별 p95·503을 계산해 후보 구간을 본다.
-   - 확정: 후보 rate마다 `SCENARIO=fixed`를 3~5분씩 따로 돌려 rate별 p95·503 표를 만든다 (계단식 고정 run). 15분 본측정은 확정 rate에서.
+3. **용량** (주문 A): W 비율 계단마다 `SCENARIO=fixed`를 4분씩 따로 돌리는 계단식 고정 run. k6 요약은 run 전체를 집계하므로 계단을 run 하나로 합치지 않는다. 판정 기준은 "주문: 회차 구성" 표. `SCENARIO=ramp`는 빠른 탐색용 보조로만 쓴다.
 4. **포화** (`SCENARIO=saturate`, 풀 크기 파일럿 전용): VUS명이 쉬지 않고 요청해 서버를 포화시킨 상태의 처리량을 잰다. 아래 "풀 크기 산정" 1단계에서만 쓴다.
+5. **스파이크** (`SCENARIO=spike`, 주문 S 회차): 평상시 → 순간 급증 → 평상시. 구간(phase)별 지연·거절이 요약에 따로 나온다.
+
+### 주문: 요구값과 근거 (2026-09-26 확정)
+
+비동기 접수의 역할은 **순간 유입(쿠폰 오픈·푸시 발송 직후)을 흡수**하는 것이다. 정상 상태에서는 두 방식 모두 같은 DB 처리량에 묶이고, 비동기의 확정 시간(접수 + 저장)은 동기 응답보다 짧아지지 않는다. 지속 유입이 처리량을 넘는 저녁 피크는 비동기로 해결되지 않는 용량 문제이며 A·C 회차로 확인한다.
+
+| 요구 | 값 | 근거 (서비스 데이터가 아닌 가정임을 명시) |
+|---|---|---|
+| 접수 응답 | 성공 응답 p95 ≤ 200ms | 원 포폴 목표(평균 200ms)를 p95로 강화. 응답 시간 기준(Nielsen: 0.1초 즉각, 1초 흐름 유지, 10초 주의 한계)에 비춰 모바일 왕복 지연을 더해도 1초보다 한참 아래. LAN에서 잰 서버 측 값이다 |
+| 저장 완료 | 제출 → 커밋 p99 ≤ 30초 | 10초를 넘으면 진행 표시가 필요하며 SSE로 "처리 중"을 보여준다. 동기 경로의 커넥션 대기 한도(Hikari 기본 30초)와 같아 "동기라면 실패로 끝났을 시점 안에 저장한다"는 비교 기준이 된다. 상태 TTL·SSE 타임아웃(5분)의 1/10. 줄이면 흡수량이 줄고(10초 → 큐 1/3), 늘리면 대기가 길어진다 |
+| 초과분 | 즉시 503 + Retry-After | 허용 지연 안에 저장할 수 없는 분량은 받지 않는다 |
 
 ### 풀 크기 산정 (주문·리뷰 공통, 본측정 전 확정)
 
@@ -101,6 +110,29 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 
 # 확정: application.properties 에 hikari = P, insert core = max = k, insert queue = Q, reviewStats core = max = P/2 를 반영한다.
 ```
+
+### 주문: 회차 구성 (B / A / S / C)
+
+설정은 위 "풀 크기 산정" 확정값으로 고정하고, 부하는 모두 파일럿 P2에서 잰 W 기준이다. 전부 open model이며 동기·비동기는 같은 서버에서 URL만 다르다.
+
+| 회차 | 상황 | 부하 | 판정·기록 | 반복 |
+|---|---|---|---|---|
+| **B. 평상시** | 한가한 시간 | 0.5W 고정 15분, `THRESHOLDS=strict` | 두 모드 모두 threshold 통과(오류 0, p95 < 200ms). 비동기 저장 완료 p95·p99(전체 구간). 확정 시간(접수 + 저장 완료)이 동기 응답과 비슷한지 = 비동기가 평소에 치르는 비용 | 모드별 3회 |
+| **A. 용량** | 저녁 피크가 어디까지 버티나 | 0.6 / 0.8 / 1.0 / 1.2 / 1.4 × W, 계단마다 4분, `off` | 동기: 접수(=저장) p95 ≤ 200ms, 실패 0, dropped 0. 비동기: 접수 p95 ≤ 200ms, 503 0, 실패 0, 계단 끝의 큐 길이 ≤ W×1초(큐가 늘지 않음), 저장 완료 p99 ≤ 30초. **"통과한 최대 단계 / 처음 실패한 단계"** 구간으로 보고 | 1회 |
+| **S. 스파이크** (헤드라인) | 쿠폰 오픈·푸시 직후 | `SCENARIO=spike`: 0.5W 120초 → 5초 만에 2W → 60초 유지 → 0.5W 300초, `off` | 비동기: spike 구간 접수 p95 ≤ 200ms, 저장 완료 p99 ≤ 30초(판정 구간 = 스파이크 시작 ~ 끝+90초), 거절 비율, 큐 최대·소진 시각, 503 응답 p95. 동기: spike 구간 p95·p99·max, 5xx·타임아웃, dropped, tomcat_busy | 모드별 3회 |
+| **C. 지속 초과** | 저녁 피크가 용량을 넘을 때 | 1.5W 고정 5분, `off`, MAX_VUS 4000 | 비동기: 큐가 찬 뒤 초과분을 계속 503으로 거절하면서 접수 p95·저장 완료 p99를 유지하는가. 동기: 붕괴 양상(p95·5xx·dropped·tomcat_busy) | 모드별 1회 (동작 확인) |
+
+**S 예측 (측정 전에 기록, 큐 Q = 24W 기준)**
+
+| 구간 | 예측 |
+|---|---|
+| 스파이크 시작 ~ 약 24초 | 초과분(초당 W)이 큐에 쌓이고 전부 202 |
+| 그 뒤 스파이크 끝까지 | 큐가 가득 차 초과분은 즉시 503. 스파이크 요청의 약 30% 거절 |
+| 저장 완료 지연 | 최대 약 24초 (한도 30초 안) |
+| 스파이크 뒤 | 초당 0.5W로 비워져 약 48초 뒤 소진 |
+| 동기 | 대기가 쌓여 지연이 수 초 이상으로 늘고, 30초를 넘긴 요청은 커넥션 대기 타임아웃(500). VU 부족으로 dropped 발생 |
+
+예측과 측정이 다르면 그 차이 자체가 분석 대상이다(스파이크 중 W 하락, 접수 경로와의 커넥션 경쟁 등). B의 0.5W는 두 모드가 모두 감당하는 부하라 strict 판정이 성립한다.
 
 ### 리뷰: 설계 판단 기준 (2026-09-24 확정)
 
@@ -176,36 +208,45 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 7. 종료 후 **완료 대기**: `queued=0`·`active=0`이 되고 `COUNT(*)`가 더 변하지 않을 때까지. 제한 5분 초과 시 "미완료"로 기록한다.
 8. 해당 설계의 검증 SQL 실행: ①은 1)·1-b)와 주석 해제한 4-a)·4-b), ②·③은 1)·1-b)·2)·2-b)·2-c). 리뷰는 `SELECT COUNT(*) FROM reviews`도 기록한다. 주문은 3)을 사용한다. 서버 로그와 k6 JSON·CSV·폴링 CSV를 `benchmark/results/<날짜>-<TAG>-r<N>/`로 이동.
 9. 같은 조건 **3회** → 성능은 중앙값과 범위, 오류·불일치는 **모든 회차의 건수**를 기록. 회차 사이 5분 휴식하고 클럭·온도를 확인한다. 가능하면 리뷰 실행 순서를 ①②③ / ②③① / ③①②로 순환해 특정 설계가 항상 마지막에 측정되는 것을 피한다.
-10. 주문 회차 A(계단식)는 탐색용이라 1~5 를 rate 계단마다 반복하지 않는다. 시작 시 한 번 하고, 계단 사이에는 폴링으로 `queued=0`·`active=0` 만 확인한다. B·C·리뷰 ①②③은 1~9 전부.
+10. 주문 A(용량 계단)는 계단마다 재시작하지 않고 `reset-round.sql`과 잔여 작업 0 확인만 한다(명령의 read 프롬프트). 주문 B·S·C와 리뷰 ①②③은 1~9 전부. 주문 B·S도 모드 순서를 회차마다 번갈아 둔다.
 
 ### 본측정 명령 (데스크탑, 리포 루트에서)
 ```bash
 S=http://<서버IP>:8080; OUT=benchmark/results
 
-# ── 주문: 회차 A~D (PORTFOLIO-1-2-draft.md 검증 방법). 전부 open model. 모드는 MODE=sync / async, 같은 서버에서 URL만 다름.
+# ── 주문: 회차 B·A·S·C (2절 "주문: 회차 구성"). 설정은 풀 크기 산정 확정값, 4절 폴링은 측정 내내 켜 둔다.
+#    B·S·C는 run마다 공통 절차 1~5(재시작 → 워밍업 → 소진 확인 → reset → 시작 전 값)를 수행하고, 모드 순서를 회차마다 번갈아 둔다.
+#    k6가 출력하는 "[run] 시작/종료" 시각(스파이크는 구간 시각)을 결과 문서에 옮긴다. 저장 완료 분포는 그 시각으로 hist_window.py 계산.
+W=<파일럿 P2의 W>
 
-# A. 접수 용량 — 계단식 고정 run. rate 마다 3~5분, sync·async 각각. THRESHOLDS=off (한계를 넘기는 게 목적. 판정은 결과값으로)
-#    "p95 < 200ms, 실패 0, 503 0" 을 지키는 최대 rate = 모드별 접수 용량. A 는 워밍업·reset 을 rate 계단마다 반복하지 않고 한 번만 한다.
-for R in 300 500 800 1000 1500; do
-  k6 run -e BASE_URL=$S -e RATE=$R -e DURATION=4m -e MODE=sync  -e THRESHOLDS=off -e TAG=A-r$R -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+# B. 평상시 — 0.5W 15분, strict. r1: sync→async, r2: async→sync, r3: sync→async
+B=$(( W / 2 ))
+k6 run -e BASE_URL=$S -e RATE=$B -e DURATION=15m -e MODE=sync  -e TAG=B-r1 -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+#   (공통 절차 1~5)
+k6 run -e BASE_URL=$S -e RATE=$B -e DURATION=15m -e MODE=async -e TAG=B-r1 -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+
+# A. 용량 계단 — 계단마다 두 모드를 번갈아 4분씩. 재시작은 생략하고 run마다 노트북에서 reset-round.sql 만 실행한다.
+for X in 0.6 0.8 1.0 1.2 1.4; do
+  R=$(awk "BEGIN{printf \"%d\", $W*$X}")
+  for M in sync async; do
+    read -p "[A x$X $M] 노트북에서 reset-round.sql 실행, queued=0·active=0 확인 후 Enter: "
+    k6 run -e BASE_URL=$S -e RATE=$R -e DURATION=4m -e MODE=$M -e THRESHOLDS=off -e TAG=A-x$X -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+  done
 done
-for R in 300 500 800 1000 1500; do
-  k6 run -e BASE_URL=$S -e RATE=$R -e DURATION=4m -e MODE=async -e THRESHOLDS=off -e TAG=A-r$R -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
-done
-#    (탐색만 빠르게 하려면 -e SCENARIO=ramp --out csv=... 로 한 번 훑고, 후보 rate 만 위 고정 run 으로 확정)
 
-# B. 같은 유입량 비교 — B_RATE = A 에서 확인한 sync 용량 근처. 15분 × 3회(TAG 의 r1~r3). THRESHOLDS=strict(기본): 둘 다 지켜야 비교 성립
-B_RATE=<A에서 확정>
-k6 run -e BASE_URL=$S -e RATE=$B_RATE -e DURATION=15m -e MODE=sync  -e TAG=B-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_sync_B-r1.csv  benchmark/k6/01-order-api.js
-k6 run -e BASE_URL=$S -e RATE=$B_RATE -e DURATION=15m -e MODE=async -e TAG=B-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_async_B-r1.csv benchmark/k6/01-order-api.js
+# S. 스파이크 (헤드라인) — r1: async→sync, r2: sync→async, r3: async→sync. 총 약 8분.
+k6 run -e BASE_URL=$S -e SCENARIO=spike -e W=$W -e MODE=async -e THRESHOLDS=off -e TAG=S-r1 -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+#   (공통 절차 1~5)
+k6 run -e BASE_URL=$S -e SCENARIO=spike -e W=$W -e MODE=sync  -e THRESHOLDS=off -e TAG=S-r1 -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+#   저장 완료 판정(비동기): k6가 출력한 "저장 완료 판정 구간"을 그대로 넣는다.
+#   python benchmark/tools/hist_window.py server-hist.txt --metric omp_order_async_completion_seconds --label outcome=completed --from <spike 시작> --to <spike 끝+90초> --slo 30
+#   큐 최대·소진 시각은 server-metrics.csv 의 insert_queued 시계열에서 읽는다.
 
-# C. 초과 유입 — C_RATE > sync 용량 (예: sync 용량의 1.5배). 15분. THRESHOLDS=off. MAX_VUS 를 넉넉히 (dropped 가 서버 포화인지 부하기 한계인지 구분).
-#    sync: p95·max·dropped·5xx 로 붕괴 양상. async: orders_rejected(503) == omp.order.async.rejected 증가분, orders_accepted == completed_orders.
-C_RATE=<A에서 확정>
-k6 run -e BASE_URL=$S -e RATE=$C_RATE -e DURATION=15m -e MODE=sync  -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=C-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_sync_C-r1.csv  benchmark/k6/01-order-api.js
-k6 run -e BASE_URL=$S -e RATE=$C_RATE -e DURATION=15m -e MODE=async -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=C-r1 -e OUT_DIR=$OUT --out csv=$OUT/order_async_C-r1.csv benchmark/k6/01-order-api.js
-
-# D. 완료 추적 — 별도 명령 없음. B·C 의 async 회차 동안 4절 폴링 CSV 를 켜 두고, k6 종료 후 queued=0·active=0 시각과 COUNT(*) 정지, hikari_pending 최대를 기록.
+# C. 지속 초과 — 1.5W 5분, off. 모드별 1회.
+C=$(awk "BEGIN{printf \"%d\", $W*1.5}")
+k6 run -e BASE_URL=$S -e RATE=$C -e DURATION=5m -e MODE=sync  -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=C-r1 -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
+#   (공통 절차 1~5)
+k6 run -e BASE_URL=$S -e RATE=$C -e DURATION=5m -e MODE=async -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=C-r1 -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
 
 # 리뷰: 각 명령 전에 해당 서버 브랜치·모드로 공통 절차 1~5를 수행한다. 세 명령을 같은 서버 모드에서 연속 실행하지 않는다.
 #   TAG는 결과 파일 이름일 뿐 서버 모드를 바꾸지 않는다. VUS·SHOP_POOL은 파일럿 확정값으로 세 설계에 동일 적용.
@@ -281,7 +322,7 @@ done
 
 해석 노트:
 - 바닥값은 참고선이다. **"API p95 − ping p95 = 서버 처리 시간"** 같은 뺄셈은 하지 않는다 (서로 다른 분포의 백분위수는 뺄 수 없다). 서버 내부 구간 시간은 별도 계측이 필요하다.
-- 비동기 주문에서 503이 나오면 insertTaskExecutor 포화 → 접수 거절(백프레셔). "측정 조건에서 503 없이 유지한 유입률"이 접수 용량이다. dropped_iterations·p95·다른 오류·완료 결과를 함께 확인한다. (CallerRunsPolicy는 제거됨. 포화 시 톰캣 스레드가 몰래 INSERT하는 구간은 없다.)
+- 비동기 주문에서 503이 나오면 insert 큐(Q = 30초분)가 가득 찬 것이다 → 접수 거절(백프레셔). 큐가 크므로 처리량 W를 조금 넘는 유입에서는 503이 몇 분 뒤에야 나온다. 그래서 지속 용량은 "503이 없었다"가 아니라 **"큐 길이가 늘지 않았다"**(A 회차 판정)로 본다. 스파이크(S)에서는 큐가 넘친 분량을 흡수하고 넘는 분량만 503이 된다. dropped_iterations·접수 p95·다른 오류·저장 완료 분포를 함께 확인한다. (CallerRunsPolicy는 제거됨. 포화 시 톰캣 스레드가 몰래 INSERT하는 구간은 없다.)
 - 유실 판정: `orders_accepted == completed_orders`(총건수)는 기본 점검이다. 누락과 중복이 상쇄될 수 있으므로 요청별 대조는 3단계 과제.
 - 리뷰 ②·③: `verify.sql` 2)·2-b)·2-c)가 모두 0행이어야 최종 집계가 일치한다. rejected·failed는 ③의 비동기 카운터이며, ②의 실패는 HTTP·롤백·로그로 확인한다. ②는 이 조건이 채택 검증의 일부이고, ③(비교군)은 두 카운터 증가분과 불일치를 건수로 기록한다.
 - **불일치 가게 수와 누락 갱신 수는 다르다.** 한 가게에 100건이 누락되면 2)의 결과는 1행이다. 개수 부족분은 2)의 가게별 `max(actual_count-review_count, 0)` 합계에 2-b)의 `reviews_without_stats_row` 합계를 더한다. 초과분은 2)의 `max(review_count-actual_count, 0)`을 별도로 합산한다. 부족분·초과분·불일치 가게 수·거절/실패 증가분을 따로 기록한다. 종료 후 남은 불일치는 **지속된 미반영**이며 단순 지연으로 설명하지 않는다.
@@ -296,7 +337,7 @@ done
 ```
 | 항목 | 값 |
 |---|---|
-| 측정일시 / 회차 / TAG | 2026-XX-XX / N회차 (3회 중) / 예: B-r1 (주문 A~D, 리뷰 before·sync·async) |
+| 측정일시 / 회차 / TAG | 2026-XX-XX / N회차 (3회 중) / 예: S-r1 (주문 B·A·S·C, 리뷰 before·sync·async) |
 | 커밋 SHA / 브랜치 | main <sha> 또는 bench/review-before <sha> |
 | 서버 | 노트북 모델, CPU, RAM, 전원 연결+최고 성능 모드, 클럭(HWiNFO) |
 | 부하기 | 데스크탑 CPU, RAM, OS, k6 버전, 측정 중 CPU·네트워크 사용 |
