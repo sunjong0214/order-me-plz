@@ -18,7 +18,7 @@ k6 version                          # 환경 표에 기록
 | 항목 | 값 |
 |---|---|
 | JDK | 21 (`java -version` 확인. 빌드 toolchain도 21) |
-| 빌드 | `./gradlew bootJar`. `gradle/wrapper/`는 gitignore 대상이라 클론에 없으면 `gradle wrapper --gradle-version 8.14.3`으로 생성하거나 시스템 Gradle 사용 |
+| 빌드 | `./gradlew bootJar` (Windows PowerShell은 `.\gradlew.bat bootJar`). Gradle wrapper(8.11.1)가 레포에 포함되어 JDK 21만 있으면 된다. 서버 노트북에서는 테스트(`test`·`build`)를 돌리지 않는다 |
 | DB 비밀번호 | `OMP_DB_PASSWORD` 환경변수 (미지정 시 1234) |
 | 리뷰 통계 모드 | `omp.review.stats.mode` = `sync`(기본, 채택) / `async`(비교군). 기동 인자로 덮어쓴다 |
 | 힙 | `-Xms2g -Xmx2g` 고정 (리사이즈 노이즈 제거) |
@@ -41,7 +41,7 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 (비교군) | main | `--omp.review.stats.mode=async` | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 트랜잭션 분리 + 비동기 실행의 결합 효과 (응답 지연 이득 vs 반영 지연·누락 경로). 채택 여부를 가르지 않음 |
 
 - 주문 전/후는 checkout 없이 같은 서버에서 URL만 바꾼다. 단, 동기 응답은 **저장 완료**까지, 비동기 응답은 **접수**까지라 계약이 다르다. 접수 지연과 커밋 완료량을 따로 기록하고 "저장 속도 개선"으로 쓰지 않는다.
-- `bench/review-before`는 **main에서 분기**해 `Shop`의 통계 필드 3개와 `ReviewService.saveReviewBy`를 바꾼 재구성 브랜치다. 애플리케이션의 스레드 풀·검증·예외 처리·설정은 같지만, ①→②에서는 통계 저장 위치와 갱신 방식이 함께 바뀐다. 모델 분리만의 성능 효과라고 해석하지 않는다. 옛 05ad2d8 기반 브랜치는 `bench/review-before-legacy-05ad2d8`로 남겨 두었고 측정에 쓰지 않는다 (CallerRuns 풀·Spring Retry·writerId 미할당이 섞여 비교가 오염된다).
+- `bench/review-before`는 **최신 main에서 분기**해 `Shop`의 통계 필드 3개와 `ReviewService.saveReviewBy` **두 파일만** 바꾼 재구성 브랜치다(2026-09-26 재분기: 이전 브랜치는 9/22 main 기준이라 이후의 계측·캐시·기본 모드·주문 수정이 빠져 main과 17개 파일이 달랐다). 애플리케이션의 스레드 풀·검증·예외 처리·설정·계측은 main과 같지만, ①→②에서는 통계 저장 위치와 갱신 방식이 함께 바뀐다. 모델 분리만의 성능 효과라고 해석하지 않는다. main이 바뀌면 같은 방식으로 다시 분기해 두 파일 차이를 유지한다. 옛 05ad2d8 기반 구성은 CallerRuns 풀·Spring Retry·writerId 미할당이 섞여 비교를 오염시키므로 쓰지 않는다.
 - 리뷰는 ②를 채택했다. ①→②에서 데드락·갱신 유실이 모델 분리와 원자 UPDATE로 해결되므로, ③의 분리는 결함 해결 수단이 아니라 별도의 선택이다. 그 선택은 응답 시간이 아니라 요구사항 우선순위(2절)로 판단했고, 측정은 ②가 그 요구를 만족하는지 검증하고 ③의 이득·대가를 기록하는 데 쓴다.
 - 옛 nGrinder 수치와는 도구가 다르므로 비교하지 않는다.
 
@@ -207,7 +207,7 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 
 ### 사전 준비 (1회)
 1. 노트북: 전원 연결 + "최고 성능" 전원 계획, 방화벽 8080 인바운드 허용, `ipconfig`로 IP 확인.
-2. MySQL: `SET GLOBAL innodb_print_all_deadlocks = ON` (에러 로그에 데드락 전건 기록). `verify.sql` 1)의 `status`가 `enabled`인지 확인.
+2. MySQL: `innodb_print_all_deadlocks`는 **OFF**로 둔다. ① 파일럿과 결정적 재현 테스트 때만 `SET GLOBAL innodb_print_all_deadlocks = ON`으로 켜서 락 정보를 캡처하고, 15분 본측정 전에 다시 끈다. ①은 요청 대부분이 데드락에 걸릴 수 있어 전건 로그가 ①에만 부하를 더해 ①②③ 성능 비교를 오염시키기 때문이다. 본측정의 데드락 수는 `verify.sql` 1)의 `lock_deadlocks` 증가분으로 센다(`status`가 `enabled`인지 확인).
 3. 새 스키마(OMP)로 main 서버 1회 기동 → 테이블 생성 확인 → `sql/seed.sql`.
 4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0.
 5. 결과 폴더 `benchmark/results/`가 있는지 확인. k6는 폴더를 만들지 않으므로 `OUT_DIR`는 존재하는 경로여야 한다.
@@ -280,11 +280,11 @@ k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -
 ### 리뷰 ① (개선 전, `bench/review-before`) 회차
 - `git checkout bench/review-before` → `./gradlew bootJar` → 기동. 첫 기동에서 ddl-auto=update가 `shops`에 `review_count`, `rating_sum`, `average_rating`을 추가한다.
 - 기존 행의 DECIMAL 컬럼은 NULL이라 `reset-round.sql` 하단 `UPDATE shops SET ... = 0`을 주석 해제해 실행해야 갱신 시 NPE가 나지 않는다.
-- **파일럿 1분 먼저.** `-e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot`에서 시작한다. 데드락 로그로 의도한 원인인지 확인하고, 부하기 여유·서버 자원 사용을 기록한다. 재현이 안 되면 FK·브랜치·초기화와 제어된 재현 테스트부터 확인한 뒤 SHOP_POOL·VUS를 조정한다. 특정 건수의 오류가 나올 때까지 부하를 올리는 것을 목표로 삼지 않는다. 확정 조건은 ①~③에 동일 적용한다.
+- **파일럿 1분 먼저.** `-e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot`에서 시작한다. 파일럿 동안만 `innodb_print_all_deadlocks = ON`으로 켜서 데드락 로그로 의도한 원인(FK S락 → 같은 행 X락)인지 확인하고, 끝나면 끈다. 부하기 여유·서버 자원 사용을 기록한다. 재현이 안 되면 FK·브랜치·초기화와 제어된 재현 테스트부터 확인한 뒤 SHOP_POOL·VUS를 조정한다. 특정 건수의 오류가 나올 때까지 부하를 올리는 것을 목표로 삼지 않는다. 확정 조건은 ①~③에 동일 적용한다.
 - closed model 에서는 ①의 데드락 롤백(500)이 빠르게 끝나 처리량이 오히려 높게 보일 수 있다. 처리량은 반드시 `reviews_created`(2xx) 기준으로 비교하고 `iterations` 를 쓰지 않는다.
 - **판정은 threshold가 아니다.** `http_req_failed`가 1% 미만이어도 데드락은 발생한다. `lock_deadlocks` 증가분과 락 로그를 근거로 삼고, `reviews_5xx`에는 다른 원인이 섞일 수 있으므로 따로 대조한다. `verify.sql` 4-a)로 저장된 리뷰와 shops 통계의 차이를 확인한다.
 - 이 회차는 `shop_review_stats`를 갱신하지 않으므로 2)·2-b)·2-c)를 정합성 근거로 쓰지 않는다. 4-a)와 shops의 평균을 별도로 확인한다.
-- 이 브랜치에서 main의 정합성 테스트(`ReviewStats*Test`)는 실패한다. 벤치마크 전용 브랜치다.
+- 이 브랜치에서 main의 정합성 테스트(`ReviewStats*Test`)는 실패한다. 벤치마크 전용 브랜치다. main과 같은 테스트 DB 가드(`OMP_TEST` 확인)가 있어 테스트를 돌려도 OMP는 지워지지 않지만, 서버 노트북에서는 `bootJar`만 쓴다.
 
 ## 4. 서버 측 지표 폴링 (k6가 못 재는 것)
 
