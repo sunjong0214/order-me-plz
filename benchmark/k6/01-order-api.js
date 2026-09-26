@@ -31,7 +31,7 @@
 
 import http from 'k6/http';
 import { check } from 'k6';
-import { Counter } from 'k6/metrics';
+import { Counter, Trend } from 'k6/metrics';
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 
 const BASE = __ENV.BASE_URL || 'http://localhost:8080';
@@ -51,6 +51,9 @@ const PATH = MODE === 'sync' ? '/api/v1/order' : '/api/v1/order/async';
 const accepted = new Counter('orders_accepted');        // 검증 통과 응답 수. "접수량"은 이 값이다 (iterations 아님)
 const rejected = new Counter('orders_rejected');        // 503: insertTaskExecutor 포화로 접수 거절 (백프레셔)
 const failedOther = new Counter('orders_failed_other'); // 503 이외의 실패 (4xx, 500, 타임아웃 등)
+// 응답 종류별 지연. http_req_duration 은 202와 503이 섞이므로 접수 p95 판정은 order_accepted_duration 으로 한다.
+const acceptedDuration = new Trend('order_accepted_duration', true); // 접수(비동기 202) / 저장 완료(동기 200) 응답
+const rejectedDuration = new Trend('order_rejected_duration', true); // 503 거절 응답. 거절도 빨라야 백프레셔가 성립한다
 
 function scenario() {
   if (SCENARIO === 'saturate') {
@@ -121,9 +124,15 @@ export default function () {
         'has sse location': (r) => (r.headers['Location'] || '').includes('/api/v1/order/sse/'),
       });
 
-  if (ok) accepted.add(1);
-  else if (res.status === 503) rejected.add(1);
-  else failedOther.add(1);
+  if (ok) {
+    accepted.add(1);
+    acceptedDuration.add(res.timings.duration);
+  } else if (res.status === 503) {
+    rejected.add(1);
+    rejectedDuration.add(res.timings.duration);
+  } else {
+    failedOther.add(1);
+  }
 }
 
 export function handleSummary(data) {

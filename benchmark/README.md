@@ -97,7 +97,7 @@ k6 run -e BASE_URL=$S -e MODE=sync -e SCENARIO=saturate -e VUS=64 -e DURATION=3m
 #   ... --spring.datasource.hikari.maximum-pool-size=<P> --omp.executor.insert.core=<4|6|8> --omp.executor.insert.max=<같은 값> --omp.executor.insert.queue=100
 #   RATE: P1 처리량의 1.5배. 503이 나와야 포화된 것이며, 503이 없으면 RATE를 올린다.
 k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=P2-k<k> -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
-#   기록: orders_accepted ÷ 180초 = W, http_req_duration{expected_response:true}의 p95(202만), 503 수, hikari_pending.
+#   기록: orders_accepted ÷ 180초 = W, order_accepted_duration p95(202만), order_rejected_duration p95, 503 수, hikari_pending.
 
 # 확정: application.properties 에 hikari = P, insert core = max = k, insert queue = Q, reviewStats core = max = P/2 를 반영한다.
 ```
@@ -209,13 +209,13 @@ k6 run -e BASE_URL=$S -e RATE=$C_RATE -e DURATION=15m -e MODE=async -e THRESHOLD
 
 # 리뷰: 각 명령 전에 해당 서버 브랜치·모드로 공통 절차 1~5를 수행한다. 세 명령을 같은 서버 모드에서 연속 실행하지 않는다.
 #   TAG는 결과 파일 이름일 뿐 서버 모드를 바꾸지 않는다. VUS·SHOP_POOL은 파일럿 확정값으로 세 설계에 동일 적용.
-#   아래는 r1 예시. r2·r3도 각각 초기화 후 실행하며, CSV는 성공 응답 지연을 따로 집계하기 위해 저장한다.
+#   아래는 r1 예시. r2·r3도 각각 초기화 후 실행한다. 성공 응답 지연은 reviews_success_duration 으로 요약에 나오므로 CSV는 필요 없다.
 # ① bench/review-before
-k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=before-r1 -e OUT_DIR=$OUT -e THRESHOLDS=off --out csv=$OUT/review_before_r1.csv benchmark/k6/02-review-api.js
+k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=before-r1 -e OUT_DIR=$OUT -e THRESHOLDS=off benchmark/k6/02-review-api.js
 # ② main, 기본 기동 (채택. 2절 채택 검증 조건으로 판정)
-k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=sync-r1 -e OUT_DIR=$OUT --out csv=$OUT/review_sync_r1.csv benchmark/k6/02-review-api.js
+k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=sync-r1 -e OUT_DIR=$OUT benchmark/k6/02-review-api.js
 # ③ main, --omp.review.stats.mode=async (비교군)
-k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async-r1 -e OUT_DIR=$OUT --out csv=$OUT/review_async_r1.csv benchmark/k6/02-review-api.js
+k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async-r1 -e OUT_DIR=$OUT benchmark/k6/02-review-api.js
 # ②의 p95만 한도를 넘으면 2절대로 같은 VUS에서 -e SHOP_POOL=1000 회차를 3회 추가한다.
 # ③의 대가를 같은 유입률에서 보이려면(선택) ②·③에 MODEL=closed·VUS 대신 MODEL=open과 같은 RATE를 쓴다.
 #   RATE는 ②가 감당하는 값(② closed 성공 처리량 이하), SHOP_POOL·DURATION 동일, dropped_iterations=0 확인.
@@ -232,21 +232,34 @@ k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -
 
 ## 4. 서버 측 지표 폴링 (k6가 못 재는 것)
 
-5초 간격 CSV. 두 풀의 queued·active, 거절·실패 카운터, Hikari 대기를 함께 본다. (Git Bash, 종료는 Ctrl+C)
+5초 간격으로 두 파일을 남긴다. (Git Bash, 종료는 Ctrl+C)
+- `server-metrics.csv`: 두 풀의 queued·active, 거절·실패 카운터, Hikari 대기, Tomcat 바쁜 스레드 (시계열)
+- `server-hist.txt`: 지연 Timer의 누적 히스토그램 버킷 줄. 누적값이라 두 시점 차이로 임의 구간의 분포를 계산한다 (`benchmark/tools/hist_window.py`)
 
 ```bash
 S=http://<서버IP>:8080
 m() { curl -s "$S/actuator/metrics/$1" | grep -o '"value":[0-9.E+-]*' | head -1 | cut -d: -f2; }
-echo "time,insert_queued,insert_active,stats_queued,stats_active,order_rejected,stats_rejected,stats_failed,hikari_active,hikari_pending" > server-metrics.csv
+echo "time,insert_queued,insert_active,stats_queued,stats_active,order_rejected,order_failed,stats_rejected,stats_failed,hikari_active,hikari_pending,tomcat_busy" > server-metrics.csv
+: > server-hist.txt
 while true; do
-  echo "$(date +%T),$(m 'executor.queued?tag=name:insertTaskExecutor'),$(m 'executor.active?tag=name:insertTaskExecutor'),$(m 'executor.queued?tag=name:reviewStatsExecutor'),$(m 'executor.active?tag=name:reviewStatsExecutor'),$(m omp.order.async.rejected),$(m omp.review.stats.rejected),$(m omp.review.stats.failed),$(m hikaricp.connections.active),$(m hikaricp.connections.pending)" | tee -a server-metrics.csv
+  T=$(date +%T)
+  echo "$T,$(m 'executor.queued?tag=name:insertTaskExecutor'),$(m 'executor.active?tag=name:insertTaskExecutor'),$(m 'executor.queued?tag=name:reviewStatsExecutor'),$(m 'executor.active?tag=name:reviewStatsExecutor'),$(m omp.order.async.rejected),$(m omp.order.async.failed),$(m omp.review.stats.rejected),$(m omp.review.stats.failed),$(m hikaricp.connections.active),$(m hikaricp.connections.pending),$(m tomcat.threads.busy)" | tee -a server-metrics.csv
+  curl -s "$S/actuator/prometheus" | grep -E '^omp_(order_async_(completion|queue_wait)|review_stats_lag)_seconds_(bucket|count)' | sed "s/^/$T /" >> server-hist.txt
   sleep 5
 done
 ```
 
-- **잔여 작업 종료 관측 시점** = k6 종료 후 해당 풀의 `queued=0`이고 `active=0`이 처음 관측된 시각. 이후 원본 행 수와 통계가 안정됐는지 확인한다. 5초에 조회 비용이 더해지는 폴링이므로 실제 샘플 간격과 함께 기록하며, 정확한 완료 시각이나 개별 작업 지연으로 해석하지 않는다.
-- 큐 용량만으로 큐가 비는 시간을 단정하지 않는다. 리뷰는 작업이 끝난 뒤에도 거절·실패로 통계가 누락될 수 있으므로 최종 SQL 검증을 함께 한다. 리뷰별 통계 반영 지연을 주장하려면 리뷰 커밋부터 stats 커밋까지 별도 계측이 필요하다.
+- **서버 지연 Timer** (모두 버킷 5ms~120s, 20~30초 구간은 5초 간격)
+  - `omp.order.async.completion{outcome=completed|failed}`: 비동기 주문의 제출(검증 통과 후)부터 저장 커밋까지. 사용자가 체감하는 확정 시간 ≈ k6 `order_accepted_duration` + 이 값
+  - `omp.order.async.queue.wait`: 제출부터 워커가 작업을 시작할 때까지의 큐 대기. completion − queue.wait ≈ INSERT 시간
+  - `omp.review.stats.lag`: 리뷰 커밋부터 통계 커밋까지 (③ 비교군에서만 기록)
+- **구간 분포 계산**: 예) 스파이크 구간의 저장 완료 분포와 30초 이내 비율.
+  `python benchmark/tools/hist_window.py server-hist.txt --metric omp_order_async_completion_seconds --label outcome=completed --from <시작> --to <끝> --slo 30`
+  구간은 폴링 간격(5초)만큼 넓어질 수 있다. 백분위수는 버킷 안 보간 추정이고, `--slo 30`의 "30초 이하 비율"은 버킷 경계라 정확한 값이다(p99 ≤ 30초 ⇔ 이 비율 ≥ 99%). 서버를 재시작하면 누적값이 초기화되므로 같은 기동 안의 구간만 계산한다.
+- **잔여 작업 종료 관측 시점** = k6 종료 후 해당 풀의 `queued=0`이고 `active=0`이 처음 관측된 시각. 이후 원본 행 수와 통계가 안정됐는지 확인한다. 5초에 조회 비용이 더해지는 폴링이므로 실제 샘플 간격과 함께 기록한다. 개별 작업의 지연은 위 Timer로 본다.
+- 큐 용량만으로 큐가 비는 시간을 단정하지 않는다. 리뷰는 작업이 끝난 뒤에도 거절·실패로 통계가 누락될 수 있으므로 최종 SQL 검증을 함께 한다.
 - `hikari_pending`이 **0보다 큰 상태**로 관측되면 커넥션 획득 대기가 있다는 뜻이다. 지속 시간과 응답 지연을 함께 기록한다. 5초 표본의 최댓값은 순간 최대치를 보장하지 않는다.
+- `tomcat_busy`가 200(기본 최대)에 붙으면 요청 스레드가 소진된 상태다. 동기 방식의 붕괴 양상을 설명하는 근거로 쓴다.
 
 ## 5. 결과 읽는 법
 
@@ -257,8 +270,12 @@ done
 | 리뷰 15분 처리량 | `reviews_created` ÷ 15분 (closed model). ①②③ 같은 VUS 에서 비교 |
 | `orders_rejected` | 503 수. 서버 `omp.order.async.rejected` **증가분**과 같아야 한다 |
 | `orders_failed_other` / `reviews_5xx` | 그 외 실패 / 리뷰 5xx. 데드락 외 원인을 포함할 수 있으므로 로그와 대조 |
-| `completed_orders` (verify 3) | 커밋 완료량. **완료 시점 이후** 값 |
-| `http_req_duration` p95/p99 | 주문 sync는 저장 완료까지, async는 접수까지의 응답 시간 |
+| `completed_orders` (verify 3) | 커밋 완료량. **완료 시점 이후** 값. `orders_accepted` = `completed_orders` + `omp.order.async.failed` 증가분이어야 한다 |
+| `http_req_duration` p95/p99 | 응답 종류가 섞인 전체 지연. 판정에는 아래 Trend를 쓴다 |
+| `order_accepted_duration` | 주문 성공 응답만의 지연. 동기는 저장 완료(200)까지, 비동기는 접수(202)까지. **접수 p95 ≤ 200ms 판정** |
+| `order_rejected_duration` | 503 거절 응답의 지연. 거절도 빨라야 백프레셔가 성립한다 (거절은 검증 SELECT 뒤에 일어난다) |
+| `reviews_success_duration` | 리뷰 2xx 응답만의 지연. **② 채택 검증(p95 ≤ 500ms)** |
+| `omp.order.async.completion` 등 서버 Timer | 4절 참고. 비동기 저장 완료 p99 ≤ 30초 판정은 `hist_window.py --slo 30` |
 | `dropped_iterations` | **0**이어야 "초당 N건 유입 유지" 주장 성립. 쌓이면 `MAX_VUS` 부족 또는 서버 포화 |
 | `checks` | strict 회차에서 100% |
 
@@ -269,7 +286,7 @@ done
 - 리뷰 ②·③: `verify.sql` 2)·2-b)·2-c)가 모두 0행이어야 최종 집계가 일치한다. rejected·failed는 ③의 비동기 카운터이며, ②의 실패는 HTTP·롤백·로그로 확인한다. ②는 이 조건이 채택 검증의 일부이고, ③(비교군)은 두 카운터 증가분과 불일치를 건수로 기록한다.
 - **불일치 가게 수와 누락 갱신 수는 다르다.** 한 가게에 100건이 누락되면 2)의 결과는 1행이다. 개수 부족분은 2)의 가게별 `max(actual_count-review_count, 0)` 합계에 2-b)의 `reviews_without_stats_row` 합계를 더한다. 초과분은 2)의 `max(review_count-actual_count, 0)`을 별도로 합산한다. 부족분·초과분·불일치 가게 수·거절/실패 증가분을 따로 기록한다. 종료 후 남은 불일치는 **지속된 미반영**이며 단순 지연으로 설명하지 않는다.
 - 리뷰 ①: 데드락 증가분·락 로그, 4-a)의 불일치 가게 수와 개수 부족/초과분을 별도로 기록한다. ①→②는 모델 분리와 원자 갱신의 결합 효과다.
-- 리뷰 지연: k6 요약의 `http_req_duration`은 실패 응답까지 포함한다. CSV에서 `metric_name=http_req_duration`의 전체 표본과 `200 <= status < 300` 표본을 구분해 p95·p99를 계산한다. 성공 표본이 없으면 0ms 대신 "측정 불가"로 기록한다.
+- 리뷰 지연: k6 요약의 `http_req_duration`은 실패 응답까지 포함한다. 성공 응답 p95·p99는 `reviews_success_duration`으로 요약에 바로 나온다. 성공 표본이 없으면 0ms 대신 "측정 불가"로 기록한다.
 - 리뷰 저장 수: `reviews_created`와 `SELECT COUNT(*) FROM reviews`를 함께 기록한다. 응답 유실·타임아웃이 있으면 서버 커밋 수와 클라이언트 성공 응답 수가 달라질 수 있으며, 총건수 일치는 요청별 대조를 대신하지 않는다.
 - 설계 해석: ①→②는 결함 제거의 근거, ② 단독 결과는 채택 검증(2절), ②→③은 비교군 기록이다. ③의 p95가 더 낮아도 채택 근거가 되지 않는다(2절 우선순위상 4순위 항목). closed model의 지연 차이는 같은 VU 수에서의 결과이며 같은 유입률의 비교가 아니다.
 - 주문 측정은 POST 응답만 본다. SSE 연결·폴링을 포함한 전체 사용자 흐름의 성능은 아니다. 결과 표에 범위를 명시한다.

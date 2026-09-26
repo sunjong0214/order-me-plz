@@ -34,6 +34,7 @@ class ReviewStatsAsyncModeTest {
 
     @Test
     void 커밋_후_통계가_최종적으로_일치하고_거절은_없다() {
+        long lagBefore = lagCount();
         assertThat(ReviewStatsModeSupport.postReview(rest, 5).getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(ReviewStatsModeSupport.postReview(rest, 1).getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -47,5 +48,13 @@ class ReviewStatsAsyncModeTest {
 
         var rejected = meterRegistry.find("omp.review.stats.rejected").counter();
         assertThat(rejected == null ? 0.0 : rejected.count()).isZero();
+
+        // 반영 지연 Timer: 성공한 통계 갱신마다 1건 (기록은 커밋 직후라 폴링으로 기다린다)
+        assertThat(TestFixtures.awaitUntil(() -> lagCount() - lagBefore == 2, Duration.ofSeconds(5))).isTrue();
+    }
+
+    private long lagCount() {
+        var lag = meterRegistry.find("omp.review.stats.lag").timer();
+        return lag == null ? 0 : lag.count();
     }
 }

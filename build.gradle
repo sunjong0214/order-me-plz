@@ -35,6 +35,8 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	// 벤치마크 계측: 지연 Timer를 누적 히스토그램(/actuator/prometheus)으로 노출해 구간별 분포·SLO 충족률을 계산한다
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	// lombok Test 적용
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'

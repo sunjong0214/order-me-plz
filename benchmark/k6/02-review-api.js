@@ -24,13 +24,13 @@
 // 명령은 저장소 루트 기준. 워밍업에서 closed 모드의 RATE만 낮춰도 VUS는 바뀌지 않으므로 MODEL·VUS를 확인한다.
 // 스모크:  k6 run -e BASE_URL=http://<서버IP>:8080 -e MODEL=open -e RATE=5 -e DURATION=30s benchmark/k6/02-review-api.js
 // 파일럿:  k6 run -e BASE_URL=http://<서버IP>:8080 -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=1m -e THRESHOLDS=off -e TAG=before-pilot benchmark/k6/02-review-api.js
-// 본측정:  k6 run -e BASE_URL=http://<서버IP>:8080 -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async-r1 -e OUT_DIR=benchmark/results --out csv=benchmark/results/review_async_r1.csv benchmark/k6/02-review-api.js
+// 본측정:  k6 run -e BASE_URL=http://<서버IP>:8080 -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=sync-r1 -e OUT_DIR=benchmark/results benchmark/k6/02-review-api.js
 //          처리량은 iterations 가 아니라 reviews_created(2xx) 로 비교한다. ①의 빠른 500 응답이 iterations 를 부풀린다.
-//          summary 지연은 전체 응답 기준. 성공 응답 p95·p99는 CSV의 http_req_duration 중 2xx 표본을 별도로 집계한다.
+//          http_req_duration 은 실패 응답까지 포함한다. 성공 응답 p95·p99는 reviews_success_duration 으로 요약에 바로 나온다(CSV 후처리 불필요).
 
 import http from 'k6/http';
 import { check } from 'k6';
-import { Counter } from 'k6/metrics';
+import { Counter, Trend } from 'k6/metrics';
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 
 const BASE = __ENV.BASE_URL || 'http://localhost:8080';
@@ -47,6 +47,7 @@ const OUT_DIR = (__ENV.OUT_DIR || '.').replace(/[\\/]+$/, '');
 const created = new Counter('reviews_created');  // 리뷰 저장 성공 응답(2xx). ③의 통계 반영 완료까지 의미하지 않음
 const failed5xx = new Counter('reviews_5xx');    // 데드락 외 5xx도 포함. lock_deadlocks 증가분·락 로그와 대조한다
 const failedOther = new Counter('reviews_failed_other');
+const successDuration = new Trend('reviews_success_duration', true); // 2xx 응답만의 지연. ② 채택 검증(p95 ≤ 500ms)에 쓴다
 
 function scenario() {
   if (MODEL === 'closed') {
@@ -95,9 +96,14 @@ export default function () {
     'status is 2xx': (r) => r.status >= 200 && r.status < 300,
   });
 
-  if (ok) created.add(1);
-  else if (res.status >= 500) failed5xx.add(1);
-  else failedOther.add(1);
+  if (ok) {
+    created.add(1);
+    successDuration.add(res.timings.duration);
+  } else if (res.status >= 500) {
+    failed5xx.add(1);
+  } else {
+    failedOther.add(1);
+  }
 }
 
 export function handleSummary(data) {

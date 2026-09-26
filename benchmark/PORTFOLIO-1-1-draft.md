@@ -118,7 +118,7 @@ WHERE shop_id = :shopId
 | 데드락 판정 | `information_schema.INNODB_METRICS.lock_deadlocks` 증가분과 데드락 로그. 5xx를 전부 데드락으로 간주하지 않음 |
 | 정합성 판정 | 작업 종료 후 리뷰 원본 집계와 count·sum 일치, 통계 행 누락 0, 평균 = ROUND(sum/count, 2). ①은 shops, ②·③은 stats와 비교 |
 | ② 채택 검증 | 모든 회차에서 데드락·불일치·실패 0, 성공 응답 p95 ≤ 500ms. p95만 넘으면 `SHOP_POOL=1000` 분산 회차를 추가해 판단 |
-| 응답 지연 | 전체 응답과 성공 응답의 p95·p99를 구분 |
+| 응답 지연 | 전체 응답과 성공 응답(`reviews_success_duration`)의 p95·p99를 구분 |
 
 closed model에서는 응답이 빨라지면 유입률도 바뀐다. ②→③ 결과는 같은 VU 수에서의 비교로 한정하고, 같은 유입률에서 ③의 대가를 보이려면 open model 회차를 추가한다.
 
