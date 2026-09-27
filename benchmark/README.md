@@ -19,15 +19,25 @@ k6 version                          # 환경 표에 기록
 |---|---|
 | JDK | 21 (`java -version` 확인. 빌드 toolchain도 21) |
 | 빌드 | `./gradlew bootJar` (Windows PowerShell은 `.\gradlew.bat bootJar`). Gradle wrapper(8.11.1)가 레포에 포함되어 JDK 21만 있으면 된다. 서버 노트북에서는 테스트(`test`·`build`)를 돌리지 않는다 |
-| DB 비밀번호 | `OMP_DB_PASSWORD` 환경변수 (미지정 시 1234) |
-| 리뷰 통계 모드 | `omp.review.stats.mode` = `sync`(기본, 채택) / `async`(비교군). 기동 인자로 덮어쓴다 |
+| 설정 | 리포 루트의 `.env` (`cp .env.example .env`, 추적하지 않음). DB 접속, Hikari P, Tomcat 스레드, 리뷰 통계 모드, 세 executor 풀. 바꾼 뒤 **재시작만** 하면 된다(재빌드 불필요). 우선순위: 기동 인자 > OS 환경변수 > `.env` > `application.properties` 기본값 |
+| 기동 위치 | **리포 루트** (`.env`를 상대 경로로 읽는다. 다른 곳에서 기동하면 조용히 기본값으로 뜬다) |
+| 리뷰 통계 모드 | `OMP_REVIEW_STATS_MODE` = `sync`(기본, 채택) / `async`(비교군) |
 | 힙 | `-Xms2g -Xmx2g` 고정 (리사이즈 노이즈 제거) |
 
 ```bash
 ./gradlew bootJar
-OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar
-# 리뷰 ③ 회차만: 위 명령 끝에  --omp.review.stats.mode=async
+cp .env.example .env      # 최초 1회. DB 비밀번호 등 수정
+java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar
+# 리뷰 ③ 회차만: .env 에 OMP_REVIEW_STATS_MODE=async (또는 기동 인자 --OMP_REVIEW_STATS_MODE=async)
 ```
+
+기동 후 실제 적용값 확인 (환경 표에 기록). 로그 레벨이 warn이라 기동 완료 로그는 안 보이므로 `/ping`으로 확인한다.
+```bash
+S=http://localhost:8080
+m() { curl -s "$S/actuator/metrics/$1" | grep -o '"value":[0-9.E+-]*' | head -1 | cut -d: -f2; }
+echo "P=$(m hikaricp.connections.max) insert=$(m 'executor.pool.core?tag=name:insertTaskExecutor')/$(m 'executor.pool.max?tag=name:insertTaskExecutor')/q$(m 'executor.queue.remaining?tag=name:insertTaskExecutor') stats=$(m 'executor.pool.core?tag=name:reviewStatsExecutor')/$(m 'executor.pool.max?tag=name:reviewStatsExecutor') tomcat=$(m tomcat.threads.config.max)"
+```
+큐 크기(`queue.remaining`)는 큐가 빈 기동 직후에만 설정값과 같다.
 
 ## 1. 무엇을 무엇과 비교하는가
 
@@ -38,7 +48,7 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 | 주문 · 비동기 접수 | main | | `01-order-api.js` (MODE=async) | 회차 B·A·S·C. 헤드라인은 S(스파이크 흡수). 초안 [PORTFOLIO-1-2-draft.md](PORTFOLIO-1-2-draft.md) |
 | 리뷰 ① shops 통계 + 같은 트랜잭션 | `bench/review-before` | | `02-review-api.js -e MODEL=closed -e TAG=before -e THRESHOLDS=off` | 데드락·유실 재현 |
 | 리뷰 ② 별도 통계 + 같은 트랜잭션 **(채택)** | main | (기본) | `02-review-api.js -e MODEL=closed -e TAG=sync` | ①→② = 모델 분리 + 원자 갱신의 결합 효과. 채택 검증(2절) |
-| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 (비교군) | main | `--omp.review.stats.mode=async` | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 트랜잭션 분리 + 비동기 실행의 결합 효과 (응답 지연 이득 vs 반영 지연·누락 경로). 채택 여부를 가르지 않음 |
+| 리뷰 ③ 별도 통계 + AFTER_COMMIT 비동기 (비교군) | main | `OMP_REVIEW_STATS_MODE=async` | `02-review-api.js -e MODEL=closed -e TAG=async` | ②→③ = 트랜잭션 분리 + 비동기 실행의 결합 효과 (응답 지연 이득 vs 반영 지연·누락 경로). 채택 여부를 가르지 않음 |
 
 - 주문 전/후는 checkout 없이 같은 서버에서 URL만 바꾼다. 단, 동기 응답은 **저장 완료**까지, 비동기 응답은 **접수**까지라 계약이 다르다. 접수 지연과 커밋 완료량을 따로 기록하고 "저장 속도 개선"으로 쓰지 않는다.
 - `bench/review-before`는 **최신 main에서 분기**해 `Shop`의 통계 필드 3개와 `ReviewService.saveReviewBy` **두 파일만** 바꾼 재구성 브랜치다(2026-09-26 재분기: 이전 브랜치는 9/22 main 기준이라 이후의 계측·캐시·기본 모드·주문 수정이 빠져 main과 17개 파일이 달랐다). 애플리케이션의 스레드 풀·검증·예외 처리·설정·계측은 main과 같지만, ①→②에서는 통계 저장 위치와 갱신 방식이 함께 바뀐다. 모델 분리만의 성능 효과라고 해석하지 않는다. main이 바뀌면 같은 방식으로 다시 분기해 두 파일 차이를 유지한다. 옛 05ad2d8 기반 구성은 CallerRuns 풀·Spring Retry·writerId 미할당이 섞여 비교를 오염시키므로 쓰지 않는다.
@@ -70,7 +80,7 @@ OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNA
 원칙
 - 풀 크기는 시나리오(평상시·저녁 피크·쿠폰 이벤트)마다 바꾸지 않는다. **하나의 고정 설정**으로 세 상황을 모두 돌려, 그 설정이 모두 감당하는지 검증한다.
 - 병목(DB)에서 거꾸로 정한다: 커넥션 총량 P → insert 워커 k → 저장 처리량 W(측정) → insert 큐 Q.
-- 공식은 출발점이고 확정은 파일럿 측정으로 한다. 확정값은 `application.properties`에 반영해 모든 본측정(동기 비교군·리뷰 포함)에 같은 값을 쓴다.
+- 공식은 출발점이고 확정은 파일럿 측정으로 한다. 확정값은 `.env`와 `application.properties` 기본값에 반영해 모든 본측정(동기 비교군·리뷰 포함)에 같은 값을 쓴다.
 
 | 단계 | 값 | 출발점과 근거 | 확정 방법 |
 |---|---|---|---|
@@ -91,25 +101,28 @@ core = max로 두는 이유: ThreadPoolExecutor는 큐가 가득 차야 max까�
 
 **각 값이 겨냥하는 시나리오:** 커넥션 P와 워커 k는 저녁 피크(지속 처리량 W), 큐 Q는 쿠폰 이벤트(순간 흡수), 평상시는 여유와 비동기의 비용을 확인한다.
 
-**파일럿 절차 (본측정 전 1회).** 값은 기동 인자로만 바꾼다. run마다 서버 재시작 → 워밍업 1분 → `reset-round.sql` → 3분 측정. 측정 중 4절 폴링과 mysqld·java CPU 사용률을 함께 기록한다(처리량이 멈추는 원인이 CPU 공유인지 판단).
+**파일럿 절차 (본측정 전 1회).** 값은 서버 노트북의 `.env`나 기동 인자로 바꾼다(재빌드 없이 재시작, 기동 인자가 `.env`보다 우선). 2026-09-26~27 파일럿은 데스크톱에서 SSH로 서버를 기동하며 기동 인자로 넣었고, 적용값을 actuator(`hikaricp.connections.max`, `executor.pool.core`)로 매 회차 확인했다. run마다 서버 재시작 → 워밍업 1분 → `reset-round.sql` → 3분 측정. 측정 중 4절 폴링과 mysqld·java CPU 사용률을 함께 기록한다(처리량이 멈추는 원인이 CPU 공유인지 판단).
 
 ```bash
 S=http://<서버IP>:8080; OUT=benchmark/results
 
-# P1. 커넥션 총량 — 서버: P만 바꿔 4번 기동
-#   OMP_DB_PASSWORD=<비번> java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar --spring.datasource.hikari.maximum-pool-size=<5|10|15|20>
+# P1. 커넥션 총량 — 서버: .env 의 OMP_HIKARI_MAX_POOL_SIZE=<5|10|15|20> 만 바꿔 4번 기동
+#   java -Xms2g -Xmx2g -jar build/libs/OrderMePlz-0.0.1-SNAPSHOT.jar   (0절 확인 명령으로 P 적용 확인)
 #   VUS 64: 최대 P(20)보다 충분히 커서 풀이 항상 포화되고, Tomcat 200보다 작아 Tomcat이 제한 요인이 되지 않는다.
 k6 run -e BASE_URL=$S -e MODE=sync -e SCENARIO=saturate -e VUS=64 -e DURATION=3m -e THRESHOLDS=off -e TAG=P1-p<P> -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
 #   기록: orders_accepted ÷ 180초 = 처리량, p95, hikari_pending, CPU%.
 
 # P2. insert 워커 — 서버: P는 P1 확정값, 큐는 100으로 작게 둬서 접수량 = 완료량이 되게 한다
-#   ... --spring.datasource.hikari.maximum-pool-size=<P> --omp.executor.insert.core=<4|6|8> --omp.executor.insert.max=<같은 값> --omp.executor.insert.queue=100
+#   .env: OMP_HIKARI_MAX_POOL_SIZE=<P>, OMP_EXECUTOR_INSERT_CORE=<k>, OMP_EXECUTOR_INSERT_MAX=<같은 값>, OMP_EXECUTOR_INSERT_QUEUE=100
+#     (또는 기동 인자 --spring.datasource.hikari.maximum-pool-size=<P> --omp.executor.insert.core=<k> --omp.executor.insert.max=<k> --omp.executor.insert.queue=100)
+#   k 후보 4/6/8은 P = 10 기준(P의 약 0.4·0.6·0.8배, 나머지는 접수 경로 몫).
 #   RATE: 비동기 용량의 1.5배(2026-09-27 정정). 처음에는 P1 처리량(동기 용량)의 1.5배로 잡았으나 비동기 용량이 동기의 약 65%라 2.3배 과부하가 됐다.
 #         수정 전 코드로 잰 비동기(SPLIT) 용량 약 1,500/s → 2,250/s. 503이 나와야 포화된 것이며, 503이 없으면 RATE를 올린다.
 k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m -e THRESHOLDS=off -e MAX_VUS=4000 -e TAG=P2-k<k> -e OUT_DIR=$OUT benchmark/k6/01-order-api.js
 #   기록: orders_accepted ÷ 180초 = W, order_accepted_duration p95(202만), order_rejected_duration p95, 503 수, hikari_pending.
 
-# 확정: application.properties 에 hikari = P, insert core = max = k, insert queue = Q, reviewStats core = max = P/2 를 반영한다.
+# 확정: hikari = P, insert core = max = k, insert queue = Q, reviewStats core = max = P/2 를
+#   서버 .env 에 넣고, .env.example 과 application.properties 기본값에도 같은 값으로 맞춰 커밋한다(커밋 SHA만으로 설정 재현).
 ```
 
 **P1 결과 (2026-09-26): P = 10 확정.** 회차마다 직전 부하 종료 후 15분 휴식, 충전기 연결, 노트북 클럭 기록 조건에서 쟀다(상세·무효 회차는 [results/2026-09-26-P1/README.md](results/2026-09-26-P1/README.md)).
@@ -230,7 +243,7 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 3. 새 스키마(OMP)로 main 서버 1회 기동 → 테이블 생성 확인 → `sql/seed.sql`.
 4. 스모크: RATE 10, 30초로 01·02 실행 → check 실패 0. **대역폭 확인**: 요약의 (`data_sent` + `data_received`) ÷ `iterations` = 요청당 바이트. 이 값 × 스파이크 유입률(2W) × 1.3(TCP/IP 오버헤드) × 8이 링크 속도의 70% 미만이어야 한다(100 Mbps 링크면 70 Mbps). 두 장비의 링크 속도(`Get-NetAdapter | Select-Object Name, InterfaceDescription, LinkSpeed`)를 환경 표에 기록한다.
 5. 결과 폴더 `benchmark/results/`가 있는지 확인. k6는 폴더를 만들지 않으므로 `OUT_DIR`는 존재하는 경로여야 한다.
-6. 2절 "풀 크기 산정" 파일럿(P1·P2)으로 P·k·W·Q를 확정하고 `application.properties`에 반영한 뒤 다시 빌드한다. 이후 모든 회차는 이 값으로 고정한다.
+6. 2절 "풀 크기 산정" 파일럿(P1·P2)으로 P·k·W·Q를 확정하고 `.env`에 반영한다(재시작만). `.env.example`·`application.properties` 기본값도 같은 값으로 맞춰 커밋한다. 이후 모든 회차는 이 값으로 고정하고, 회차마다 0절 확인 명령으로 적용값을 기록한다.
 
 ### 매 회차 공통 절차 (순서가 결과를 좌우한다)
 1. 서버 재시작 (해당 브랜치·기동 옵션). ①을 처음 기동해 shops 통계 컬럼이 NULL이면 워밍업 전에 0으로 초기화한다. 본측정 초기화는 4번에서 다시 한다.
@@ -289,7 +302,7 @@ k6 run -e BASE_URL=$S -e RATE=$C -e DURATION=5m -e MODE=async -e THRESHOLDS=off 
 k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=before-r1 -e OUT_DIR=$OUT -e THRESHOLDS=off benchmark/k6/02-review-api.js
 # ② main, 기본 기동 (채택. 2절 채택 검증 조건으로 판정)
 k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=sync-r1 -e OUT_DIR=$OUT benchmark/k6/02-review-api.js
-# ③ main, --omp.review.stats.mode=async (비교군)
+# ③ main, .env 에 OMP_REVIEW_STATS_MODE=async (비교군)
 k6 run -e BASE_URL=$S -e MODEL=closed -e VUS=50 -e SHOP_POOL=3 -e DURATION=15m -e TAG=async-r1 -e OUT_DIR=$OUT benchmark/k6/02-review-api.js
 # ②의 p95만 한도를 넘으면 2절대로 같은 VUS에서 -e SHOP_POOL=1000 회차를 3회 추가한다.
 # ③의 대가를 같은 유입률에서 보이려면(선택) ②·③에 MODEL=closed·VUS 대신 MODEL=open과 같은 RATE를 쓴다.
@@ -408,12 +421,15 @@ done
 - **테스트 실행 금지(OMP)**: 통합 테스트는 마스터 테이블을 전부 지운다. 8절대로 OMP_TEST에서만.
 - **actuator 노출**: 현재 `management.endpoints.web.exposure.include=*` — 벤치마크 편의용이므로 외부 배포 시 축소.
 - **테이블명 대소문자**: Windows MySQL은 대소문자 무시. 서버를 Linux로 옮기면 소문자 테이블명 기준으로 SQL 확인.
+- **`.env` 미적용**: 리포 루트가 아닌 곳에서 기동하면 `.env`를 못 찾고 오류 없이 기본값으로 뜬다. 값에 따옴표·뒤 공백을 넣지 않는다(Java properties 형식으로 읽음). 회차마다 0절 확인 명령으로 P·k·Q를 기록한다.
 
 ## 8. 테스트 실행 (측정과 무관, 코드 수정 검증)
 
 ```bash
-OMP_DB_PASSWORD=<비번> ./gradlew test --console=plain
+./gradlew test --console=plain
 ```
+
+- DB 비밀번호는 리포 루트 `.env`의 `OMP_DB_PASSWORD`를 읽는다. 풀 크기·리뷰 모드 등 튜닝 값은 `application-test.properties`가 고정하므로 `.env`의 파일럿 값이 테스트에 영향을 주지 않는다.
 
 - 프로필 `test` → `src/test/resources/application-test.properties` → DB **`OMP_TEST`** (`createDatabaseIfNotExist=true`, `ddl-auto=create`).
 - `TestFixtures.resetAndSeed`는 users/shops/carts를 전부 지우기 전에 `DATABASE()`가 `OMP_TEST`인지 확인하고 아니면 예외로 중단한다. 프로필 파일이 없으면 기본 설정(OMP)으로 붙으므로 이 가드가 seed 데이터를 지킨다.
