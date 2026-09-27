@@ -1,0 +1,53 @@
+# [2026-09-27 정리] 원본 4,726줄 · 1.2MB. 반복 경고 "Request Failed" 4,695건은 처음 20건만 남기고 끝에 종류별 건수로 요약했다.
+time="2026-09-26T23:41:35+09:00" level=info msg="[run] 시작 23:41:35 MODE=async SCENARIO=fixed TAG=P2-p10-k8-warmup" source=console
+time="2026-09-26T23:41:38+09:00" level=warning msg="Insufficient VUs, reached 4000 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=orders
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9634->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9640->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9633->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9637->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9629->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9638->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9636->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9645->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9622->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9639->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9632->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9658->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9662->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9665->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9664->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9643->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9669->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9653->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9663->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:41:54+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:9654->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:42:37+09:00" level=info msg="[run] 종료 23:42:37 TAG=P2-p10-k8-warmup" source=console
+[31m     ✗ status is 202
+      ↳  40% — ✓ 56564 / ✗ 83807[0m
+[31m     ✗ has sse location
+      ↳  40% — ✓ 56564 / ✗ 83807[0m
+
+     checks[2m.........................:[0m [36m40.29%[0m [36;2m✓ 113128[0m      [36;2m✗ 167614[0m
+     data_received[2m..................:[0m [36m25 MB[0m  [36;2m404 kB/s[0m
+     data_sent[2m......................:[0m [36m38 MB[0m  [36;2m607 kB/s[0m
+     dropped_iterations[2m.............:[0m [36m67831[0m  [36;2m1095.408308/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m914.42ms[0m min=[36m0s[0m       med=[36m40.9ms[0m   max=[36m15.65s[0m  p(90)=[36m3.04s[0m p(95)=[36m3.31s[0m   p(99)=[36m15.47s[0m
+     http_req_connecting[2m............:[0m avg=[36m914.4ms[0m  min=[36m0s[0m       med=[36m40.83ms[0m  max=[36m15.65s[0m  p(90)=[36m3.04s[0m p(95)=[36m3.31s[0m   p(99)=[36m15.47s[0m
+     http_req_duration[2m..............:[0m avg=[36m684.26ms[0m min=[36m0s[0m       med=[36m418.36ms[0m max=[36m5.2s[0m    p(90)=[36m2.1s[0m  p(95)=[36m2.77s[0m   p(99)=[36m3.24s[0m 
+       { expected_response:true }[2m...:[0m avg=[36m756.16ms[0m min=[36m639.59µs[0m med=[36m390.17ms[0m max=[36m4.52s[0m   p(90)=[36m2.5s[0m  p(95)=[36m3.09s[0m   p(99)=[36m3.27s[0m 
+     http_req_failed[2m................:[0m [36m59.70%[0m [36;2m✓ 83807[0m       [36;2m✗ 56564[0m 
+     http_req_receiving[2m.............:[0m avg=[36m324.78µs[0m min=[36m0s[0m       med=[36m0s[0m       max=[36m19.2ms[0m  p(90)=[36m1ms[0m   p(95)=[36m2ms[0m     p(99)=[36m4.51ms[0m
+     http_req_sending[2m...............:[0m avg=[36m130.12µs[0m min=[36m0s[0m       med=[36m0s[0m       max=[36m39.82ms[0m p(90)=[36m0s[0m    p(95)=[36m999.7µs[0m p(99)=[36m2.99ms[0m
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m       min=[36m0s[0m       med=[36m0s[0m       max=[36m0s[0m      p(90)=[36m0s[0m    p(95)=[36m0s[0m      p(99)=[36m0s[0m    
+     http_req_waiting[2m...............:[0m avg=[36m683.81ms[0m min=[36m0s[0m       med=[36m417.56ms[0m max=[36m5.2s[0m    p(90)=[36m2.1s[0m  p(95)=[36m2.77s[0m   p(99)=[36m3.24s[0m 
+     http_reqs[2m......................:[0m [36m140371[0m [36;2m2266.862639/s[0m
+     iteration_duration[2m.............:[0m avg=[36m1.67s[0m    min=[36m639.59µs[0m med=[36m952.31ms[0m max=[36m21.06s[0m  p(90)=[36m3.54s[0m p(95)=[36m4.38s[0m   p(99)=[36m16.16s[0m
+     iterations[2m.....................:[0m [36m140371[0m [36;2m2266.862639/s[0m
+     order_accepted_duration[2m........:[0m avg=[36m756.16ms[0m min=[36m639.59µs[0m med=[36m390.17ms[0m max=[36m4.52s[0m   p(90)=[36m2.5s[0m  p(95)=[36m3.09s[0m   p(99)=[36m3.27s[0m 
+     order_rejected_duration[2m........:[0m avg=[36m646.6ms[0m  min=[36m1.55ms[0m   med=[36m412.41ms[0m max=[36m5.2s[0m    p(90)=[36m1.9s[0m  p(95)=[36m2.53s[0m   p(99)=[36m3.05s[0m 
+     orders_accepted[2m................:[0m [36m56564[0m  [36;2m913.456613/s[0m
+     orders_failed_other[2m............:[0m [36m4695[0m   [36;2m75.819935/s[0m
+     orders_rejected[2m................:[0m [36m79112[0m  [36;2m1277.58609/s[0m
+     vus[2m............................:[0m [36m1387[0m   [36;2mmin=1387[0m      [36;2mmax=4000[0m
+     vus_max[2m........................:[0m [36m4000[0m   [36;2mmin=1511[0m      [36;2mmax=4000[0m
+# Request Failed 종류별: 4,220건 read tcp N.N.N.N:N->N.N.N.N:N: wsarecv: An existing connection was forcibly closed by the remote host. | 475건 dial tcp N.N.N.N:N: connectex: A connection attempt failed because the connected party did not properly respon

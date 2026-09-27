@@ -1,0 +1,52 @@
+# [2026-09-27 정리] 원본 122,720줄 · 30.7MB. 반복 경고 "Request Failed" 122,690건은 처음 20건만 남기고 끝에 종류별 건수로 요약했다.
+time="2026-09-27T10:20:21+09:00" level=info msg="[run] 시작 10:20:21 MODE=async SCENARIO=fixed TAG=P2-p10-k6" source=console
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:24+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:25+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:25+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:25+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:25+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:20:25+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": dial tcp 192.168.0.51:8080: connectex: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-09-27T10:23:21+09:00" level=info msg="[run] 종료 10:23:21 TAG=P2-p10-k6" source=console
+[31m     ✗ status is 202
+      ↳  51% — ✓ 208308 / ✗ 196602[0m
+[31m     ✗ has sse location
+      ↳  51% — ✓ 208308 / ✗ 196602[0m
+
+     checks[2m.........................:[0m [36m51.44%[0m [36;2m✓ 416616[0m      [36;2m✗ 393204[0m
+     data_received[2m..................:[0m [36m45 MB[0m  [36;2m250 kB/s[0m
+     data_sent[2m......................:[0m [36m76 MB[0m  [36;2m421 kB/s[0m
+     dropped_iterations[2m.............:[0m [36m90[0m     [36;2m0.499689/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m2.44ms[0m  min=[36m0s[0m     med=[36m0s[0m      max=[36m1.03s[0m    p(90)=[36m8.42ms[0m  p(95)=[36m14.57ms[0m  p(99)=[36m35.06ms[0m 
+     http_req_connecting[2m............:[0m avg=[36m2.43ms[0m  min=[36m0s[0m     med=[36m0s[0m      max=[36m1.03s[0m    p(90)=[36m8.4ms[0m   p(95)=[36m14.54ms[0m  p(99)=[36m35.02ms[0m 
+     http_req_duration[2m..............:[0m avg=[36m16.57ms[0m min=[36m0s[0m     med=[36m6.41ms[0m  max=[36m1.03s[0m    p(90)=[36m40.58ms[0m p(95)=[36m63.31ms[0m  p(99)=[36m147.82ms[0m
+       { expected_response:true }[2m...:[0m avg=[36m18.01ms[0m min=[36m0s[0m     med=[36m8.43ms[0m  max=[36m798.22ms[0m p(90)=[36m38.65ms[0m p(95)=[36m58.41ms[0m  p(99)=[36m143.24ms[0m
+     http_req_failed[2m................:[0m [36m48.55%[0m [36;2m✓ 196602[0m      [36;2m✗ 208308[0m
+     http_req_receiving[2m.............:[0m avg=[36m74.5µs[0m  min=[36m0s[0m     med=[36m0s[0m      max=[36m51.7ms[0m   p(90)=[36m0s[0m      p(95)=[36m509.49µs[0m p(99)=[36m1.5ms[0m   
+     http_req_sending[2m...............:[0m avg=[36m22.39µs[0m min=[36m0s[0m     med=[36m0s[0m      max=[36m50.75ms[0m  p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m535.5µs[0m 
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m      min=[36m0s[0m     med=[36m0s[0m      max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_waiting[2m...............:[0m avg=[36m16.47ms[0m min=[36m0s[0m     med=[36m6.37ms[0m  max=[36m1.03s[0m    p(90)=[36m40.31ms[0m p(95)=[36m63.03ms[0m  p(99)=[36m147.44ms[0m
+     http_reqs[2m......................:[0m [36m404910[0m [36;2m2248.098855/s[0m
+     iteration_duration[2m.............:[0m avg=[36m27.28ms[0m min=[36m0s[0m     med=[36m16.72ms[0m max=[36m1.25s[0m    p(90)=[36m61.06ms[0m p(95)=[36m80.5ms[0m   p(99)=[36m160.76ms[0m
+     iterations[2m.....................:[0m [36m404910[0m [36;2m2248.098855/s[0m
+     order_accepted_duration[2m........:[0m avg=[36m18.01ms[0m min=[36m0s[0m     med=[36m8.43ms[0m  max=[36m798.22ms[0m p(90)=[36m38.65ms[0m p(95)=[36m58.41ms[0m  p(99)=[36m143.24ms[0m
+     order_rejected_duration[2m........:[0m avg=[36m40.02ms[0m min=[36m1.07ms[0m med=[36m27.03ms[0m max=[36m1.03s[0m    p(90)=[36m80.05ms[0m p(95)=[36m112.85ms[0m p(99)=[36m228.95ms[0m
+     orders_accepted[2m................:[0m [36m208308[0m [36;2m1156.54584/s[0m
+     orders_failed_other[2m............:[0m [36m122690[0m [36;2m681.186556/s[0m
+     orders_rejected[2m................:[0m [36m73912[0m  [36;2m410.366458/s[0m
+     vus[2m............................:[0m [36m175[0m    [36;2mmin=6[0m         [36;2mmax=250[0m 
+     vus_max[2m........................:[0m [36m340[0m    [36;2mmin=338[0m       [36;2mmax=340[0m 
+# Request Failed 종류별: 122,690건 dial tcp N.N.N.N:N: connectex: Only one usage of each socket address (protocol/network address/port) is normal

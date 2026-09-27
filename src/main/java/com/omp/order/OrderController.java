@@ -6,6 +6,8 @@ import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.SEE_OTHER;
 import static org.springframework.http.ResponseEntity.accepted;
 
+import com.omp.order.async.AsyncOrderAdmission;
+import com.omp.order.async.AsyncOrderProperties;
 import com.omp.order.async.OrderJobState;
 import com.omp.order.dto.CreateOrderRequest;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class OrderController {
     private final OrderService orderService;
     private final SseEmitterService sseEmitterService;
+    private final AsyncOrderAdmission asyncOrderAdmission;
+    private final AsyncOrderProperties asyncOrderProperties;
 
     @GetMapping("/{id}")
     public Order getOrder(final @PathVariable Long id) {
@@ -37,13 +41,21 @@ public class OrderController {
         return orderService.saveOrderBy(request);
     }
 
+    /**
+     * 대기 자리는 서비스의 트랜잭션(커넥션 획득)보다 먼저 예약한다. 자리가 없으면 DB를 쓰지 않고 즉시 503.
+     * 검증 실패 등으로 워커에 넘기지 못하면 try-with-resources가 자리를 반납한다.
+     */
     @PostMapping("/async")
     @ResponseStatus(ACCEPTED)
     public ResponseEntity<String> asyncCreateOrder(final @RequestBody CreateOrderRequest request) {
-        String uuid = orderService.asyncOrder(request);
-        return accepted()
-                .header("Location", "/api/v1/order/sse/" + uuid)
-                .build();
+        try (AsyncOrderAdmission.Slot slot = asyncOrderAdmission.acquire()) {
+            String uuid = asyncOrderProperties.isSplit()
+                    ? orderService.asyncOrder(request, slot)
+                    : orderService.asyncOrderDeferred(request, slot);
+            return accepted()
+                    .header("Location", "/api/v1/order/sse/" + uuid)
+                    .build();
+        }
     }
 
     @GetMapping(value = "/sse/{orderUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

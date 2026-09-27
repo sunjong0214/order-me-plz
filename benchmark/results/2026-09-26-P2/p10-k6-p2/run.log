@@ -1,0 +1,86 @@
+# [2026-09-27 정리] 원본 927,480줄 · 86.4MB. 반복 경고 "Request Failed" 88,707건은 처음 20건만 남기고 끝에 종류별 건수로 요약했다.
+time="2026-09-26T23:01:42+09:00" level=info msg="[run] 시작 23:01:42 MODE=async SCENARIO=fixed TAG=P2-p10-k6" source=console
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1783->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1736->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1726->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1798->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1888->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1829->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1805->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1774->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1771->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1721->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1796->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1773->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1860->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1831->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1959->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1719->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1750->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1819->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:1830->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:01:55+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:2002->192.168.0.51:8080: wsarecv: An existing connection was forcibly closed by the remote host."
+time="2026-09-26T23:03:03+09:00" level=warning msg="Insufficient VUs, reached 4000 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=orders
+runtime: program exceeds 10000-thread limit
+fatal error: thread exhaustion
+
+runtime stack:
+runtime.throw({0x7ff6a051f610?, 0x7ff69ed3296d?})
+	runtime/panic.go:1229 +0x4d fp=0xe90a5ff8a0 sp=0xe90a5ff870 pc=0x7ff69ed2af4d
+runtime.checkmcount()
+	runtime/proc.go:977 +0x8e fp=0xe90a5ff8c8 sp=0xe90a5ff8a0 pc=0x7ff69ecf67ae
+runtime.mReserveID()
+	runtime/proc.go:993 +0x2f fp=0xe90a5ff8f0 sp=0xe90a5ff8c8 pc=0x7ff69ecf67ef
+runtime.startm(0x2ba8216ce008?, 0x0, 0x0)
+	runtime/proc.go:3088 +0xf7 fp=0xe90a5ff938 sp=0xe90a5ff8f0 pc=0x7ff69ecfa2f7
+runtime.handoffp(0x2ba86fe49680?)
+	runtime/proc.go:3137 +0x2f8 fp=0xe90a5ff960 sp=0xe90a5ff938 pc=0x7ff69ecfa7b8
+runtime.retake(0x47ef1ab518798)
+	runtime/proc.go:6715 +0x265 fp=0xe90a5ff9d0 sp=0xe90a5ff960 pc=0x7ff69ed02ea5
+runtime.sysmon()
+	runtime/proc.go:6597 +0x3fa fp=0xe90a5ffa68 sp=0xe90a5ff9d0 pc=0x7ff69ed02a5a
+runtime.mstart1()
+	runtime/proc.go:1935 +0x9d fp=0xe90a5ffa90 sp=0xe90a5ffa68 pc=0x7ff69ecf8a5d
+runtime.mstart0()
+	runtime/proc.go:1888 +0x6a fp=0xe90a5ffab8 sp=0xe90a5ffa90 pc=0x7ff69ecf89aa
+runtime.mstart()
+	runtime/asm_amd64.s:426 +0xc fp=0xe90a5ffac0 sp=0xe90a5ffab8 pc=0x7ff69ed3100c
+
+goroutine 1 gp=0x2ba8216da000 m=nil [chan receive, 2 minutes]:
+runtime.gopark(0x7ff69ed286e5?, 0x6000000000010?, 0xe0?, 0xe5?, 0x21391183e00?)
+	runtime/proc.go:462 +0xce fp=0x2ba821f0e308 sp=0x2ba821f0e2e8 pc=0x7ff69ed2b06e
+runtime.chanrecv(0x2ba82599a7e0, 0x2ba821f0e500, 0x1)
+	runtime/chan.go:667 +0x4ae fp=0x2ba821f0e380 sp=0x2ba821f0e308 pc=0x7ff69ecb9fce
+runtime.chanrecv1(0x7ff6a06787a8?, 0x2ba825816870?)
+	runtime/chan.go:509 +0x12 fp=0x2ba821f0e3a8 sp=0x2ba821f0e380 pc=0x7ff69ecb9af2
+go.k6.io/k6/v2/internal/execution.(*Scheduler).Run(0x2ba821b34a00, {0x7ff6a06787e0, 0x2ba821729220}, {0x7ff6a06787a8, 0x2ba821940630}, 0x2ba821aa92d0)
+	go.k6.io/k6/v2/internal/execution/scheduler.go:518 +0xc2c fp=0x2ba821f0e948 sp=0x2ba821f0e3a8 pc=0x7ff69f4a690c
+go.k6.io/k6/v2/internal/cmd.(*cmdRun).run(0x2ba821721440, 0x2ba821aab348, {0x2ba8217566e0, 0x1, 0x15})
+	go.k6.io/k6/v2/internal/cmd/run.go:454 +0x1865 fp=0x2ba821f0fc28 sp=0x2ba821f0e948 pc=0x7ff69ffc7325
+go.k6.io/k6/v2/internal/cmd.(*cmdRun).run-fm(0x2ba821719200?, {0x2ba8217566e0?, 0x4?, 0x7ff6a05074d1?})
+	<autogenerated>:1 +0x2b fp=0x2ba821f0fc60 sp=0x2ba821f0fc28 pc=0x7ff69ffd9cab
+github.com/spf13/cobra.(*Command).execute(0x2ba821aab348, {0x2ba821756580, 0x15, 0x16})
+	github.com/spf13/cobra@v1.4.0/command.go:856 +0x6dc fp=0x2ba821f0fd40 sp=0x2ba821f0fc60 pc=0x7ff69f3d7e3c
+github.com/spf13/cobra.(*Command).ExecuteC(0x2ba82177e2c8)
+	github.com/spf13/cobra@v1.4.0/command.go:974 +0x38d fp=0x2ba821f0fdf8 sp=0x2ba821f0fd40 pc=0x7ff69f3d846d
+go.k6.io/k6/v2/internal/cmd.(*rootCommand).execute(0x2ba821d1c300)
+	go.k6.io/k6/v2/internal/cmd/root.go:209 +0x178 fp=0x2ba821f0ff00 sp=0x2ba821f0fdf8 pc=0x7ff69ffc2e98
+go.k6.io/k6/v2/internal/cmd.ExecuteWithGlobalState(0x7ff6a0678770?)
+	go.k6.io/k6/v2/internal/cmd/root.go:81 +0x18 fp=0x2ba821f0ff18 sp=0x2ba821f0ff00 pc=0x7ff69ffc2318
+go.k6.io/k6/v2/cmd.Execute()
+	go.k6.io/k6/v2/cmd/execute.go:16 +0x2a fp=0x2ba821f0ff38 sp=0x2ba821f0ff18 pc=0x7ff69ffdacea
+main.main()
+	go.k6.io/k6/v2/main.go:9 +0xf fp=0x2ba821f0ff48 sp=0x2ba821f0ff38 pc=0x7ff69ffdad0f
+runtime.main()
+	runtime/proc.go:290 +0x2c7 fp=0x2ba821f0ffe0 sp=0x2ba821f0ff48 pc=0x7ff69ecf55c7
+runtime.goexit({})
+	runtime/asm_amd64.s:1771 +0x1 fp=0x2ba821f0ffe8 sp=0x2ba821f0ffe0 pc=0x7ff69ed32d61
+
+goroutine 2 gp=0x2ba8216da780 m=nil [force gc (idle), 2 minutes]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	runtime/proc.go:462 +0xce fp=0x2ba8216ddfa8 sp=0x2ba8216ddf88 pc=0x7ff69ed2b06e
+runtime.goparkunlock(...)
+	runtime/proc.go:468
+runtime.forcegchelper()
+# Request Failed 종류별: 86,497건 dial tcp N.N.N.N:N: connectex: Only one usage of each socket address (protocol/network address/port) is normal | 2,187건 read tcp N.N.N.N:N->N.N.N.N:N: wsarecv: An existing connection was forcibly closed by the remote host. | 23건 dial tcp N.N.N.N:N: connectex: A connection attempt failed because the connected party did not properly respon
+# k6 비정상 종료(fatal error: thread exhaustion) 뒤 goroutine 스택 838,710줄은 생략했다.
