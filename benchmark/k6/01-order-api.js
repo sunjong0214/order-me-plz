@@ -68,8 +68,8 @@ if (SCENARIO === 'spike' && !(W > 0)) {
 
 // 시도(iterations) / 접수(accepted) / 거절(rejected, 503) / 그 외 실패 를 분리해 기록한다.
 const accepted = new Counter('orders_accepted');        // 검증 통과 응답 수. "접수량"은 이 값이다 (iterations 아님)
-const rejected = new Counter('orders_rejected');        // 503: insertTaskExecutor 포화로 접수 거절 (백프레셔)
-const failedOther = new Counter('orders_failed_other'); // 503 이외의 실패 (4xx, 500, 타임아웃 등)
+const rejected = new Counter('orders_rejected');        // 503(또는 설정에 따라 429): 대기 자리가 없어 접수 거절 (백프레셔)
+const failedOther = new Counter('orders_failed_other'); // 거절 이외의 실패 (4xx, 500, 타임아웃 등)
 // 응답 종류별 지연. http_req_duration 은 202와 503이 섞이므로 접수 p95 판정은 order_accepted_duration 으로 한다.
 const acceptedDuration = new Trend('order_accepted_duration', true); // 접수(비동기 202) / 저장 완료(동기 200) 응답
 const rejectedDuration = new Trend('order_rejected_duration', true); // 503 거절 응답. 거절도 빨라야 백프레셔가 성립한다
@@ -208,7 +208,7 @@ export default function (data) {
   if (ok) {
     accepted.add(1, metricTags);
     acceptedDuration.add(res.timings.duration, metricTags);
-  } else if (res.status === 503) {
+  } else if (res.status === 503 || res.status === 429) {   // 거절 응답 코드는 서버 설정(omp.order.async.reject-status)에 따름
     rejected.add(1, metricTags);
     rejectedDuration.add(res.timings.duration, metricTags);
   } else {
