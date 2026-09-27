@@ -1,0 +1,29 @@
+time="2026-09-27T10:43:28+09:00" level=info msg="[run] 시작 10:43:28 MODE=async SCENARIO=fixed TAG=P2-p10-k6" source=console
+time="2026-09-27T10:46:28+09:00" level=info msg="[run] 종료 10:46:28 TAG=P2-p10-k6" source=console
+[31m     ✗ status is 202
+      ↳  69% — ✓ 280638 / ✗ 124187[0m
+[31m     ✗ has sse location
+      ↳  69% — ✓ 280638 / ✗ 124187[0m
+
+     checks[2m.........................:[0m [36m69.32%[0m [36;2m✓ 561276[0m      [36;2m✗ 248374[0m
+     data_received[2m..................:[0m [36m61 MB[0m  [36;2m340 kB/s[0m
+     data_sent[2m......................:[0m [36m109 MB[0m [36;2m604 kB/s[0m
+     dropped_iterations[2m.............:[0m [36m176[0m    [36;2m0.977604/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m1.45ms[0m  min=[36m0s[0m med=[36m0s[0m      max=[36m162.41ms[0m p(90)=[36m4.64ms[0m  p(95)=[36m7.68ms[0m  p(99)=[36m15.88ms[0m 
+     http_req_connecting[2m............:[0m avg=[36m1.44ms[0m  min=[36m0s[0m med=[36m0s[0m      max=[36m162.41ms[0m p(90)=[36m4.62ms[0m  p(95)=[36m7.66ms[0m  p(99)=[36m15.84ms[0m 
+     http_req_duration[2m..............:[0m avg=[36m20.94ms[0m min=[36m0s[0m med=[36m13.79ms[0m max=[36m666.18ms[0m p(90)=[36m43.56ms[0m p(95)=[36m62.31ms[0m p(99)=[36m122.11ms[0m
+       { expected_response:true }[2m...:[0m avg=[36m24.37ms[0m min=[36m0s[0m med=[36m16.32ms[0m max=[36m607.73ms[0m p(90)=[36m49.98ms[0m p(95)=[36m70.1ms[0m  p(99)=[36m139.45ms[0m
+     http_req_failed[2m................:[0m [36m30.67%[0m [36;2m✓ 124187[0m      [36;2m✗ 280638[0m
+     http_req_receiving[2m.............:[0m avg=[36m65.55µs[0m min=[36m0s[0m med=[36m0s[0m      max=[36m14.33ms[0m  p(90)=[36m0s[0m      p(95)=[36m531.4µs[0m p(99)=[36m1.03ms[0m  
+     http_req_sending[2m...............:[0m avg=[36m15.15µs[0m min=[36m0s[0m med=[36m0s[0m      max=[36m15.1ms[0m   p(90)=[36m0s[0m      p(95)=[36m0s[0m      p(99)=[36m541.29µs[0m
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m      min=[36m0s[0m med=[36m0s[0m      max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m      p(99)=[36m0s[0m      
+     http_req_waiting[2m...............:[0m avg=[36m20.86ms[0m min=[36m0s[0m med=[36m13.7ms[0m  max=[36m663.33ms[0m p(90)=[36m43.45ms[0m p(95)=[36m62.19ms[0m p(99)=[36m122.06ms[0m
+     http_reqs[2m......................:[0m [36m404825[0m [36;2m2248.628018/s[0m
+     iteration_duration[2m.............:[0m avg=[36m22.46ms[0m min=[36m0s[0m med=[36m15.45ms[0m max=[36m666.7ms[0m  p(90)=[36m45.82ms[0m p(95)=[36m64.57ms[0m p(99)=[36m125.75ms[0m
+     iterations[2m.....................:[0m [36m404825[0m [36;2m2248.628018/s[0m
+     order_accepted_duration[2m........:[0m avg=[36m24.37ms[0m min=[36m0s[0m med=[36m16.32ms[0m max=[36m607.73ms[0m p(90)=[36m49.98ms[0m p(95)=[36m70.1ms[0m  p(99)=[36m139.45ms[0m
+     order_rejected_duration[2m........:[0m avg=[36m13.21ms[0m min=[36m0s[0m med=[36m8.83ms[0m  max=[36m666.18ms[0m p(90)=[36m28.26ms[0m p(95)=[36m39.57ms[0m p(99)=[36m73.6ms[0m  
+     orders_accepted[2m................:[0m [36m280638[0m [36;2m1558.822873/s[0m
+     orders_rejected[2m................:[0m [36m124187[0m [36;2m689.805145/s[0m
+     vus[2m............................:[0m [36m76[0m     [36;2mmin=2[0m         [36;2mmax=289[0m 
+     vus_max[2m........................:[0m [36m432[0m    [36;2mmin=300[0m       [36;2mmax=432[0m 

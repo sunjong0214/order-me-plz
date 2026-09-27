@@ -1,0 +1,186 @@
+[19:28:55] === P2 시리즈 lim3k 시작: RATE=3000, 회차 4개 (single:15:15 single:20:20 single:10:10 single:15:15), 휴식 900초 ===
+노트북 CPU 기록 시작 pid=6564 rc=0
+[19:28:59] [1/4 single P=15 k=15] 전 휴식 781초 (끝 19:42:00)
+[19:42:01] 전원 상태 [k=15 기동 전] = 2 100 (첫 값 2 = 충전기)
+서버 기동 요청 P=15 --omp.executor.insert.core=15 --omp.executor.insert.max=15 --omp.executor.insert.queue=100 --omp.order.async.transaction=single rc=0 pid=352
+[19:42:13] 서버 준비 완료 (풀 15.0, 3회 확인)
+서버 커넥션 풀 = 15.0 (기대 15), insert 워커 core = 15.0 (기대 15), 큐 남은 칸 = 100.0 (기대 100)
+[1/1 19:42:29] 부하 전 노트북 CPU 평균 = 0.019 (기준 0.15 미만) / 데스크톱 = 3.7% (기준 30% 미만)
+워밍업 종료 19:43:31 exit=0
+워밍업 k6 연결 실패 0건
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+reviews	orders	order_menus	stats_not_zero
+0	0	0	0
+[19:43:33] 전원 상태 [k=15 측정 전] = 2 100 (첫 값 2 = 충전기)
+서버 커넥션 풀 = 15.0 (기대 15), insert 워커 core = 15.0 (기대 15), 큐 남은 칸 = 100.0 (기대 100)
+[1/8 19:43:49] 부하 전 노트북 CPU 평균 = 0.189 (기준 0.15 미만) / 데스크톱 = 5.6% (기준 30% 미만)
+[2/8 19:44:05] 부하 전 노트북 CPU 평균 = 0.022 (기준 0.15 미만) / 데스크톱 = 4.6% (기준 30% 미만)
+측정 종료 19:47:06 exit=0
+측정 k6 연결 실패 0건 → 통과
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+측정 중 데스크톱 CPU 평균 32.7% / 최대 41.6% / 80% 이상 최장 연속 0표본 → 통과
+[19:47:42] DB 주문 수(측정분) = 496872
+[19:47:43] 전원 상태 [k=15 측정 후] = 2 100 (첫 값 2 = 충전기)
+서버 종료 pid=17692
+서버 종료 pid=10816
+p15-k15-lim3k1-single 19:44:06  W= 2760.4/s  접수 496872 · 503 42750 · 기타실패 0 · dropped 370  202 p95=18.5 p99=41.3ms  503 p95=28.3ms
+[19:47:46] 회차 완료 1/4 (single P=15 k=15)
+[19:47:46] [2/4 single P=20 k=20] 전 휴식 895초 (끝 20:02:41)
+[20:02:43] 전원 상태 [k=20 기동 전] = 2 100 (첫 값 2 = 충전기)
+서버 기동 요청 P=20 --omp.executor.insert.core=20 --omp.executor.insert.max=20 --omp.executor.insert.queue=100 --omp.order.async.transaction=single rc=0 pid=1280
+[20:02:54] 서버 준비 완료 (풀 20.0, 3회 확인)
+서버 커넥션 풀 = 20.0 (기대 20), insert 워커 core = 20.0 (기대 20), 큐 남은 칸 = 100.0 (기대 100)
+[1/1 20:03:11] 부하 전 노트북 CPU 평균 = 0.016 (기준 0.15 미만) / 데스크톱 = 9.1% (기준 30% 미만)
+워밍업 종료 20:04:12 exit=0
+워밍업 k6 연결 실패 937건
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+reviews	orders	order_menus	stats_not_zero
+0	0	0	0
+[20:04:14] 전원 상태 [k=20 측정 전] = 2 100 (첫 값 2 = 충전기)
+서버 커넥션 풀 = 20.0 (기대 20), insert 워커 core = 20.0 (기대 20), 큐 남은 칸 = 100.0 (기대 100)
+[1/8 20:04:31] 부하 전 노트북 CPU 평균 = 0.188 (기준 0.15 미만) / 데스크톱 = 8.1% (기준 30% 미만)
+[2/8 20:04:47] 부하 전 노트북 CPU 평균 = 0.023 (기준 0.15 미만) / 데스크톱 = 8.2% (기준 30% 미만)
+측정 종료 20:07:48 exit=0
+측정 k6 연결 실패 0건 → 통과
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+측정 중 데스크톱 CPU 평균 34.0% / 최대 44.5% / 80% 이상 최장 연속 0표본 → 통과
+[20:08:24] DB 주문 수(측정분) = 528987
+[20:08:25] 전원 상태 [k=20 측정 후] = 2 100 (첫 값 2 = 충전기)
+서버 종료 pid=11252
+서버 종료 pid=17672
+p20-k20-lim3k2-single 20:04:47  W= 2938.8/s  접수 528987 · 503 10956 · 기타실패 0 · dropped 57  202 p95=28.9 p99=50.0ms  503 p95=49.1ms
+[20:08:28] 회차 완료 2/4 (single P=20 k=20)
+[20:08:28] [3/4 single P=10 k=10] 전 휴식 894초 (끝 20:23:22)
+[20:23:23] 전원 상태 [k=10 기동 전] = 2 100 (첫 값 2 = 충전기)
+서버 기동 요청 P=10 --omp.executor.insert.core=10 --omp.executor.insert.max=10 --omp.executor.insert.queue=100 --omp.order.async.transaction=single rc=0 pid=18916
+[20:23:34] 서버 준비 완료 (풀 10.0, 3회 확인)
+서버 커넥션 풀 = 10.0 (기대 10), insert 워커 core = 10.0 (기대 10), 큐 남은 칸 = 100.0 (기대 100)
+[1/1 20:23:50] 부하 전 노트북 CPU 평균 = 0.018 (기준 0.15 미만) / 데스크톱 = 8.7% (기준 30% 미만)
+워밍업 종료 20:24:52 exit=0
+워밍업 k6 연결 실패 0건
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+reviews	orders	order_menus	stats_not_zero
+0	0	0	0
+[20:24:54] 전원 상태 [k=10 측정 전] = 2 100 (첫 값 2 = 충전기)
+서버 커넥션 풀 = 10.0 (기대 10), insert 워커 core = 10.0 (기대 10), 큐 남은 칸 = 100.0 (기대 100)
+[1/8 20:25:11] 부하 전 노트북 CPU 평균 = 0.188 (기준 0.15 미만) / 데스크톱 = 10.3% (기준 30% 미만)
+[2/8 20:25:27] 부하 전 노트북 CPU 평균 = 0.023 (기준 0.15 미만) / 데스크톱 = 9.7% (기준 30% 미만)
+측정 종료 20:28:28 exit=0
+측정 k6 연결 실패 0건 → 통과
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+측정 중 데스크톱 CPU 평균 41.2% / 최대 53.7% / 80% 이상 최장 연속 0표본 → 통과
+[20:29:03] DB 주문 수(측정분) = 397798
+[20:29:04] 전원 상태 [k=10 측정 후] = 2 100 (첫 값 2 = 충전기)
+서버 종료 pid=15688
+서버 종료 pid=19100
+p10-k10-lim3k3-single 20:25:27  W= 2210.0/s  접수 397798 · 503 142115 · 기타실패 0 · dropped 86  202 p95=54.2 p99=70.6ms  503 p95=41.2ms
+[20:29:07] 회차 완료 3/4 (single P=10 k=10)
+[20:29:08] [4/4 single P=15 k=15] 전 휴식 895초 (끝 20:44:02)
+[20:44:04] 전원 상태 [k=15 기동 전] = 2 100 (첫 값 2 = 충전기)
+서버 기동 요청 P=15 --omp.executor.insert.core=15 --omp.executor.insert.max=15 --omp.executor.insert.queue=100 --omp.order.async.transaction=single rc=0 pid=14604
+[20:44:15] 서버 준비 완료 (풀 15.0, 3회 확인)
+서버 커넥션 풀 = 15.0 (기대 15), insert 워커 core = 15.0 (기대 15), 큐 남은 칸 = 100.0 (기대 100)
+[1/1 20:44:31] 부하 전 노트북 CPU 평균 = 0.017 (기준 0.15 미만) / 데스크톱 = 10.5% (기준 30% 미만)
+워밍업 종료 20:45:33 exit=0
+워밍업 k6 연결 실패 655건
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+reviews	orders	order_menus	stats_not_zero
+0	0	0	0
+[20:45:35] 전원 상태 [k=15 측정 전] = 2 100 (첫 값 2 = 충전기)
+서버 커넥션 풀 = 15.0 (기대 15), insert 워커 core = 15.0 (기대 15), 큐 남은 칸 = 100.0 (기대 100)
+[1/8 20:45:52] 부하 전 노트북 CPU 평균 = 0.188 (기준 0.15 미만) / 데스크톱 = 10.3% (기준 30% 미만)
+[2/8 20:46:08] 부하 전 노트북 CPU 평균 = 0.026 (기준 0.15 미만) / 데스크톱 = 7.6% (기준 30% 미만)
+측정 종료 20:49:22 exit=0
+측정 k6 연결 실패 3730건 → 무효(요청이 서버에 닿지 못함)
+큐 소진 (queued=0.0 active=0.0, 2초 이내)
+측정 중 데스크톱 CPU 평균 39.4% / 최대 48.0% / 80% 이상 최장 연속 0표본 → 통과
+[20:49:45] DB 주문 수(측정분) = 416082
+[20:49:46] 전원 상태 [k=15 측정 후] = 2 100 (첫 값 2 = 충전기)
+서버 종료 pid=5388
+서버 종료 pid=14936
+p15-k15-lim3k4-single 20:46:09  W= 2311.6/s  접수 416082 · 503 111246 · 기타실패 3730 · dropped 8944  202 p95=1231.6 p99=4843.9ms  503 p95=1200.3ms
+[20:49:49] 회차 완료 4/4 (single P=15 k=15)
+노트북 CPU 기록 종료 pid=6564
+[20:49:50] 노트북 CPU 기록 → benchmark/results/2026-09-26-P2/laptop-cpu-lim3k.csv
+[20:49:50] === P2 시리즈 lim3k 끝 ===
+p10-k10-grid-single 17:43:57  W= 2187.2/s  접수 393690 · 503 92118 · 기타실패 0 · dropped 193  202 p95=85.9 p99=109.5ms  503 p95=68.5ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 9.6 pending 0.0 | insert 큐 평균 75 최대 100, 워커 active 9.0 | tomcat 4 | 노트북 CPU 97% (mysqld 57 / java 33) 클럭 110% | 데스크톱 36%/39%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.45, data_fsyncs 1.46
+p10-k10-lim3k3-single 20:25:27  W= 2210.0/s  접수 397798 · 503 142115 · 기타실패 0 · dropped 86  202 p95=54.2 p99=70.6ms  503 p95=41.2ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 9.5 pending 0.0 | insert 큐 평균 77 최대 100, 워커 active 9.2 | tomcat 3 | 노트북 CPU 97% (mysqld 56 / java 34) 클럭 110% | 데스크톱 46%/54%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.21, data_fsyncs 1.22
+p10-k4-grid-split 16:41:55  W= 1401.4/s  접수 252256 · 503 233746 · 기타실패 0 · dropped 0  202 p95=30.8 p99=47.5ms  503 p95=25.1ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 6.6 pending 0.1 | insert 큐 평균 93 최대 100, 워커 active 3.9 | tomcat 4 | 노트북 CPU 97% (mysqld 56 / java 32) 클럭 110% | 데스크톱 41%/47%
+               주문 1건당 MySQL: Questions 15.00, select 3.00, insert 2.00, commit 2.00, rollback 0.00, set_option 8.00, Handler_commit 8.00, os_log_fsyncs 2.15, data_fsyncs 2.16
+p10-k4-p2      23:22:30  W=  988.6/s  접수 177949 · 503 248779 · 기타실패 75623 · dropped 122251  202 p95=284.9 p99=480.6ms  503 p95=285.9ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 7.1 pending 32.6 | insert 큐 평균 67 최대 100, 워커 active 2.7 | tomcat 33 | 노트북 CPU 92% (mysqld 50 / java 34) 클럭 112% | 데스크톱 68%/96%
+p10-k6-after-single 11:04:08  W= 1959.2/s  접수 352660 · 503 52341 · 기타실패 0 · dropped 0  202 p95=6.0 p99=11.9ms  503 p95=11.1ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 5.9 pending 0.0 | insert 큐 평균 93 최대 100, 워커 active 6.0 | tomcat 2 | 노트북 CPU 98% (mysqld 57 / java 32) 클럭 112% | 데스크톱 42%/48%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.85, data_fsyncs 1.87
+p10-k6-after-split 10:43:28  W= 1559.1/s  접수 280638 · 503 124187 · 기타실패 0 · dropped 176  202 p95=70.1 p99=139.5ms  503 p95=39.6ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 7.7 pending 2.5 | insert 큐 평균 82 최대 100, 워커 active 5.7 | tomcat 16 | 노트북 CPU 96% (mysqld 56 / java 31) 클럭 112% | 데스크톱 45%/49%
+               주문 1건당 MySQL: Questions 15.00, select 3.00, insert 2.00, commit 2.00, rollback 0.00, set_option 8.00, Handler_commit 8.00, os_log_fsyncs 2.10, data_fsyncs 2.12
+p10-k6-before  00:04:30  W= 1464.1/s  접수 263545 · 503 6456 · 기타실패 0 · dropped 0  202 p95=31.2 p99=73.3ms  503 p95=59.7ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 5.7 pending 0.5 | insert 큐 평균 15 최대 71, 워커 active 4.3 | tomcat 6 | 노트북 CPU 98% (mysqld 59 / java 28) 클럭 113% | 데스크톱 37%/61%
+p10-k6-before2250 10:20:21  W= 1157.3/s  접수 208308 · 503 73912 · 기타실패 122690 · dropped 90  202 p95=58.4 p99=143.2ms  503 p95=112.9ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 8.0 pending 31.5 | insert 큐 평균 98 최대 100, 워커 active 6.0 | tomcat 35 | 노트북 CPU 82% (mysqld 51 / java 25) 클럭 115% | 데스크톱 61%/76%
+               주문 1건당 MySQL: Questions 17.48, select 3.71, insert 2.00, commit 2.00, rollback 0.35, set_option 9.42, Handler_commit 8.35, os_log_fsyncs 2.30, data_fsyncs 2.32
+p10-k6-grid-single 16:21:17  W= 1858.6/s  접수 334540 · 503 151463 · 기타실패 0 · dropped 0  202 p95=9.3 p99=18.7ms  503 p95=12.4ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 6.0 pending 0.0 | insert 큐 평균 97 최대 100, 워커 active 6.0 | tomcat 2 | 노트북 CPU 91% (mysqld 40 / java 34) 클럭 110% | 데스크톱 43%/51%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 0.79, data_fsyncs 0.81
+p10-k6-grid-split 15:19:09  W= 1598.0/s  접수 287646 · 503 197777 · 기타실패 0 · dropped 579  202 p95=57.9 p99=81.8ms  503 p95=43.4ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 7.7 pending 2.8 | insert 큐 평균 85 최대 100, 워커 active 5.7 | tomcat 9 | 노트북 CPU 98% (mysqld 56 / java 34) 클럭 113% | 데스크톱 48%/70%
+               주문 1건당 MySQL: Questions 15.00, select 3.00, insert 2.00, commit 2.00, rollback 0.00, set_option 8.00, Handler_commit 8.00, os_log_fsyncs 1.54, data_fsyncs 1.56
+p10-k8-grid-single 15:39:53  W= 2173.0/s  접수 391133 · 503 94869 · 기타실패 0 · dropped 0  202 p95=25.8 p99=36.9ms  503 p95=21.8ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 7.7 pending 0.0 | insert 큐 평균 93 최대 100, 워커 active 7.7 | tomcat 2 | 노트북 CPU 97% (mysqld 56 / java 33) 클럭 111% | 데스크톱 47%/56%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.27, data_fsyncs 1.29
+p10-k8-grid-split 17:23:15  W= 1839.8/s  접수 331173 · 503 154768 · 기타실패 0 · dropped 61  202 p95=67.9 p99=110.6ms  503 p95=21.7ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 9.1 pending 22.0 | insert 큐 평균 57 최대 88, 워커 active 7.7 | tomcat 29 | 노트북 CPU 96% (mysqld 49 / java 38) 클럭 107% | 데스크톱 39%/44%
+               주문 1건당 MySQL: Questions 15.00, select 3.00, insert 2.00, commit 2.00, rollback 0.00, set_option 8.00, Handler_commit 8.00, os_log_fsyncs 0.67, data_fsyncs 0.69
+p10-k8-p2      23:43:12  W=  968.6/s  접수 174343 · 503 302381 · 기타실패 82205 · dropped 65676  202 p95=803.1 p99=1078.3ms  503 p95=806.7ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 7.7 pending 118.6 | insert 큐 평균 72 최대 100, 워커 active 6.9 | tomcat 80 | 노트북 CPU 92% (mysqld 48 / java 37) 클럭 111% | 데스크톱 72%/94%
+p15-k10-grid-single 18:25:15  W= 2259.5/s  접수 406710 · 503 79201 · 기타실패 0 · dropped 90  202 p95=70.8 p99=89.8ms  503 p95=50.0ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 9.3 pending 0.0 | insert 큐 평균 74 최대 100, 워커 active 9.5 | tomcat 6 | 노트북 CPU 96% (mysqld 56 / java 33) 클럭 108% | 데스크톱 35%/38%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.30, data_fsyncs 1.32
+p15-k10-grid-split 16:00:31  W= 1633.1/s  접수 293959 · 503 189764 · 기타실패 0 · dropped 2278  202 p95=344.9 p99=466.2ms  503 p95=322.3ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 11.4 pending 5.1 | insert 큐 평균 39 최대 100, 워커 active 8.3 | tomcat 16 | 노트북 CPU 96% (mysqld 55 / java 33) 클럭 109% | 데스크톱 45%/54%
+               주문 1건당 MySQL: Questions 15.00, select 3.00, insert 2.00, commit 2.00, rollback 0.00, set_option 8.00, Handler_commit 8.00, os_log_fsyncs 1.46, data_fsyncs 1.47
+p15-k15-grid-single 17:02:35  W= 2627.1/s  접수 472873 · 503 12756 · 기타실패 0 · dropped 403  202 p95=40.6 p99=58.0ms  503 p95=53.4ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 14.3 pending 0.0 | insert 큐 평균 31 최대 100, 워커 active 13.5 | tomcat 3 | 노트북 CPU 98% (mysqld 53 / java 38) 클럭 108% | 데스크톱 44%/63%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 0.60, data_fsyncs 0.61
+p15-k15-lim1-single 19:23:20  W= 2270.0/s  접수 408600 · 503 200004 · 기타실패 37 · dropped 39363  202 p95=1060.9 p99=1159.9ms  503 p95=1035.5ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 13.0 pending 0.0 | insert 큐 평균 60 최대 100, 워커 active 13.0 | tomcat 6 | 노트북 CPU 97% (mysqld 54 / java 35) 클럭 110% | 데스크톱 44%/50%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.04, data_fsyncs 1.05
+p15-k15-lim3k1-single 19:44:06  W= 2760.4/s  접수 496872 · 503 42750 · 기타실패 0 · dropped 370  202 p95=18.5 p99=41.3ms  503 p95=28.3ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 15.0 pending 0.0 | insert 큐 평균 84 최대 100, 워커 active 14.4 | tomcat 3 | 노트북 CPU 95% (mysqld 48 / java 40) 클럭 106% | 데스크톱 36%/42%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 0.42, data_fsyncs 0.43
+p15-k15-lim3k4-single 20:46:09  W= 2311.6/s  접수 416082 · 503 111246 · 기타실패 3730 · dropped 8944  202 p95=1231.6 p99=4843.9ms  503 p95=1200.3ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 10.1 pending 0.0 | insert 큐 평균 41 최대 95, 워커 active 10.3 | tomcat 6 | 노트북 CPU 92% (mysqld 54 / java 32) 클럭 109% | 데스크톱 42%/48%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 1.11, data_fsyncs 1.12
+p15-k6-grid-split 18:04:36  W= 1696.8/s  접수 305424 · 503 180312 · 기타실패 0 · dropped 266  202 p95=53.3 p99=81.3ms  503 p95=42.4ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 9.9 pending 0.1 | insert 큐 평균 90 최대 100, 워커 active 6.0 | tomcat 5 | 노트북 CPU 97% (mysqld 54 / java 36) 클럭 110% | 데스크톱 40%/46%
+               주문 1건당 MySQL: Questions 15.00, select 3.00, insert 2.00, commit 2.00, rollback 0.00, set_option 8.00, Handler_commit 8.00, os_log_fsyncs 1.05, data_fsyncs 1.07
+p20-k20-lim3k2-single 20:04:47  W= 2938.8/s  접수 528987 · 503 10956 · 기타실패 0 · dropped 57  202 p95=28.9 p99=50.0ms  503 p95=49.1ms
+               대조: 503↔서버 일치, DB=접수−실패 일치, 큐 소진 (queued=0.0 active=0.0, 2초 이내)
+               커넥션 active 19.6 pending 0.0 | insert 큐 평균 40 최대 87, 워커 active 18.3 | tomcat 4 | 노트북 CPU 97% (mysqld 50 / java 41) 클럭 108% | 데스크톱 37%/44%
+               주문 1건당 MySQL: Questions 9.00, select 2.00, insert 2.00, commit 1.00, rollback 0.00, set_option 4.00, Handler_commit 7.00, os_log_fsyncs 0.32, data_fsyncs 0.34
