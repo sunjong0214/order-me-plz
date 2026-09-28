@@ -15,19 +15,21 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * 주문당 MySQL 명령이 15 → 9개로 준다. 관심사 분리는 코드 구조(OrderValidator·AsyncOrderAdmission·AsyncOrderHandler·
  * AsyncOrderProcessor)로 유지하고 트랜잭션 경계만 저장 단계 하나로 둔다. 근거와 수치는 benchmark/README.md 2절.
  *
- * rejectStatus — 대기 자리가 없을 때의 응답 코드. 503(기본, 서버 과부하의 표준 의미) 또는 429.
- * Tomcat은 503 응답 뒤 연결을 닫고 429는 닫지 않는다. 과부하에서 거절이 많을 때 재연결이 몰리는지 비교하려고 설정으로 둔다
- * (유입 한계 확인, benchmark/results/2026-09-26-P2 6절).
+ * rejectStatus — 대기 자리가 없을 때의 응답 코드. 429(기본) 또는 503.
+ * Tomcat은 503 응답 뒤 연결을 닫고("Connection: close") 429는 연결을 유지한다. 거절이 많은 과부하에서 503은 거절마다
+ * 새 TCP 연결을 만들게 해, 4,000건/s에서 초당 새 연결 약 44 → 800~1,050개, 재전송 약 15배로 서버가 무너졌다(3회 중 3회).
+ * 429는 같은 부하에서 무너지지 않았다(benchmark/results/2026-09-26-P2 7절). 앞에 프록시(Nginx)를 두면 프록시가
+ * 클라이언트 연결을 쥐므로 앱은 429를 그대로 두고, 클라이언트에 보낼 코드(503 등)는 프록시에서 바꾼다(benchmark/README.md 2절).
  */
 @ConfigurationProperties(prefix = "omp.order.async")
 public record AsyncOrderProperties(@DefaultValue("single") Transaction transaction,
-                                   @DefaultValue("503") int rejectStatus) {
+                                   @DefaultValue("429") int rejectStatus) {
 
     public enum Transaction { SPLIT, SINGLE }
 
     public AsyncOrderProperties {
         if (rejectStatus != 503 && rejectStatus != 429) {
-            throw new IllegalArgumentException("omp.order.async.reject-status 는 503 또는 429 : " + rejectStatus);
+            throw new IllegalArgumentException("omp.order.async.reject-status 는 429 또는 503 : " + rejectStatus);
         }
     }
 

@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * Spring은 AFTER_COMMIT 리스너를 afterCompletion 단계에서 실행하고 그곳의 예외를 로그로만 남긴다(호출자로 전파 안 됨).
  * 이벤트 방식이면 제출이 거절돼도 컨트롤러는 202를 반환한다(AsyncOrderRejectionTest로 확인).
  * 접수 트랜잭션은 검증 SELECT만 수행하므로 "커밋 후"를 기다릴 데이터도 없다. 따라서 서비스가 직접 호출하고
- * 거절 예외를 요청 스레드로 전파해 503으로 응답한다.
+ * 거절 예외를 요청 스레드로 전파해 429로 응답한다.
  *
  * 대기 자리는 호출자가 미리 예약한다(AsyncOrderAdmission). 제출에 성공하면 자리를 워커에 넘기고, 워커가 작업을 시작할 때 반납한다.
  *
@@ -72,7 +72,7 @@ public class AsyncOrderHandler {
 
     /**
      * 저장 작업을 제출한다. 예약한 자리 덕분에 큐가 넘치지 않으므로 executor 거절은 정상이라면 일어나지 않는다.
-     * 일어나면(안전망) 상태 엔트리를 지우고 AsyncCapacityExceededException(→ 503)을 던지며, 자리는 호출자가 close()로 반납한다.
+     * 일어나면(안전망) 상태 엔트리를 지우고 AsyncCapacityExceededException(→ 429)을 던지며, 자리는 호출자가 close()로 반납한다.
      */
     public void submit(CreateAsyncOrderEvent event, AsyncOrderAdmission.Slot slot, WorkerTask task) {
         long submittedAt = System.nanoTime();

@@ -38,7 +38,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * 대기 자리 예약(AsyncOrderAdmission): 워커 1, 큐 1 → 대기 자리 1.
- * 자리가 없으면 접수 트랜잭션에 들어가지 않고 즉시 503이며(검증 쿼리 0회), 자리는 워커가 작업을 시작하거나 검증이 실패하면 돌아온다.
+ * 자리가 없으면 접수 트랜잭션에 들어가지 않고 즉시 429이며(검증 쿼리 0회), 자리는 워커가 작업을 시작하거나 검증이 실패하면 돌아온다.
  * 저장 단계는 mock으로 붙잡아 자리를 채운다.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -63,7 +63,7 @@ class AsyncOrderAdmissionTest {
     }
 
     @Test
-    void 대기_자리가_없으면_검증_쿼리_없이_즉시_503이다() {
+    void 대기_자리가_없으면_검증_쿼리_없이_즉시_429다() {
         CountDownLatch hold = new CountDownLatch(1);
         when(asyncOrderProcessor.processOrderTask(any())).thenAnswer(inv -> {
             hold.await(10, TimeUnit.SECONDS);
@@ -82,7 +82,7 @@ class AsyncOrderAdmissionTest {
             long queriesBefore = stats.getQueryExecutionCount();
             ResponseEntity<String> overflow = post(USER_OK);
 
-            assertThat(overflow.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+            assertThat(overflow.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
             assertThat(overflow.getHeaders().getFirst(HttpHeaders.RETRY_AFTER)).isNotNull();
             assertThat(stats.getQueryExecutionCount()).as("거절된 요청은 검증 쿼리를 실행하지 않는다").isEqualTo(queriesBefore);
             assertThat(rejectedCount() - rejectedBefore).isEqualTo(1.0);

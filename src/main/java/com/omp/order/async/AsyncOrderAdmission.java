@@ -34,7 +34,7 @@ public class AsyncOrderAdmission {
                 .register(registry);
     }
 
-    /** 자리를 예약한다. 없으면 기다리지 않고 AsyncCapacityExceededException(→ 503 + Retry-After). */
+    /** 자리를 예약한다. 없으면 기다리지 않고 AsyncCapacityExceededException(→ 429 + Retry-After). */
     public Slot acquire() {
         if (!slots.tryAcquire()) {
             throw reject();

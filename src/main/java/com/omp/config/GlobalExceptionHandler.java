@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
-    // 포화 시 백프레셔: 몰래 동기 실행하지 않고 재시도를 안내한다. 응답 코드는 503(기본) 또는 429(AsyncOrderProperties).
+    // 포화 시 백프레셔: 몰래 동기 실행하지 않고 재시도를 안내한다. 응답 코드는 429(기본) 또는 503(AsyncOrderProperties).
     @ExceptionHandler(AsyncCapacityExceededException.class)
     public ResponseEntity<String> capacityExceeded(AsyncCapacityExceededException e) {
         return ResponseEntity.status(asyncOrderProperties.rejectStatus())

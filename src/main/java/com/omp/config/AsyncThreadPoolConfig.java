@@ -26,7 +26,7 @@ public class AsyncThreadPoolConfig {
 
     // 거절 정책은 기본 AbortPolicy. CallerRunsPolicy는 포화 시 작업을 요청 스레드(AFTER_COMMIT 콜백 안)에서
     // 실행해 이미 커밋된 트랜잭션에 참여시키고, 지연 격리라는 비동기 구조의 전제도 깨뜨린다.
-    // 거절은 호출부가 잡아 카운터·로그·503으로 드러낸다.
+    // 거절은 호출부가 잡아 카운터·로그·거절 응답(429)으로 드러낸다.
     private static ThreadPoolTaskExecutor build(Pool pool, String prefix) {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pool.getCore());

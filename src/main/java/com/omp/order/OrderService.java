@@ -47,7 +47,7 @@ public class OrderService {
 
     /**
      * 비동기 SPLIT 접수: 검증 후 INSERT 작업을 워커 풀에 제출하고 작업 식별자를 반환한다. 이 트랜잭션은 검증 SELECT만 수행한다.
-     * 제출은 이벤트가 아닌 직접 호출이다. 거절이 예외로 전파되어 503이 되어야 하기 때문(AsyncOrderHandler 참고).
+     * 제출은 이벤트가 아닌 직접 호출이다. 거절이 예외로 전파되어 429가 되어야 하기 때문(AsyncOrderHandler 참고).
      * 대기 자리(slot)는 호출자가 트랜잭션 전에 예약해 넘긴다(AsyncOrderAdmission).
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
