@@ -141,6 +141,8 @@ class PromotionOrderRulesTest {
         @Test
         void 없는_이벤트는_404() {
             assertThat(post("/api/v1/order", USER_OK, promotionId + 1000).getStatusCode().value()).isEqualTo(404);
+            assertThat(rest.getForEntity("/api/v1/promotions/" + (promotionId + 1000) + "/check", String.class).getStatusCode().value())
+                    .as("정합성 확인 API도 404").isEqualTo(404);
         }
 
         @Test

@@ -83,10 +83,14 @@ public class PromotionAdminService {
      */
     @Transactional(readOnly = true)
     public Map<String, Object> check(long promotionId) {
+        List<Integer> total = jdbc.queryForList("SELECT total_stock FROM promotions WHERE promotion_id = ?", Integer.class, promotionId);
+        if (total.isEmpty()) {
+            throw new PromotionRejectedException(PromotionRejectedException.Reason.NOT_FOUND);   // → 404
+        }
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("promotionId", promotionId);
         out.put("stockMode", props.stockMode().name());
-        out.put("totalStock", jdbc.queryForObject("SELECT total_stock FROM promotions WHERE promotion_id = ?", Integer.class, promotionId));
+        out.put("totalStock", total.get(0));
         out.put("participations", jdbc.queryForObject("SELECT COUNT(*) FROM promotion_participations WHERE promotion_id = ?", Integer.class, promotionId));
         out.put("remainingSingle", jdbc.queryForObject("SELECT remaining_stock FROM promotions WHERE promotion_id = ?", Integer.class, promotionId));
         out.put("remainingBuckets", jdbc.queryForObject("SELECT COALESCE(SUM(remaining), 0) FROM promotion_stock_buckets WHERE promotion_id = ?", Integer.class, promotionId));
