@@ -199,7 +199,7 @@ k6 run -e BASE_URL=$S -e MODE=async -e RATE=<P1 처리량 × 1.5> -e DURATION=3m
 
 설정은 위 "풀 크기 산정" 확정값으로 고정한다. 부하는 B·S가 위 목표치(절대값), A가 잰 용량 W의 배수다. 전부 open model이며 동기·비동기는 같은 서버에서 URL만 다르다.
 
-> S 회차는 선착순 한정 수량 할인 측정으로 대체했다(2026-09-29, [DESIGN-promotion-stock.md](DESIGN-promotion-stock.md) 4장, k6 `k6/03-promotion-flash.js`). 아래 S 행·S 판정·S 예측은 대체 전 기록이다. 선착순 측정의 동기 비교군에 빠른 거절을 쓸지는 측정 전에 정한다.
+> S 회차는 선착순 한정 수량 할인 측정으로 대체했다(2026-09-29, [DESIGN-promotion-stock.md](DESIGN-promotion-stock.md) 4장, k6 `k6/03-promotion-flash.js`). 아래 S 행·S 판정·S 예측은 대체 전 기록이다. 선착순 측정의 동기 비교군은 빠른 거절(상한 130)을 켜고, 메모리 방식에만 빠른 거절 없는 동기를 더한다(2026-09-29 결정, 설계 4.1).
 
 | 회차 | 상황 | 부하 | 판정·기록 | 반복 |
 |---|---|---|---|---|
