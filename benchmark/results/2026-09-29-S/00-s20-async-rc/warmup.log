@@ -1,0 +1,29 @@
+time="2026-09-29T09:54:55+09:00" level=info msg="[run] 시작 09:54:55 MODE=async SCENARIO=fixed TAG=S-warmup" source=console
+time="2026-09-29T09:55:19+09:00" level=warning msg="Request Failed" error="Post \"http://192.168.0.51:8080/api/v1/order/async\": read tcp 192.168.0.8:15368->192.168.0.51:8080: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond."
+time="2026-09-29T09:55:55+09:00" level=info msg="[run] 종료 09:55:55 TAG=S-warmup" source=console
+[31m     ✗ status is 202
+      ↳  99% — ✓ 88605 / ✗ 1[0m
+[31m     ✗ has sse location
+      ↳  99% — ✓ 88605 / ✗ 1[0m
+
+     checks[2m.........................:[0m [36m99.99%[0m [36;2m✓ 177210[0m      [36;2m✗ 2[0m     
+     data_received[2m..................:[0m [36m12 MB[0m  [36;2m205 kB/s[0m
+     data_sent[2m......................:[0m [36m24 MB[0m  [36;2m397 kB/s[0m
+     dropped_iterations[2m.............:[0m [36m1395[0m   [36;2m23.241473/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m18.74ms[0m min=[36m0s[0m med=[36m0s[0m       max=[36m15.03s[0m p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m144.01ms[0m
+     http_req_connecting[2m............:[0m avg=[36m18.74ms[0m min=[36m0s[0m med=[36m0s[0m       max=[36m15.03s[0m p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m144.01ms[0m
+     http_req_duration[2m..............:[0m avg=[36m77.92ms[0m min=[36m0s[0m med=[36m539.15µs[0m max=[36m19.24s[0m p(90)=[36m154.16ms[0m p(95)=[36m396ms[0m    p(99)=[36m1.4s[0m    
+       { expected_response:true }[2m...:[0m avg=[36m77.71ms[0m min=[36m0s[0m med=[36m539.1µs[0m  max=[36m11.53s[0m p(90)=[36m154.12ms[0m p(95)=[36m395.83ms[0m p(99)=[36m1.4s[0m    
+     http_req_failed[2m................:[0m [36m0.00%[0m  [36;2m✓ 1[0m           [36;2m✗ 88605[0m 
+     http_req_receiving[2m.............:[0m avg=[36m17.14µs[0m min=[36m0s[0m med=[36m0s[0m       max=[36m2ms[0m    p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m526.49µs[0m
+     http_req_sending[2m...............:[0m avg=[36m2.2µs[0m   min=[36m0s[0m med=[36m0s[0m       max=[36m4.04ms[0m p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m      min=[36m0s[0m med=[36m0s[0m       max=[36m0s[0m     p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_waiting[2m...............:[0m avg=[36m77.9ms[0m  min=[36m0s[0m med=[36m530.4µs[0m  max=[36m19.24s[0m p(90)=[36m154.08ms[0m p(95)=[36m395.99ms[0m p(99)=[36m1.4s[0m    
+     http_reqs[2m......................:[0m [36m88606[0m  [36;2m1476.225035/s[0m
+     iteration_duration[2m.............:[0m avg=[36m96.72ms[0m min=[36m0s[0m med=[36m656.9µs[0m  max=[36m19.24s[0m p(90)=[36m168.33ms[0m p(95)=[36m457.77ms[0m p(99)=[36m1.73s[0m   
+     iterations[2m.....................:[0m [36m88606[0m  [36;2m1476.225035/s[0m
+     order_accepted_duration[2m........:[0m avg=[36m77.71ms[0m min=[36m0s[0m med=[36m539.1µs[0m  max=[36m11.53s[0m p(90)=[36m154.12ms[0m p(95)=[36m395.83ms[0m p(99)=[36m1.4s[0m    
+     orders_accepted[2m................:[0m [36m88605[0m  [36;2m1476.208374/s[0m
+     orders_failed_other[2m............:[0m [36m1[0m      [36;2m0.016661/s[0m
+     vus[2m............................:[0m [36m2[0m      [36;2mmin=0[0m         [36;2mmax=1375[0m
+     vus_max[2m........................:[0m [36m1420[0m   [36;2mmin=330[0m       [36;2mmax=1420[0m

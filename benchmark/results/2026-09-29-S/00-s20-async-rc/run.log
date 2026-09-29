@@ -1,0 +1,48 @@
+time="2026-09-29T09:56:31+09:00" level=info msg="[run] 시작 09:56:31 MODE=async SCENARIO=spike TAG=S-async-3373" source=console
+time="2026-09-29T09:56:31+09:00" level=info msg="[spike] 절대값, 평상시 40/s, 스파이크 3373/s" source=console
+time="2026-09-29T09:56:31+09:00" level=info msg="[spike] base  09:56:31 ~ 09:58:31" source=console
+time="2026-09-29T09:56:31+09:00" level=info msg="[spike] spike 09:58:31 ~ 09:59:36" source=console
+time="2026-09-29T09:56:31+09:00" level=info msg="[spike] after 09:59:36 ~ 10:04:36" source=console
+time="2026-09-29T09:56:31+09:00" level=info msg="[spike] 저장 완료 판정 구간(스파이크 시작 ~ 끝+90초): hist_window.py ... --from 09:58:31 --to 10:01:06 --slo 30" source=console
+time="2026-09-29T10:04:36+09:00" level=info msg="[run] 종료 10:04:36 TAG=S-async-3373" source=console
+[32m     ✓ status is 202[0m
+[32m     ✓ has sse location[0m
+
+     checks[2m.........................:[0m [36m100.00%[0m [36;2m✓ 438648[0m     [36;2m✗ 0[0m     
+     data_received[2m..................:[0m [36m31 MB[0m   [36;2m63 kB/s[0m
+     data_sent[2m......................:[0m [36m59 MB[0m   [36;2m121 kB/s[0m
+     dropped_iterations[2m.............:[0m [36m55[0m      [36;2m0.113397/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m311.76µs[0m min=[36m0s[0m       med=[36m0s[0m     max=[36m1.03s[0m    p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m582.3µs[0m 
+     http_req_connecting[2m............:[0m avg=[36m311.38µs[0m min=[36m0s[0m       med=[36m0s[0m     max=[36m1.03s[0m    p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m548.57µs[0m
+     http_req_duration[2m..............:[0m avg=[36m7.88ms[0m   min=[36m0s[0m       med=[36m4.29ms[0m max=[36m271.76ms[0m p(90)=[36m13.24ms[0m p(95)=[36m19.88ms[0m  p(99)=[36m79.29ms[0m 
+       { expected_response:true }[2m...:[0m avg=[36m7.88ms[0m   min=[36m0s[0m       med=[36m4.29ms[0m max=[36m271.76ms[0m p(90)=[36m13.24ms[0m p(95)=[36m19.88ms[0m  p(99)=[36m79.29ms[0m 
+     http_req_failed[2m................:[0m [36m0.00%[0m   [36;2m✓ 0[0m          [36;2m✗ 219324[0m
+     http_req_receiving[2m.............:[0m avg=[36m45.82µs[0m  min=[36m0s[0m       med=[36m0s[0m     max=[36m12.24ms[0m  p(90)=[36m0s[0m      p(95)=[36m531.29µs[0m p(99)=[36m887.67µs[0m
+     http_req_sending[2m...............:[0m avg=[36m1.08µs[0m   min=[36m0s[0m       med=[36m0s[0m     max=[36m7.37ms[0m   p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m       min=[36m0s[0m       med=[36m0s[0m     max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_waiting[2m...............:[0m avg=[36m7.83ms[0m   min=[36m0s[0m       med=[36m4.27ms[0m max=[36m271.76ms[0m p(90)=[36m13.22ms[0m p(95)=[36m19.87ms[0m  p(99)=[36m79.29ms[0m 
+     http_reqs[2m......................:[0m [36m219324[0m  [36;2m452.192301/s[0m
+     iteration_duration[2m.............:[0m avg=[36m8.24ms[0m   min=[36m0s[0m       med=[36m4.33ms[0m max=[36m1.05s[0m    p(90)=[36m13.42ms[0m p(95)=[36m20.14ms[0m  p(99)=[36m81.96ms[0m 
+     iterations[2m.....................:[0m [36m219324[0m  [36;2m452.192301/s[0m
+     order_accepted_duration[2m........:[0m avg=[36m7.88ms[0m   min=[36m0s[0m       med=[36m4.29ms[0m max=[36m271.76ms[0m p(90)=[36m13.24ms[0m p(95)=[36m19.88ms[0m  p(99)=[36m79.29ms[0m 
+     [32m✓[0m { phase:after }[2m..............:[0m avg=[36m1.42ms[0m   min=[36m0s[0m       med=[36m1.43ms[0m max=[36m31.81ms[0m  p(90)=[36m1.68ms[0m  p(95)=[36m1.82ms[0m   p(99)=[36m3.83ms[0m  
+     [32m✓[0m { phase:base }[2m...............:[0m avg=[36m1.45ms[0m   min=[36m302.09µs[0m med=[36m1.51ms[0m max=[36m32.37ms[0m  p(90)=[36m1.74ms[0m  p(95)=[36m1.84ms[0m   p(99)=[36m2.26ms[0m  
+     [32m✓[0m { phase:spike }[2m..............:[0m avg=[36m8.42ms[0m   min=[36m0s[0m       med=[36m4.6ms[0m  max=[36m271.76ms[0m p(90)=[36m13.91ms[0m p(95)=[36m20.8ms[0m   p(99)=[36m84.23ms[0m 
+     order_rejected_duration[2m........:[0m avg=[36m0s[0m       min=[36m0s[0m       med=[36m0s[0m     max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     [32m✓[0m { phase:after }[2m..............:[0m avg=[36m0s[0m       min=[36m0s[0m       med=[36m0s[0m     max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     [32m✓[0m { phase:base }[2m...............:[0m avg=[36m0s[0m       min=[36m0s[0m       med=[36m0s[0m     max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     [32m✓[0m { phase:spike }[2m..............:[0m avg=[36m0s[0m       min=[36m0s[0m       med=[36m0s[0m     max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     orders_accepted[2m................:[0m [36m219324[0m  [36;2m452.192301/s[0m
+     [32m✓[0m { phase:after }[2m..............:[0m [36m12001[0m   [36;2m24.743119/s[0m
+     [32m✓[0m { phase:base }[2m...............:[0m [36m4798[0m    [36;2m9.892299/s[0m
+     [32m✓[0m { phase:spike }[2m..............:[0m [36m202525[0m  [36;2m417.556883/s[0m
+     orders_failed_other[2m............:[0m [36m0[0m       [36;2m0/s[0m
+     [32m✓[0m { phase:after }[2m..............:[0m [36m0[0m       [36;2m0/s[0m
+     [32m✓[0m { phase:base }[2m...............:[0m [36m0[0m       [36;2m0/s[0m
+     [32m✓[0m { phase:spike }[2m..............:[0m [36m0[0m       [36;2m0/s[0m
+     orders_rejected[2m................:[0m [36m0[0m       [36;2m0/s[0m
+     [32m✓[0m { phase:after }[2m..............:[0m [36m0[0m       [36;2m0/s[0m
+     [32m✓[0m { phase:base }[2m...............:[0m [36m0[0m       [36;2m0/s[0m
+     [32m✓[0m { phase:spike }[2m..............:[0m [36m0[0m       [36;2m0/s[0m
+     vus[2m............................:[0m [36m0[0m       [36;2mmin=0[0m        [36;2mmax=260[0m 
+     vus_max[2m........................:[0m [36m340[0m     [36;2mmin=300[0m      [36;2mmax=340[0m 
