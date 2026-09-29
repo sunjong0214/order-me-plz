@@ -30,15 +30,19 @@ public class OrderController {
     private final SseEmitterService sseEmitterService;
     private final AsyncOrderAdmission asyncOrderAdmission;
     private final AsyncOrderProperties asyncOrderProperties;
+    private final SyncOrderAdmission syncOrderAdmission;
 
     @GetMapping("/{id}")
     public Order getOrder(final @PathVariable Long id) {
         return orderService.findOrderBy(id);
     }
 
+    /** 동시 처리 상한(omp.order.sync.max-in-flight)이 켜져 있으면 트랜잭션보다 먼저 자리를 잡고, 없으면 DB를 쓰지 않고 즉시 429. */
     @PostMapping
     public Long createOrder(final @RequestBody CreateOrderRequest request) {
-        return orderService.saveOrderBy(request);
+        try (SyncOrderAdmission.Permit permit = syncOrderAdmission.acquire()) {
+            return orderService.saveOrderBy(request);
+        }
     }
 
     /**

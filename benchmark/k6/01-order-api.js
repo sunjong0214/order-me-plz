@@ -8,9 +8,11 @@
 //
 // 환경변수
 //   SCENARIO   fixed(기본): constant-arrival-rate 로 RATE 유지. B(평상시)·A(용량 계단)·C(지속 초과) 회차.
-//              spike      : ramping-arrival-rate. 평상시 → 스파이크 → 평상시 (S 회차). W(필수) = 파일럿 P2에서 잰 저장 처리량(req/s).
-//                           기본: 0.5W로 120초 → 5초 만에 2W → 60초 유지 → 5초 만에 0.5W → 300초 관찰 (총 490초).
-//                           조정: BASE_RATIO(0.5) SPIKE_RATIO(2) BASE_BEFORE_S(120) SPIKE_RAMP_S(5) SPIKE_HOLD_S(60) SPIKE_DOWN_S(5) BASE_AFTER_S(300)
+//              spike      : ramping-arrival-rate. 평상시 → 스파이크 → 평상시 (S 회차).
+//                           부하는 절대값 BASE_RATE·SPIKE_RATE(req/s)로 준다(S 회차, README 2절 목표치: 평상시 40, 이벤트 10만 명 1,707 / 20만 명 3,373).
+//                           둘을 안 주면 W(파일럿 P2 저장 처리량) × BASE_RATIO(0.5)·SPIKE_RATIO(2)로 계산한다.
+//                           형태: 평상시 120초 → 5초 만에 스파이크 → 60초 유지 → 5초 만에 평상시 → 300초 관찰 (총 490초).
+//                           조정: BASE_BEFORE_S(120) SPIKE_RAMP_S(5) SPIKE_HOLD_S(60) SPIKE_DOWN_S(5) BASE_AFTER_S(300)
 //                           요청마다 phase 태그(base|spike|after)를 붙여 구간별 접수 지연·거절 수가 요약에 따로 나온다.
 //                           시작할 때 구간별 시각을 출력한다 → hist_window.py --from/--to 에 넣어 서버 저장 완료 분포를 계산한다
 //                           (k6와 폴링이 같은 데스크탑 시계를 쓰므로 시각이 맞는다).
@@ -25,7 +27,7 @@
 //              스파이크·지속 초과의 동기 회차는 응답이 길어져 VU가 모자라 dropped 가 나는 것 자체가 결과이며, 부하기 CPU로 원인을 구분한다.
 //
 // 스모크:  k6 run -e BASE_URL=http://<서버IP>:8080 -e RATE=10 -e DURATION=30s benchmark/k6/01-order-api.js
-// 스파이크: k6 run -e BASE_URL=http://<서버IP>:8080 -e SCENARIO=spike -e W=<W> -e MODE=async -e THRESHOLDS=off \
+// 스파이크: k6 run -e BASE_URL=http://<서버IP>:8080 -e SCENARIO=spike -e BASE_RATE=40 -e SPIKE_RATE=3373 -e MODE=async -e THRESHOLDS=off \
 //              -e TAG=S-r1 -e OUT_DIR=benchmark/results benchmark/k6/01-order-api.js
 //
 // 전제(sql/seed.sql): users 1..USER_POOL, carts 1..USER_POOL(cart N = user N), shops 1..SHOP_POOL(전부 is_open=1)
@@ -50,11 +52,12 @@ const OUT_DIR = (__ENV.OUT_DIR || '.').replace(/[\\/]+$/, '');
 
 const PATH = MODE === 'sync' ? '/api/v1/order' : '/api/v1/order/async';
 
-// 스파이크 형태. 비율과 길이의 근거는 README 2절(요구값·시험 설계값) 참고.
+// 스파이크 형태. 부하·길이의 근거는 README 2절(요구값·목표치) 참고.
 const W = Number(__ENV.W || 0);
+const ABSOLUTE = Number(__ENV.BASE_RATE || 0) > 0 && Number(__ENV.SPIKE_RATE || 0) > 0;
 const SPIKE = {
-  base: Math.max(1, Math.round(W * Number(__ENV.BASE_RATIO || 0.5))),
-  peak: Math.max(1, Math.round(W * Number(__ENV.SPIKE_RATIO || 2))),
+  base: ABSOLUTE ? Number(__ENV.BASE_RATE) : Math.max(1, Math.round(W * Number(__ENV.BASE_RATIO || 0.5))),
+  peak: ABSOLUTE ? Number(__ENV.SPIKE_RATE) : Math.max(1, Math.round(W * Number(__ENV.SPIKE_RATIO || 2))),
   before: Number(__ENV.BASE_BEFORE_S || 120),
   ramp: Number(__ENV.SPIKE_RAMP_S || 5),
   hold: Number(__ENV.SPIKE_HOLD_S || 60),
@@ -62,8 +65,8 @@ const SPIKE = {
   after: Number(__ENV.BASE_AFTER_S || 300),
 };
 const PHASES = ['base', 'spike', 'after'];
-if (SCENARIO === 'spike' && !(W > 0)) {
-  throw new Error('SCENARIO=spike 는 -e W=<파일럿 P2에서 잰 저장 처리량(req/s)> 가 필요하다');
+if (SCENARIO === 'spike' && !ABSOLUTE && !(W > 0)) {
+  throw new Error('SCENARIO=spike 는 -e BASE_RATE=<평상시 req/s> -e SPIKE_RATE=<스파이크 req/s> 또는 -e W=<저장 처리량> 가 필요하다');
 }
 
 // 시도(iterations) / 접수(accepted) / 거절(rejected, 503) / 그 외 실패 를 분리해 기록한다.
@@ -72,7 +75,7 @@ const rejected = new Counter('orders_rejected');        // 503(또는 설정에 
 const failedOther = new Counter('orders_failed_other'); // 거절 이외의 실패 (4xx, 500, 타임아웃 등)
 // 응답 종류별 지연. http_req_duration 은 202와 503이 섞이므로 접수 p95 판정은 order_accepted_duration 으로 한다.
 const acceptedDuration = new Trend('order_accepted_duration', true); // 접수(비동기 202) / 저장 완료(동기 200) 응답
-const rejectedDuration = new Trend('order_rejected_duration', true); // 503 거절 응답. 거절도 빨라야 백프레셔가 성립한다
+const rejectedDuration = new Trend('order_rejected_duration', true); // 거절 응답(429, 비교군 503). 거절도 빨라야 백프레셔가 성립한다
 
 function scenario() {
   if (SCENARIO === 'spike') {
@@ -167,7 +170,7 @@ export function setup() {
     const s1 = t0 + SPIKE.before * 1000;
     const s2 = s1 + (SPIKE.ramp + SPIKE.hold + SPIKE.down) * 1000;
     const end = s2 + SPIKE.after * 1000;
-    console.log(`[spike] W=${W}, 평상시 ${SPIKE.base}/s, 스파이크 ${SPIKE.peak}/s`);
+    console.log(`[spike] ${ABSOLUTE ? '절대값' : `W=${W}`}, 평상시 ${SPIKE.base}/s, 스파이크 ${SPIKE.peak}/s`);
     console.log(`[spike] base  ${hms(t0)} ~ ${hms(s1)}`);
     console.log(`[spike] spike ${hms(s1)} ~ ${hms(s2)}`);
     console.log(`[spike] after ${hms(s2)} ~ ${hms(end)}`);
