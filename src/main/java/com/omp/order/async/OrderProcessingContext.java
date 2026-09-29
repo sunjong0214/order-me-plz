@@ -12,7 +12,11 @@ public record OrderProcessingContext(OrderIdentifier orderIdentifier, OrderJobSt
     }
 
     public OrderProcessingContext failed() {
-        return new OrderProcessingContext(orderIdentifier, OrderJobState.failed());
+        return failed(null);
+    }
+
+    public OrderProcessingContext failed(String failureCode) {
+        return new OrderProcessingContext(orderIdentifier, OrderJobState.failed(failureCode));
     }
 
     public OrderJobState getOrderJobState() {

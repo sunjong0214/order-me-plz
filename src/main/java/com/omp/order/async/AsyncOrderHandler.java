@@ -7,9 +7,11 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -75,20 +77,28 @@ public class AsyncOrderHandler {
      * 일어나면(안전망) 상태 엔트리를 지우고 AsyncCapacityExceededException(→ 429)을 던지며, 자리는 호출자가 close()로 반납한다.
      */
     public void submit(CreateAsyncOrderEvent event, AsyncOrderAdmission.Slot slot, WorkerTask task) {
+        // REQUIRES_NEW: 반환 시점에 커밋 완료
+        submitWork(event.getUuid(), slot, () -> task == WorkerTask.INSERT_ONLY
+                ? asyncOrderProcessor.processOrderTask(event)
+                : asyncOrderProcessor.validateAndProcessOrderTask(event));
+    }
+
+    /**
+     * 저장 작업(work)을 워커에 제출한다. 상태 엔트리(uuid)는 호출자가 먼저 넣는다. 할인 주문(PromotionOrderService)도 이 경로를 쓴다.
+     * work가 CodedOrderFailure로 끝나면(예: 매진) 상태에 그 코드를 남기고, 정상 흐름이므로 경고 로그를 남기지 않는다.
+     */
+    public void submitWork(String uuid, AsyncOrderAdmission.Slot slot, Supplier<Long> work) {
         long submittedAt = System.nanoTime();
         CompletableFuture<Long> future;
         try {
             future = CompletableFuture.supplyAsync(() -> {
                 slot.release();   // 워커가 작업을 꺼냈다: 큐 한 칸이 비었다
                 queueWait.record(System.nanoTime() - submittedAt, TimeUnit.NANOSECONDS);
-                // REQUIRES_NEW: 반환 시점에 커밋 완료
-                return task == WorkerTask.INSERT_ONLY
-                        ? asyncOrderProcessor.processOrderTask(event)
-                        : asyncOrderProcessor.validateAndProcessOrderTask(event);
+                return work.get();
             }, insertTaskExecutor);
         } catch (RejectedExecutionException e) {
-            asyncOrderManager.remove(event.getUuid());
-            log.debug("order accept rejected by executor : {}", event.getUuid());   // 건별 WARN은 과부하에서 로그 폭주가 된다
+            asyncOrderManager.remove(uuid);
+            log.debug("order accept rejected by executor : {}", uuid);   // 건별 WARN은 과부하에서 로그 폭주가 된다
             throw asyncOrderAdmission.reject();
         }
         slot.handOff();
@@ -97,14 +107,19 @@ public class AsyncOrderHandler {
             long elapsed = System.nanoTime() - submittedAt;
             if (orderException == null) {
                 completedLatency.record(elapsed, TimeUnit.NANOSECONDS);
-                asyncOrderManager.complete(event.getUuid(), orderId);
-                sseEmitterService.orderCreateComplete(event.getUuid());
+                asyncOrderManager.complete(uuid, orderId);
+                sseEmitterService.orderCreateComplete(uuid);
             } else {
                 failedLatency.record(elapsed, TimeUnit.NANOSECONDS);
                 failed.increment();
-                asyncOrderManager.fail(event.getUuid());
-                sseEmitterService.orderCreateFail(event.getUuid());
-                log.warn("order create fail : {}", orderException.getMessage());
+                Throwable cause = orderException instanceof CompletionException && orderException.getCause() != null
+                        ? orderException.getCause() : orderException;
+                String code = cause instanceof CodedOrderFailure coded ? coded.failureCode() : null;
+                asyncOrderManager.fail(uuid, code);
+                sseEmitterService.orderCreateFail(uuid);
+                if (code == null) {
+                    log.warn("order create fail : {}", cause.getMessage());
+                }
             }
         });
     }

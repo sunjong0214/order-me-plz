@@ -32,7 +32,12 @@ public class AsyncOrderManager {
     }
 
     public void fail(String key) {
-        map.asMap().computeIfPresent(key, (k, v) -> v.failed());
+        fail(key, null);
+    }
+
+    /** code: 실패 이유(예: 할인 매진 SOLD_OUT). 없으면 null. */
+    public void fail(String key, String code) {
+        map.asMap().computeIfPresent(key, (k, v) -> v.failed(code));
     }
 
     public void remove(String key) {

@@ -10,6 +10,7 @@ import com.omp.order.async.AsyncOrderAdmission;
 import com.omp.order.async.AsyncOrderProperties;
 import com.omp.order.async.OrderJobState;
 import com.omp.order.dto.CreateOrderRequest;
+import com.omp.promotion.PromotionOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class OrderController {
     private final AsyncOrderAdmission asyncOrderAdmission;
     private final AsyncOrderProperties asyncOrderProperties;
     private final SyncOrderAdmission syncOrderAdmission;
+    private final PromotionOrderService promotionOrderService;
 
     @GetMapping("/{id}")
     public Order getOrder(final @PathVariable Long id) {
@@ -41,7 +43,9 @@ public class OrderController {
     @PostMapping
     public Long createOrder(final @RequestBody CreateOrderRequest request) {
         try (SyncOrderAdmission.Permit permit = syncOrderAdmission.acquire()) {
-            return orderService.saveOrderBy(request);
+            return request.getPromotionId() != null
+                    ? promotionOrderService.placeSync(request)
+                    : orderService.saveOrderBy(request);
         }
     }
 
@@ -53,9 +57,14 @@ public class OrderController {
     @ResponseStatus(ACCEPTED)
     public ResponseEntity<String> asyncCreateOrder(final @RequestBody CreateOrderRequest request) {
         try (AsyncOrderAdmission.Slot slot = asyncOrderAdmission.acquire()) {
-            String uuid = asyncOrderProperties.isSplit()
-                    ? orderService.asyncOrder(request, slot)
-                    : orderService.asyncOrderDeferred(request, slot);
+            String uuid;
+            if (request.getPromotionId() != null) {
+                uuid = promotionOrderService.placeAsync(request, slot);
+            } else {
+                uuid = asyncOrderProperties.isSplit()
+                        ? orderService.asyncOrder(request, slot)
+                        : orderService.asyncOrderDeferred(request, slot);
+            }
             return accepted()
                     .header("Location", "/api/v1/order/sse/" + uuid)
                     .build();

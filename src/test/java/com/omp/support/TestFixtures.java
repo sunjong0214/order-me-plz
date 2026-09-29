@@ -20,7 +20,8 @@ public final class TestFixtures {
     public static void resetAndSeed(JdbcTemplate jdbc) {
         assertTestDatabase(jdbc);
         jdbc.execute("SET FOREIGN_KEY_CHECKS = 0");
-        for (String t : new String[]{"reviews", "orders", "order_menu", "carts", "shop_review_stats", "shops", "users"}) {
+        for (String t : new String[]{"promotion_participations", "promotion_tickets", "promotion_stock_buckets", "promotions",
+                "reviews", "orders", "order_menu", "carts", "shop_review_stats", "shops", "users"}) {
             jdbc.execute("DELETE FROM " + t);
         }
         jdbc.execute("SET FOREIGN_KEY_CHECKS = 1");

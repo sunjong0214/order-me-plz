@@ -10,6 +10,8 @@ TRUNCATE TABLE reviews;
 TRUNCATE TABLE orders;
 TRUNCATE TABLE order_menu;
 TRUNCATE TABLE deliveries;
+-- 선착순 할인 참여 기록. 재고·메모리 번호표는 회차 직전에 POST /api/v1/promotions/{id}/reset 으로 되돌린다(이벤트가 있을 때)
+TRUNCATE TABLE promotion_participations;
 SET FOREIGN_KEY_CHECKS = 1;
 
 UPDATE shop_review_stats SET review_count = 0, rating_sum = 0, average_rating = 0;

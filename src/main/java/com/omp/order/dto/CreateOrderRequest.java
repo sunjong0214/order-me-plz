@@ -19,6 +19,9 @@ public class CreateOrderRequest {
     @Positive
     private final Long shopId;
     private List<OrderMenuRequest> orderMenus;
+    /** 선착순 할인 이벤트 id(선택). 있으면 할인 주문 경로(PromotionOrderService)로 간다. */
+    @Positive
+    private Long promotionId;
 
     public static Order from(final CreateOrderRequest request) {
         return new Order(request.ordererId, request.cartId, request.shopId);

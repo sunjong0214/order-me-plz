@@ -5,11 +5,12 @@
 --   2) 모든 테이블이 비어 있어야 함 (auto_increment가 1부터 시작해야 cart N = user N 이 성립)
 USE OMP;
 
-SET SESSION cte_max_recursion_depth = 200000;
+SET SESSION cte_max_recursion_depth = 400000;
 
--- 회원 100,000명 (k6 USER_POOL 기본값과 일치)
+-- 회원 300,000명. 일반 주문 k6는 USER_POOL(기본 10만) 안에서 고르고, 선착순 할인(03-promotion-flash.js)은
+-- 시도마다 다른 사용자(1~약 23.3만)와 평상시 주문용 사용자(25만 1~30만)를 쓴다. 이미 10만 명이 있으면 seed-users-300k.sql 로 늘린다.
 INSERT INTO users (email, name, status)
-WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 100000)
+WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 300000)
 SELECT CONCAT('user', n, '@test.com'), CONCAT('user', n), 'GENERAL' FROM seq;
 
 -- 가게 1,000개, 전부 영업 중 (k6 SHOP_POOL 기본값과 일치)
@@ -24,7 +25,7 @@ SELECT shop_id, 0, 0, 0 FROM shops;
 
 -- 장바구니: cart N = user N (k6 주문 스크립트가 cartId = userId 로 요청)
 INSERT INTO carts (user_id, shop_id)
-WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 100000)
+WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 300000)
 SELECT n, 1 + (n MOD 1000) FROM seq;
 
 -- 적재 확인
