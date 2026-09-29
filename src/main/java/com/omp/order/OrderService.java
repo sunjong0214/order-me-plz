@@ -13,7 +13,6 @@ import com.omp.orderMenu.OrderMenuService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +34,8 @@ public class OrderService {
         return orderRepository.findById(id).orElseThrow();
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    /** 격리 수준은 DB 기본값(AsyncOrderProcessor 설명 참고). */
+    @Transactional
     public Long saveOrderBy(final CreateOrderRequest request) {
         orderValidator.validate(request.getOrdererId(), request.getShopId(), request.getCartId());
 
@@ -50,7 +50,7 @@ public class OrderService {
      * 제출은 이벤트가 아닌 직접 호출이다. 거절이 예외로 전파되어 429가 되어야 하기 때문(AsyncOrderHandler 참고).
      * 대기 자리(slot)는 호출자가 트랜잭션 전에 예약해 넘긴다(AsyncOrderAdmission).
      */
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public String asyncOrder(CreateOrderRequest request, AsyncOrderAdmission.Slot slot) {
         orderValidator.validate(request.getOrdererId(), request.getShopId(), request.getCartId());
         return submit(request, slot, WorkerTask.INSERT_ONLY);

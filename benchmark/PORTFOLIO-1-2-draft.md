@@ -63,7 +63,7 @@
 4. 응답: `202 Accepted` + `Location: /api/v1/order/sse/{uuid}`
 
 **저장 (워커, 트랜잭션 하나)**
-- 새 트랜잭션(REQUIRES_NEW, READ_COMMITTED)에서 검증 SELECT와 주문·메뉴 INSERT를 함께 한다. 동기 API와 같은 쿼리·격리 수준이다
+- 새 트랜잭션(REQUIRES_NEW, DB 기본 격리 수준)에서 검증 SELECT와 주문·메뉴 INSERT를 함께 한다. 동기 API와 같은 쿼리·격리 수준이다. 처음에는 READ COMMITTED를 지정했지만, 읽기가 검증 한 번뿐이라 결과가 같고 트랜잭션마다 전환 명령만 붙어 기본값으로 되돌렸다(비교 `[측정값: ISO]`)
 - 결과는 상태 객체를 통째로 교체해(불변 record) `COMPLETED + orderId` 또는 `FAILED`가 항상 함께 보인다
 - 관심사 분리는 코드 구조로 유지한다: 검증(`OrderValidator`), 자리 관리(`AsyncOrderAdmission`), 제출(`AsyncOrderHandler`), 저장(`AsyncOrderProcessor`). 트랜잭션 경계만 저장 단계 하나로 둔다
 
