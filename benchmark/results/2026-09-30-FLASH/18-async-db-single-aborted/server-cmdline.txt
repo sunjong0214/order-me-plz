@@ -1,0 +1,1 @@
+java  -Xms2g -Xmx2g -Xlog:gc:file=gc-flash-18-async-db-single.log:time,uptime -jar build\libs\OrderMePlz-0.0.1-SNAPSHOT.jar --spring.datasource.hikari.maximum-pool-size=20 --omp.executor.insert.queue=70000 --omp.promotion.stock-mode=db-single --omp.promotion.admin-api=true 

@@ -1,0 +1,3 @@
+phase,async_rejected,async_failed,sync_rejected,hikari_timeout
+before,12205.0,0.0,0.0,0.0
+after,137401.0,0.0,0.0,0.0

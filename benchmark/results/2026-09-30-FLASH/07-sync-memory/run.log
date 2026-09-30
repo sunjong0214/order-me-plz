@@ -1,0 +1,27 @@
+time="2026-09-30T08:42:32+09:00" level=info msg="[run] 시작 08:42:32 MODE=sync TAG=FLASH-sync-memory PROMOTION_ID=1" source=console
+time="2026-09-30T08:42:32+09:00" level=info msg="[flash] 시도 08:43:02 ~ 08:44:49 (최고 초당 3000건), 관찰 끝 08:49:49" source=console
+time="2026-09-30T08:43:37+09:00" level=warning msg="Insufficient VUs, reached 4000 active VUs and cannot initialize more" executor=ramping-arrival-rate scenario=attempts
+time="2026-09-30T08:49:49+09:00" level=info msg="[run] 종료 08:49:49 TAG=FLASH-sync-memory" source=console
+     base_accepted[2m..................:[0m [36m17469[0m  [36;2m39.972491/s[0m
+     base_accepted_duration[2m.........:[0m avg=[36m77.13ms[0m  min=[36m0s[0m      med=[36m4.25ms[0m   max=[36m4.19s[0m    p(90)=[36m5.02ms[0m  p(95)=[36m740.24ms[0m p(99)=[36m1.35s[0m 
+     data_received[2m..................:[0m [36m34 MB[0m  [36;2m77 kB/s[0m
+     data_sent[2m......................:[0m [36m69 MB[0m  [36;2m157 kB/s[0m
+     dropped_iterations[2m.............:[0m [36m4683[0m   [36;2m10.715621/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m973.87µs[0m min=[36m0s[0m      med=[36m0s[0m       max=[36m1.05s[0m    p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m1.13ms[0m
+     http_req_connecting[2m............:[0m avg=[36m973.43µs[0m min=[36m0s[0m      med=[36m0s[0m       max=[36m1.05s[0m    p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m1.07ms[0m
+     http_req_duration[2m..............:[0m avg=[36m386.59ms[0m min=[36m0s[0m      med=[36m1.47ms[0m   max=[36m6.28s[0m    p(90)=[36m1.2s[0m    p(95)=[36m1.36s[0m    p(99)=[36m1.88s[0m 
+       { expected_response:true }[2m...:[0m avg=[36m777.91ms[0m min=[36m0s[0m      med=[36m772.25ms[0m max=[36m6.28s[0m    p(90)=[36m1.36s[0m   p(95)=[36m1.45s[0m    p(99)=[36m2.41s[0m 
+     http_req_failed[2m................:[0m [36m52.10%[0m [36;2m✓ 127810[0m     [36;2m✗ 117469[0m
+     http_req_receiving[2m.............:[0m avg=[36m150.71µs[0m min=[36m0s[0m      med=[36m0s[0m       max=[36m112.43ms[0m p(90)=[36m511.8µs[0m p(95)=[36m576.7µs[0m  p(99)=[36m3.33ms[0m
+     http_req_sending[2m...............:[0m avg=[36m1.22µs[0m   min=[36m0s[0m      med=[36m0s[0m       max=[36m5.73ms[0m   p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m    
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m       min=[36m0s[0m      med=[36m0s[0m       max=[36m0s[0m       p(90)=[36m0s[0m      p(95)=[36m0s[0m       p(99)=[36m0s[0m    
+     http_req_waiting[2m...............:[0m avg=[36m386.44ms[0m min=[36m0s[0m      med=[36m742.3µs[0m  max=[36m6.28s[0m    p(90)=[36m1.2s[0m    p(95)=[36m1.36s[0m    p(99)=[36m1.88s[0m 
+     http_reqs[2m......................:[0m [36m245279[0m [36;2m561.246359/s[0m
+     iteration_duration[2m.............:[0m avg=[36m387.61ms[0m min=[36m0s[0m      med=[36m1.53ms[0m   max=[36m6.28s[0m    p(90)=[36m1.2s[0m    p(95)=[36m1.36s[0m    p(99)=[36m1.91s[0m 
+     iterations[2m.....................:[0m [36m245279[0m [36;2m561.246359/s[0m
+     promo_sold_out[2m.................:[0m [36m127810[0m [36;2m292.454296/s[0m
+     promo_sold_out_duration[2m........:[0m avg=[36m26.93ms[0m  min=[36m0s[0m      med=[36m510.4µs[0m  max=[36m1.63s[0m    p(90)=[36m619.1µs[0m p(95)=[36m1.28ms[0m   p(99)=[36m1.11s[0m 
+     promo_success[2m..................:[0m [36m100000[0m [36;2m228.819573/s[0m
+     promo_success_duration[2m.........:[0m avg=[36m900.32ms[0m min=[36m422.4µs[0m med=[36m869.4ms[0m  max=[36m6.28s[0m    p(90)=[36m1.39s[0m   p(95)=[36m1.47s[0m    p(99)=[36m2.52s[0m 
+     vus[2m............................:[0m [36m0[0m      [36;2mmin=0[0m        [36;2mmax=4021[0m
+     vus_max[2m........................:[0m [36m4062[0m   [36;2mmin=2050[0m     [36;2mmax=4062[0m

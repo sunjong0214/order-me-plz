@@ -1,0 +1,1 @@
+clock_offset_s=-1.367 error_s=0.302

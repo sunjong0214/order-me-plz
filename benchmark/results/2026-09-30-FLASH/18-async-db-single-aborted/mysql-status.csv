@@ -1,0 +1,13 @@
+phase,name,value
+before,Com_commit,39088263
+before,Com_insert,73345153
+before,Com_rollback,2191773
+before,Com_select,72297928
+before,Com_set_option,149280437
+before,Com_update,1117055
+before,Handler_commit,262579647
+before,Innodb_data_fsyncs,38246310
+before,Innodb_os_log_fsyncs,37533727
+before,Innodb_row_lock_time,7407377
+before,Innodb_row_lock_waits,552747
+before,Questions,337321674

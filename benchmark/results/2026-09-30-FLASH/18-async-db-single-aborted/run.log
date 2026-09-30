@@ -1,0 +1,26 @@
+time="2026-09-30T13:12:01+09:00" level=info msg="[run] 시작 13:12:01 MODE=async TAG=FLASH-async-db-single PROMOTION_ID=1" source=console
+time="2026-09-30T13:12:01+09:00" level=info msg="[flash] 시도 13:12:31 ~ 13:14:18 (최고 초당 3000건), 관찰 끝 13:19:18" source=console
+time="2026-09-30T13:16:29+09:00" level=info msg="[run] 종료 13:16:29 TAG=FLASH-async-db-single" source=console
+     base_accepted[2m..................:[0m [36m9700[0m   [36;2m36.14106/s[0m
+     base_accepted_duration[2m.........:[0m avg=[36m7.36ms[0m  min=[36m0s[0m med=[36m1.31ms[0m   max=[36m2.31s[0m    p(90)=[36m1.76ms[0m p(95)=[36m2.58ms[0m p(99)=[36m224.99ms[0m
+     base_rejected[2m..................:[0m [36m1033[0m   [36;2m3.848837/s[0m
+     data_received[2m..................:[0m [36m35 MB[0m  [36;2m130 kB/s[0m
+     data_sent[2m......................:[0m [36m70 MB[0m  [36;2m259 kB/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m51.31µs[0m min=[36m0s[0m med=[36m0s[0m       max=[36m1.15s[0m    p(90)=[36m0s[0m     p(95)=[36m0s[0m     p(99)=[36m523.8µs[0m 
+     http_req_connecting[2m............:[0m avg=[36m50.99µs[0m min=[36m0s[0m med=[36m0s[0m       max=[36m1.15s[0m    p(90)=[36m0s[0m     p(95)=[36m0s[0m     p(99)=[36m522.9µs[0m 
+     http_req_duration[2m..............:[0m avg=[36m6.81ms[0m  min=[36m0s[0m med=[36m775.9µs[0m  max=[36m2.33s[0m    p(90)=[36m2.59ms[0m p(95)=[36m4.59ms[0m p(99)=[36m200.47ms[0m
+       { expected_response:true }[2m...:[0m avg=[36m8.13ms[0m  min=[36m0s[0m med=[36m794.1µs[0m  max=[36m2.33s[0m    p(90)=[36m2.6ms[0m  p(95)=[36m4.8ms[0m  p(99)=[36m247.07ms[0m
+     http_req_failed[2m................:[0m [36m21.79%[0m [36;2m✓ 53009[0m      [36;2m✗ 190214[0m
+     http_req_receiving[2m.............:[0m avg=[36m27.12µs[0m min=[36m0s[0m med=[36m0s[0m       max=[36m4.02ms[0m   p(90)=[36m0s[0m     p(95)=[36m0s[0m     p(99)=[36m734.1µs[0m 
+     http_req_sending[2m...............:[0m avg=[36m827ns[0m   min=[36m0s[0m med=[36m0s[0m       max=[36m3.01ms[0m   p(90)=[36m0s[0m     p(95)=[36m0s[0m     p(99)=[36m0s[0m      
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m      min=[36m0s[0m med=[36m0s[0m       max=[36m0s[0m       p(90)=[36m0s[0m     p(95)=[36m0s[0m     p(99)=[36m0s[0m      
+     http_req_waiting[2m...............:[0m avg=[36m6.78ms[0m  min=[36m0s[0m med=[36m647.29µs[0m max=[36m2.33s[0m    p(90)=[36m2.58ms[0m p(95)=[36m4.53ms[0m p(99)=[36m200.47ms[0m
+     http_reqs[2m......................:[0m [36m243223[0m [36;2m906.220324/s[0m
+     iteration_duration[2m.............:[0m avg=[36m6.88ms[0m  min=[36m0s[0m med=[36m1.01ms[0m   max=[36m2.33s[0m    p(90)=[36m2.61ms[0m p(95)=[36m4.77ms[0m p(99)=[36m201.2ms[0m 
+     iterations[2m.....................:[0m [36m243223[0m [36;2m906.220324/s[0m
+     promo_queue_full[2m...............:[0m [36m51976[0m  [36;2m193.65647/s[0m
+     promo_queue_full_duration[2m......:[0m avg=[36m2.06ms[0m  min=[36m0s[0m med=[36m641µs[0m    max=[36m219.65ms[0m p(90)=[36m2.34ms[0m p(95)=[36m4.01ms[0m p(99)=[36m40.98ms[0m 
+     promo_success[2m..................:[0m [36m180514[0m [36;2m672.573957/s[0m
+     promo_success_duration[2m.........:[0m avg=[36m8.17ms[0m  min=[36m0s[0m med=[36m654.4µs[0m  max=[36m2.33s[0m    p(90)=[36m2.62ms[0m p(95)=[36m4.99ms[0m p(99)=[36m247.73ms[0m
+     vus[2m............................:[0m [36m0[0m      [36;2mmin=0[0m        [36;2mmax=275[0m 
+     vus_max[2m........................:[0m [36m2050[0m   [36;2mmin=2050[0m     [36;2mmax=2050[0mtime="2026-09-30T13:16:29+09:00" level=error msg="test run was aborted because k6 received a 'terminated' signal"
