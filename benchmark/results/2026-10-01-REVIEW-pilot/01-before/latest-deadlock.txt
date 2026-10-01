@@ -1,0 +1,74 @@
+LATEST DETECTED DEADLOCK
+------------------------
+2026-10-01 06:10:28 0x18a8
+*** (1) TRANSACTION:
+TRANSACTION 86767074, ACTIVE 0 sec starting index read
+mysql tables in use 1, locked 1
+LOCK WAIT 5 lock struct(s), heap size 1128, 2 row lock(s), undo log entries 1
+MySQL thread id 2474, OS thread handle 9256, query id 378793179 localhost 127.0.0.1 root updating
+update shops set average_rating=2.95,category='FOOD',is_open=1,name='shop2',rating_sum=1297.00,review_count=440 where shop_id=2
+
+*** (1) HOLDS THE LOCK(S):
+RECORD LOCKS space id 2371 page no 8 n bits 272 index PRIMARY of table `omp`.`shops` trx id 86767074 lock mode S locks rec but not gap
+Record lock, heap no 3 PHYSICAL RECORD: n_fields 9; compact format; info bits 64
+ 0: len 8; hex 8000000000000002; asc         ;;
+ 1: len 6; hex 0000052bf5dc; asc    +  ;;
+ 2: len 7; hex 010000027c1cf2; asc     |  ;;
+ 3: len 1; hex 03; asc  ;;
+ 4: len 1; hex 01; asc  ;;
+ 5: len 5; hex 73686f7032; asc shop2;;
+ 6: len 17; hex 800000000000000000000000000000025f; asc                 _;;
+ 7: len 17; hex 8000000000000000000000000000050f00; asc                  ;;
+ 8: len 8; hex 80000000000001b7; asc         ;;
+
+
+*** (1) WAITING FOR THIS LOCK TO BE GRANTED:
+RECORD LOCKS space id 2371 page no 8 n bits 272 index PRIMARY of table `omp`.`shops` trx id 86767074 lock_mode X locks rec but not gap waiting
+Record lock, heap no 3 PHYSICAL RECORD: n_fields 9; compact format; info bits 64
+ 0: len 8; hex 8000000000000002; asc         ;;
+ 1: len 6; hex 0000052bf5dc; asc    +  ;;
+ 2: len 7; hex 010000027c1cf2; asc     |  ;;
+ 3: len 1; hex 03; asc  ;;
+ 4: len 1; hex 01; asc  ;;
+ 5: len 5; hex 73686f7032; asc shop2;;
+ 6: len 17; hex 800000000000000000000000000000025f; asc                 _;;
+ 7: len 17; hex 8000000000000000000000000000050f00; asc                  ;;
+ 8: len 8; hex 80000000000001b7; asc         ;;
+
+
+*** (2) TRANSACTION:
+TRANSACTION 86767084, ACTIVE 0 sec starting index read
+mysql tables in use 1, locked 1
+LOCK WAIT 5 lock struct(s), heap size 1128, 2 row lock(s), undo log entries 1
+MySQL thread id 2461, OS thread handle 15000, query id 378793182 localhost 127.0.0.1 root updating
+update shops set average_rating=2.95,category='FOOD',is_open=1,name='shop2',rating_sum=1300.00,review_count=440 where shop_id=2
+
+*** (2) HOLDS THE LOCK(S):
+RECORD LOCKS space id 2371 page no 8 n bits 272 index PRIMARY of table `omp`.`shops` trx id 86767084 lock mode S locks rec but not gap
+Record lock, heap no 3 PHYSICAL RECORD: n_fields 9; compact format; info bits 64
+ 0: len 8; hex 8000000000000002; asc         ;;
+ 1: len 6; hex 0000052bf5dc; asc    +  ;;
+ 2: len 7; hex 010000027c1cf2; asc     |  ;;
+ 3: len 1; hex 03; asc  ;;
+ 4: len 1; hex 01; asc  ;;
+ 5: len 5; hex 73686f7032; asc shop2;;
+ 6: len 17; hex 800000000000000000000000000000025f; asc                 _;;
+ 7: len 17; hex 8000000000000000000000000000050f00; asc                  ;;
+ 8: len 8; hex 80000000000001b7; asc         ;;
+
+
+*** (2) WAITING FOR THIS LOCK TO BE GRANTED:
+RECORD LOCKS space id 2371 page no 8 n bits 272 index PRIMARY of table `omp`.`shops` trx id 86767084 lock_mode X locks rec but not gap waiting
+Record lock, heap no 3 PHYSICAL RECORD: n_fields 9; compact format; info bits 64
+ 0: len 8; hex 8000000000000002; asc         ;;
+ 1: len 6; hex 0000052bf5dc; asc    +  ;;
+ 2: len 7; hex 010000027c1cf2; asc     |  ;;
+ 3: len 1; hex 03; asc  ;;
+ 4: len 1; hex 01; asc  ;;
+ 5: len 5; hex 73686f7032; asc shop2;;
+ 6: len 17; hex 800000000000000000000000000000025f; asc                 _;;
+ 7: len 17; hex 8000000000000000000000000000050f00; asc                  ;;
+ 8: len 8; hex 80000000000001b7; asc         ;;
+
+*** WE ROLL BACK TRANSACTION (2)
+------------

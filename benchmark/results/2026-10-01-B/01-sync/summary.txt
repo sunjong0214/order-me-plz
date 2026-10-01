@@ -1,0 +1,7 @@
+== 01-sync  W = 40.0건/s (DB 36,001, 응답 성공 36,001) | 거절 0 (0.0%) 실패 0 dropped 0 | 성공 p95 4.8 p99 6.4ms
+  주문당 MySQL: Questions 6.00, Com_select 1.00, Com_set_option 2.00, Com_commit 1.00, Innodb_os_log_fsyncs 2.38, Innodb_row_lock_waits 0.00
+  부하 중 평균: 커넥션 사용 0.2 / 대기 0.0 | Tomcat 바쁜 스레드 1.1 | insert 큐 0.0 / 워커 0.0 | 폴링 158회
+  누적 타이머(측정 15분): 커넥션 점유 평균 0.1개, 커넥션 획득 대기 평균 0.1ms, 성공 주문의 서버 처리 평균 3.2ms · 평균 동시 처리 0건
+  노트북 CPU 3.7% (mysqld 1.2 / java 0.7), 클럭 81%, 주문당 CPU mysqld 30.62 / java 17.68 (%p per 1000건/s), TCP 재전송 0/s
+  GC 멈춤 33회, 최대 114ms
+  데스크톱 CPU 평균 11.0% / 최대 16.2%
