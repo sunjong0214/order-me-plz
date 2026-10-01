@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 주문 검증(validateOrder 단일 쿼리 1회). 동기, 비동기 SPLIT의 접수, 비동기 SINGLE의 워커가 같은 규칙을 쓴다.
+ * 주문 검증(validateOrder 단일 쿼리 1회). 동기, 비동기 SPLIT의 접수, 비동기 SINGLE의 워커, 할인 주문 저장(PromotionOrderWriter)이 같은 규칙을 쓴다.
  * 호출한 쪽의 트랜잭션 안에서 실행된다.
  */
 @RequiredArgsConstructor

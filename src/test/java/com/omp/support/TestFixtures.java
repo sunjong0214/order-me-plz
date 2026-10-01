@@ -8,9 +8,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public final class TestFixtures {
     public static final long USER_OK = 1L;
     public static final long USER_BANNED = 2L;
+    public static final long USER_OTHER = 3L;
     public static final long SHOP_OPEN = 1L;
     public static final long SHOP_CLOSED = 2L;
-    public static final long CART_OK = 1L;
+    /** 장바구니는 사용자 한 명·가게 하나의 것이고, 주문의 주문자·가게와 같아야 검증을 통과한다. id = 주인 사용자 id(벤치마크 seed와 같은 규칙). */
+    public static final long CART_OK = 1L;       // USER_OK · SHOP_OPEN
+    public static final long CART_BANNED = 2L;   // USER_BANNED · SHOP_OPEN
+    public static final long CART_OTHER = 3L;    // USER_OTHER · SHOP_CLOSED
 
     /** 통합 테스트가 붙어야 하는 스키마. application-test.properties 와 일치해야 한다. */
     public static final String TEST_DB = "OMP_TEST";
@@ -28,11 +32,14 @@ public final class TestFixtures {
 
         jdbc.update("INSERT INTO users(user_id, email, name, status) VALUES (?, ?, ?, ?)", USER_OK, "ok@test.com", "ok", "GENERAL");
         jdbc.update("INSERT INTO users(user_id, email, name, status) VALUES (?, ?, ?, ?)", USER_BANNED, "ban@test.com", "ban", "BAN");
+        jdbc.update("INSERT INTO users(user_id, email, name, status) VALUES (?, ?, ?, ?)", USER_OTHER, "other@test.com", "other", "GENERAL");
         jdbc.update("INSERT INTO shops(shop_id, name, category, is_open) VALUES (?, ?, ?, ?)", SHOP_OPEN, "open", "PIZZA", 1);
         jdbc.update("INSERT INTO shops(shop_id, name, category, is_open) VALUES (?, ?, ?, ?)", SHOP_CLOSED, "closed", "PIZZA", 0);
         jdbc.update("INSERT INTO shop_review_stats(shop_id, review_count, rating_sum, average_rating) VALUES (?, 0, 0, 0)", SHOP_OPEN);
         jdbc.update("INSERT INTO shop_review_stats(shop_id, review_count, rating_sum, average_rating) VALUES (?, 0, 0, 0)", SHOP_CLOSED);
         jdbc.update("INSERT INTO carts(cart_id, user_id, shop_id) VALUES (?, ?, ?)", CART_OK, USER_OK, SHOP_OPEN);
+        jdbc.update("INSERT INTO carts(cart_id, user_id, shop_id) VALUES (?, ?, ?)", CART_BANNED, USER_BANNED, SHOP_OPEN);
+        jdbc.update("INSERT INTO carts(cart_id, user_id, shop_id) VALUES (?, ?, ?)", CART_OTHER, USER_OTHER, SHOP_CLOSED);
     }
 
     /**

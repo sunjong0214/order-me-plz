@@ -1,9 +1,12 @@
 package com.omp.order;
 
+import static com.omp.support.TestFixtures.CART_BANNED;
 import static com.omp.support.TestFixtures.CART_OK;
+import static com.omp.support.TestFixtures.CART_OTHER;
 import static com.omp.support.TestFixtures.SHOP_OPEN;
 import static com.omp.support.TestFixtures.USER_BANNED;
 import static com.omp.support.TestFixtures.USER_OK;
+import static com.omp.support.TestFixtures.USER_OTHER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.omp.support.TestFixtures;
@@ -45,7 +48,7 @@ class AsyncOrderSingleTransactionTest {
 
     @Test
     void 유효한_주문은_접수_후_저장되고_완료로_조회된다() throws Exception {
-        String uuid = acceptedUuid(USER_OK);
+        String uuid = acceptedUuid(USER_OK, CART_OK, SHOP_OPEN);
 
         assertThat(TestFixtures.awaitUntil(() -> TestFixtures.count(jdbc, "orders") == 1, Duration.ofSeconds(5))).isTrue();
         assertThat(TestFixtures.awaitUntil(() -> status(uuid).statusCode() == 303, Duration.ofSeconds(5))).isTrue();
@@ -53,22 +56,37 @@ class AsyncOrderSingleTransactionTest {
 
     @Test
     void 잘못된_주문도_접수되고_이후_FAILED로_조회된다() throws Exception {
+        assertAcceptedThenFailed(USER_BANNED, CART_BANNED, SHOP_OPEN);
+    }
+
+    @Test
+    void 다른_가게의_장바구니는_접수되고_이후_FAILED로_조회된다() throws Exception {
+        assertAcceptedThenFailed(USER_OTHER, CART_OTHER, SHOP_OPEN);   // 자기 장바구니지만 SHOP_CLOSED의 것
+    }
+
+    @Test
+    void 남의_장바구니는_접수되고_이후_FAILED로_조회된다() throws Exception {
+        assertAcceptedThenFailed(USER_OTHER, CART_OK, SHOP_OPEN);      // USER_OK의 장바구니
+    }
+
+    /** 접수는 검증하지 않아 202, 워커의 검증이 실패해 상태 조회가 200 + FAILED가 되고 행은 남지 않는다. */
+    private void assertAcceptedThenFailed(long ordererId, long cartId, long shopId) throws Exception {
         double failedBefore = failedCount();
 
-        String uuid = acceptedUuid(USER_BANNED);
+        String uuid = acceptedUuid(ordererId, cartId, shopId);
 
-        assertThat(TestFixtures.awaitUntil(() -> failedCount() - failedBefore == 1.0, Duration.ofSeconds(5))).isTrue();
-        HttpResponse<String> status = status(uuid);
-        assertThat(status.statusCode()).isEqualTo(200);
-        assertThat(status.body()).contains("\"status\":\"FAILED\"");
+        assertThat(TestFixtures.awaitUntil(() -> status(uuid).body().contains("\"status\":\"FAILED\""), Duration.ofSeconds(5)))
+                .isTrue();
+        assertThat(status(uuid).statusCode()).isEqualTo(200);
+        assertThat(failedCount() - failedBefore).isEqualTo(1.0);
         assertThat(TestFixtures.count(jdbc, "orders")).isZero();
     }
 
-    private String acceptedUuid(long ordererId) throws Exception {
+    private String acceptedUuid(long ordererId, long cartId, long shopId) throws Exception {
         HttpResponse<String> res = http.send(HttpRequest.newBuilder(uri("/api/v1/order/async"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        "{\"ordererId\": " + ordererId + ", \"cartId\": " + CART_OK + ", \"shopId\": " + SHOP_OPEN + ", \"orderMenus\": []}"))
+                        "{\"ordererId\": " + ordererId + ", \"cartId\": " + cartId + ", \"shopId\": " + shopId + ", \"orderMenus\": []}"))
                 .build(), HttpResponse.BodyHandlers.ofString());
         assertThat(res.statusCode()).isEqualTo(202);
         String location = res.headers().firstValue("Location").orElseThrow();

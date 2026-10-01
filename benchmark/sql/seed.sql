@@ -13,7 +13,7 @@ INSERT INTO users (email, name, status)
 WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 300000)
 SELECT CONCAT('user', n, '@test.com'), CONCAT('user', n), 'GENERAL' FROM seq;
 
--- 가게 1,000개, 전부 영업 중 (k6 SHOP_POOL 기본값과 일치)
+-- 가게 1,000개, 전부 영업 중 (k6 주문 스크립트의 SEED_SHOPS와 일치)
 -- 주의: is_open=0이면 비동기 주문이 202 접수 후 백그라운드 검증에서 전부 실패한다.
 INSERT INTO shops (name, category, is_open)
 WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000)
@@ -23,7 +23,8 @@ SELECT CONCAT('shop', n), ELT(1 + (n MOD 4), 'CHICKEN', 'PIZZA', 'FOOD', 'BEEF')
 INSERT INTO shop_review_stats (shop_id, review_count, rating_sum, average_rating)
 SELECT shop_id, 0, 0, 0 FROM shops;
 
--- 장바구니: cart N = user N (k6 주문 스크립트가 cartId = userId 로 요청)
+-- 장바구니: cart N = user N, 가게 1 + (N mod 1000). 주문 검증이 장바구니의 사용자·가게를 확인하므로
+-- k6 주문 스크립트는 cartId = userId, shopId = 1 + (cartId mod 1000) 으로 요청한다.
 INSERT INTO carts (user_id, shop_id)
 WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 300000)
 SELECT n, 1 + (n MOD 1000) FROM seq;

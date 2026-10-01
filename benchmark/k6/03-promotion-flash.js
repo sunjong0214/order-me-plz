@@ -6,9 +6,10 @@
 // 환경변수
 //   BASE_URL, MODE(async|sync), PROMOTION_ID(필수), TAG, OUT_DIR
 //   PEAK(3000) RAMP_S(5) HOLD_S(42) DECAY_S(60) TAIL(300) LEAD_S(30) AFTER_S(300) BASE_RATE(40)
-//   FLASH_USER_FROM(1) BASE_USER_FROM(250001) BASE_USER_POOL(50000) SHOP_POOL(1000)
+//   FLASH_USER_FROM(1) BASE_USER_FROM(250001) BASE_USER_POOL(50000)
 //   PRE_VUS(2000): 급증 순간에 VU를 새로 만들지 않게 미리 만든다. MAX_VUS(4000)
 // 전제: users·carts 30만 명(benchmark/sql/seed.sql), 이벤트 생성(POST /api/v1/promotions), 회차마다 이벤트 초기화(POST .../reset).
+//       주문 검증이 장바구니 소유(사용자·가게)를 확인하므로 shopId는 seed의 장바구니 가게(1 + (cartId mod 1000))로 보낸다.
 // 판정·기록은 k6 요약(응답 종류별 건수·지연)과 서버 지표(omp.promotion.confirmed 1초 폴링 → 초당 확정 건수, 재고가 모두 확정된 시각)로 한다.
 
 import http from 'k6/http';
@@ -32,7 +33,7 @@ const BASE_RATE = Number(__ENV.BASE_RATE || 40);
 const FLASH_USER_FROM = Number(__ENV.FLASH_USER_FROM || 1);
 const BASE_USER_FROM = Number(__ENV.BASE_USER_FROM || 250001);
 const BASE_USER_POOL = Number(__ENV.BASE_USER_POOL || 50000);
-const SHOP_POOL = Number(__ENV.SHOP_POOL || 1000);
+const SEED_SHOPS = 1000; // seed.sql 가게 수. 장바구니 N의 가게 = 1 + (N mod 1000)
 const PATH = MODE === 'sync' ? '/api/v1/order' : '/api/v1/order/async';
 const ATTEMPT_S = RAMP + HOLD + DECAY;
 
@@ -103,7 +104,7 @@ function body(userId, withPromotion) {
   const o = {
     ordererId: userId,
     cartId: userId, // seed.sql: cart N = user N
-    shopId: Math.floor(Math.random() * SHOP_POOL) + 1,
+    shopId: 1 + (userId % SEED_SHOPS), // 그 장바구니의 가게
     orderMenus: [{ menuId: 1, cartId: userId, quantity: 2, orderedPrice: 15000 }], // 일반 주문과 같은 DB 작업
   };
   if (withPromotion) {

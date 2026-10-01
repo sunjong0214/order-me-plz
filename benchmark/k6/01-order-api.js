@@ -30,9 +30,9 @@
 // 스파이크: k6 run -e BASE_URL=http://<서버IP>:8080 -e SCENARIO=spike -e BASE_RATE=40 -e SPIKE_RATE=3373 -e MODE=async -e THRESHOLDS=off \
 //              -e TAG=S-r1 -e OUT_DIR=benchmark/results benchmark/k6/01-order-api.js
 //
-// 전제(sql/seed.sql): users 1..USER_POOL, carts 1..USER_POOL(cart N = user N), shops 1..SHOP_POOL(전부 is_open=1)
-//   장바구니-가게 일치 검증은 현재 주석 처리되어 있어 shopId를 랜덤으로 보내도 통과한다. 검증을 켜면
-//   seed의 cart N → shop 1+(N mod 1000) 배정과 맞춰야 한다.
+// 전제(sql/seed.sql): users 1..USER_POOL, carts 1..USER_POOL(cart N = user N, 가게 1 + (N mod 1000)), shops 1..1000(전부 is_open=1)
+//   주문 검증이 장바구니 소유(장바구니의 사용자·가게 = 주문의 사용자·가게)를 확인하므로 shopId는 장바구니의 가게로 보낸다.
+//   (2026-10-01 전에는 이 확인이 주석 처리돼 있어 shopId를 무작위로 보냈다.)
 
 import http from 'k6/http';
 import { check } from 'k6';
@@ -46,7 +46,7 @@ const THRESHOLDS = (__ENV.THRESHOLDS || 'strict').toLowerCase(); // strict | off
 const RATE = Number(__ENV.RATE || 1000);
 const DURATION = __ENV.DURATION || '15m';
 const USER_POOL = Number(__ENV.USER_POOL || 100000);
-const SHOP_POOL = Number(__ENV.SHOP_POOL || 1000);
+const SEED_SHOPS = 1000; // sql/seed.sql 가게 수. 장바구니 N의 가게 = 1 + (N mod 1000)
 const TAG = __ENV.TAG || SCENARIO;
 const OUT_DIR = (__ENV.OUT_DIR || '.').replace(/[\\/]+$/, '');
 
@@ -187,7 +187,7 @@ export default function (data) {
   const payload = JSON.stringify({
     ordererId: userId,
     cartId: userId, // seed.sql이 cart N = user N 으로 적재
-    shopId: Math.floor(Math.random() * SHOP_POOL) + 1,
+    shopId: 1 + (userId % SEED_SHOPS), // 그 장바구니의 가게
     orderMenus: [
       { menuId: 1, cartId: userId, quantity: 2, orderedPrice: 15000 }, // order_menu.menu_id 는 FK가 아니라 menus 시딩 불필요
     ],

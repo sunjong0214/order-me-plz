@@ -1,6 +1,5 @@
 package com.omp.promotion;
 
-import static com.omp.support.TestFixtures.CART_OK;
 import static com.omp.support.TestFixtures.SHOP_OPEN;
 import static com.omp.support.TestFixtures.USER_BANNED;
 import static com.omp.support.TestFixtures.USER_OK;
@@ -63,6 +62,9 @@ class PromotionOrderRulesTest {
             }
             users.add(new Object[]{USER_TRIGGER, "t@test.com", "t", "GENERAL"});
             jdbc.batchUpdate("INSERT INTO users(user_id, email, name, status) VALUES (?, ?, ?, ?)", users);
+            // 사용자마다 자기 장바구니(id = 사용자 id). USER_OK·USER_BANNED의 것은 TestFixtures가 넣는다
+            List<Object[]> carts = users.stream().map(u -> new Object[]{u[0], u[0], SHOP_OPEN}).toList();
+            jdbc.batchUpdate("INSERT INTO carts(cart_id, user_id, shop_id) VALUES (?, ?, ?)", carts);
             promotionId = admin.create("test", STOCK, LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusHours(1));
         }
 
@@ -74,7 +76,7 @@ class PromotionOrderRulesTest {
         ResponseEntity<String> post(String path, long userId, long promotion) {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String body = "{\"ordererId\": " + userId + ", \"cartId\": " + CART_OK + ", \"shopId\": " + SHOP_OPEN
+            String body = "{\"ordererId\": " + userId + ", \"cartId\": " + userId + ", \"shopId\": " + SHOP_OPEN
                     + ", \"orderMenus\": [], \"promotionId\": " + promotion + "}";
             return rest.postForEntity(path, new HttpEntity<>(body, headers), String.class);
         }
