@@ -1,0 +1,28 @@
+time="2026-10-02T07:19:46+09:00" level=info msg="[run] 시작 07:19:46 MODE=sync TAG=FLASH-sync-ff-memory PROMOTION_ID=1" source=console
+time="2026-10-02T07:19:46+09:00" level=info msg="[flash] 시도 07:20:16 ~ 07:22:03 (최고 초당 3000건), 관찰 끝 07:27:03" source=console
+time="2026-10-02T07:27:03+09:00" level=info msg="[run] 종료 07:27:03 TAG=FLASH-sync-ff-memory" source=console
+     base_accepted[2m..................:[0m [36m17396[0m  [36;2m39.806013/s[0m
+     base_accepted_duration[2m.........:[0m avg=[36m8.51ms[0m   min=[36m301.2µs[0m med=[36m4.31ms[0m   max=[36m586.21ms[0m p(90)=[36m4.95ms[0m   p(95)=[36m31.63ms[0m  p(99)=[36m114.88ms[0m
+     base_rejected[2m..................:[0m [36m85[0m     [36;2m0.194499/s[0m
+     data_received[2m..................:[0m [36m34 MB[0m  [36;2m79 kB/s[0m
+     data_sent[2m......................:[0m [36m70 MB[0m  [36;2m160 kB/s[0m
+     http_req_blocked[2m...............:[0m avg=[36m12.02µs[0m  min=[36m0s[0m      med=[36m0s[0m       max=[36m23.08ms[0m  p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m513.7µs[0m 
+     http_req_connecting[2m............:[0m avg=[36m11.56µs[0m  min=[36m0s[0m      med=[36m0s[0m       max=[36m21.27ms[0m  p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m512.8µs[0m 
+     http_req_duration[2m..............:[0m avg=[36m28.2ms[0m   min=[36m0s[0m      med=[36m1.11ms[0m   max=[36m665.72ms[0m p(90)=[36m82.72ms[0m  p(95)=[36m122.56ms[0m p(99)=[36m267.88ms[0m
+       { expected_response:true }[2m...:[0m avg=[36m57.82ms[0m  min=[36m301.2µs[0m med=[36m41.98ms[0m  max=[36m665.72ms[0m p(90)=[36m123.79ms[0m p(95)=[36m169.32ms[0m p(99)=[36m321.11ms[0m
+     http_req_failed[2m................:[0m [36m53.03%[0m [36;2m✓ 132576[0m     [36;2m✗ 117396[0m
+     http_req_receiving[2m.............:[0m avg=[36m137.02µs[0m min=[36m0s[0m      med=[36m0s[0m       max=[36m123.93ms[0m p(90)=[36m508.2µs[0m  p(95)=[36m567.69µs[0m p(99)=[36m3.36ms[0m  
+     http_req_sending[2m...............:[0m avg=[36m1.07µs[0m   min=[36m0s[0m      med=[36m0s[0m       max=[36m5.16ms[0m   p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_tls_handshaking[2m.......:[0m avg=[36m0s[0m       min=[36m0s[0m      med=[36m0s[0m       max=[36m0s[0m       p(90)=[36m0s[0m       p(95)=[36m0s[0m       p(99)=[36m0s[0m      
+     http_req_waiting[2m...............:[0m avg=[36m28.06ms[0m  min=[36m0s[0m      med=[36m720.15µs[0m max=[36m665.72ms[0m p(90)=[36m82.68ms[0m  p(95)=[36m122.49ms[0m p(99)=[36m267.88ms[0m
+     http_reqs[2m......................:[0m [36m249972[0m [36;2m571.992905/s[0m
+     iteration_duration[2m.............:[0m avg=[36m28.26ms[0m  min=[36m0s[0m      med=[36m1.17ms[0m   max=[36m665.72ms[0m p(90)=[36m82.74ms[0m  p(95)=[36m122.6ms[0m  p(99)=[36m267.88ms[0m
+     iterations[2m.....................:[0m [36m249972[0m [36;2m571.992905/s[0m
+     promo_queue_full[2m...............:[0m [36m6215[0m   [36;2m14.221336/s[0m
+     promo_queue_full_duration[2m......:[0m avg=[36m33.3ms[0m   min=[36m0s[0m      med=[36m8.88ms[0m   max=[36m610.16ms[0m p(90)=[36m43.02ms[0m  p(95)=[36m277.13ms[0m p(99)=[36m574.15ms[0m
+     promo_sold_out[2m.................:[0m [36m126276[0m [36;2m288.948267/s[0m
+     promo_sold_out_duration[2m........:[0m avg=[36m418.86µs[0m min=[36m0s[0m      med=[36m503µs[0m    max=[36m41.83ms[0m  p(90)=[36m572.54µs[0m p(95)=[36m674.9µs[0m  p(99)=[36m3.87ms[0m  
+     promo_success[2m..................:[0m [36m100000[0m [36;2m228.82279/s[0m
+     promo_success_duration[2m.........:[0m avg=[36m66.39ms[0m  min=[36m497.7µs[0m med=[36m57.06ms[0m  max=[36m665.72ms[0m p(90)=[36m130.87ms[0m p(95)=[36m178.33ms[0m p(99)=[36m335.13ms[0m
+     vus[2m............................:[0m [36m0[0m      [36;2mmin=0[0m        [36;2mmax=433[0m 
+     vus_max[2m........................:[0m [36m2050[0m   [36;2mmin=2050[0m     [36;2mmax=2050[0m
