@@ -25,12 +25,12 @@ public class MenuController {
     private final MenuService menuService;
 
     @GetMapping("/{id}")
-    public Menu getMenu(final Long id) {
+    public Menu getMenu(final @PathVariable Long id) {
         return menuService.findMenuBy(id);
     }
 
     @PostMapping
-    public Long createMenu(final CreateMenuRequest request) {
+    public Long createMenu(final @RequestBody CreateMenuRequest request) {
         return menuService.saveMenuBy(CreateMenuRequest.from(request));
     }
 
@@ -40,9 +40,12 @@ public class MenuController {
         menuService.updateMenuBy(ChangeMenuRequest.from(request), id);
     }
 
+    /**
+     * 가게의 메뉴 목록(커서 페이지, menu_id 내림차순). 첫 페이지는 cursor 없이, 다음 페이지는 이전 페이지의 마지막 id를 cursor로.
+     */
     @GetMapping
     @ResponseStatus(OK)
-    public Slice<MenuResponse> getMenus(final @RequestParam Long cursor, final @RequestParam int pageSize,
+    public Slice<MenuResponse> getMenus(final @RequestParam(required = false) Long cursor, final @RequestParam int pageSize,
                                         final @RequestParam Long shopId) {
         return menuService.findMenusBy(pageSize, shopId, cursor);
     }

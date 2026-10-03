@@ -6,6 +6,7 @@ import com.omp.menu.dto.UpdateMenuDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -21,6 +22,8 @@ public class MenuService {
         return menuRepository.save(CreateMenuDto.from(createMenuDto)).getId();
     }
 
+    // QueryDSL 벌크 UPDATE는 트랜잭션 없이 실행하면 TransactionRequiredException으로 실패한다
+    @Transactional
     public void updateMenuBy(final UpdateMenuDto dto, final Long id) {
         menuRepositoryCustomImpl.updateMenu(dto, id);
     }

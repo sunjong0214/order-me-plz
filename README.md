@@ -41,7 +41,7 @@
 |---|---|
 | 사용자 | `POST /api/v1/users`, `GET /api/v1/users/{id}` |
 | 가게 | `GET /api/v1/shops?category=&cursor=&pageSize=`(목록, 캐시), `GET /api/v1/shops/{id}`, `POST /api/v1/shops`, `PATCH /api/v1/shops`(본문의 id로 영업 상태 · 이름 · 카테고리 변경) |
-| 메뉴 | `GET /api/v1/menu?shopId=&cursor=&pageSize=`, `PATCH /api/v1/menu/{id}` |
+| 메뉴 | `GET /api/v1/menu?shopId=&cursor=&pageSize=`, `GET /api/v1/menu/{id}`, `POST /api/v1/menu`, `PATCH /api/v1/menu/{id}` |
 | 장바구니 | `GET /api/v1/cart/{id}` |
 | 주문 | `POST /api/v1/order`, `POST /api/v1/order/async`, `GET /api/v1/order/{id}`, `GET /api/v1/order/sse/{uuid}`, `GET /api/v1/order/async/{uuid}` |
 | 배달 | `GET /api/v1/delivery/{id}` |

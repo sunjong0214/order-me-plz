@@ -7,6 +7,7 @@ import static org.springframework.util.StringUtils.hasText;
 import com.omp.menu.dto.MenuResponse;
 import com.omp.menu.dto.UpdateMenuDto;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.impl.JPAUpdateClause;
 import java.util.List;
@@ -21,15 +22,17 @@ public class MenuRepositoryCustomImpl implements MenuRepositoryCustom {
 
     @Override
     public Slice<MenuResponse> findMenusBy(int pageSize, Long shopId, Long cursor) {
-        List<MenuResponse> menus = queryFactory.select(Projections.fields(MenuResponse.class,
+        List<MenuResponse> menus = queryFactory.select(Projections.constructor(MenuResponse.class,
                         menu.id,
                         menu.name,
                         menu.price,
                         menu.isSoldOut,
                         menu.description
                 )).from(menu)
-                .where(menu.id.lt(cursor).and(menu.shopId.eq(shopId)))
-                .limit(pageSize)
+                .where(menu.shopId.eq(shopId))
+                .where(checkCursor(cursor))
+                .orderBy(menu.id.desc())   // 커서 조건(id < cursor)과 같은 방향으로 정렬해야 페이지 경계가 고정된다
+                .limit(pageSize + 1)       // 한 건 더 읽어 다음 페이지가 있는지 판단한다
                 .fetch();
 
         boolean hasNext = false;
@@ -39,6 +42,10 @@ public class MenuRepositoryCustomImpl implements MenuRepositoryCustom {
         }
 
         return new SliceImpl<>(menus, PageRequest.ofSize(pageSize), hasNext);
+    }
+
+    private static BooleanExpression checkCursor(Long cursor) {
+        return cursor == null ? null : menu.id.lt(cursor);
     }
 
     @Override
