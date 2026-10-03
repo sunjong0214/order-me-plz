@@ -29,7 +29,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
- * 리뷰 결함의 결정적 재현 (포폴 1-1 "부하 전 원인 재현").
+ * 리뷰 결함의 결정적 재현 (부하 측정 전 원인 재현, benchmark/README.md 2절 "리뷰: 측정 전 확정할 항목").
  * 두 트랜잭션(커넥션 2개)의 실행 순서를 한 단계씩 통제하고, 같은 순서를 두 설계에 적용한다.
  * <ul>
  *   <li>① shops 통계 + 같은 트랜잭션 + 읽고-계산-쓰기: bench/review-before 의 ReviewService 가 실행하는 SQL 순서
@@ -38,7 +38,7 @@ import org.springframework.test.context.ActiveProfiles;
  *       (리뷰 INSERT → ShopReviewStatsRepository.applyReviewRating 과 같은 증가 UPDATE)</li>
  * </ul>
  * (a) 데드락: 두 트랜잭션이 모두 리뷰 INSERT(외래 키 검사로 shops 행에 S락)를 마친 뒤 통계를 UPDATE 한다.
- * (b) 갱신 유실: 두 트랜잭션이 같은 이전 통계를 읽은 뒤 차례로 커밋한다(포폴 예시: 리뷰 10개·합계 30에 5점과 4점).
+ * (b) 갱신 유실: 두 트랜잭션이 같은 이전 통계를 읽은 뒤 차례로 커밋한다(예시: 리뷰 10개·합계 30에 5점과 4점).
  * 데드락 판정은 본측정과 같이 information_schema.INNODB_METRICS 의 lock_deadlocks 증가분으로 한다.
  * 락 대기는 시간에 기대지 않고 performance_schema.data_lock_waits 에 대기가 보일 때까지 확인한 뒤 다음 단계로 간다.
  */
@@ -184,7 +184,7 @@ class ReviewLockReproductionTest {
         }
     }
 
-    /** 포폴 예시의 출발점: 리뷰 10개·평점 합계 30점, 통계도 같은 값. */
+    /** (b) 예시의 출발점: 리뷰 10개·평점 합계 30점, 통계도 같은 값. */
     private void seedTenReviewsSummingThirty() {
         for (int i = 0; i < 10; i++) {
             jdbc.update("INSERT INTO reviews(title, writer_id, detail, shop_id, rating) VALUES ('seed', 1, 'd', ?, 3)", SHOP);

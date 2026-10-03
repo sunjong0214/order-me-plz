@@ -74,3 +74,5 @@ Thumbs.db
 *.hprof
 
 build/generated
+### 인증서·키 (로컬 전용) ###
+*.p12

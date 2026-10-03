@@ -32,7 +32,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * 가게 목록 캐시(포폴 1-3): 커서 정렬, 변경 시 무효화, 같은 키의 동시 미스 합치기(sync).
+ * 가게 목록 캐시: 커서 정렬, 변경 시 무효화, 같은 키의 동시 미스 합치기(sync).
  * HTTP와 같은 캐시 경계(컨트롤러 빈의 @Cacheable 프록시)를 직접 호출한다.
  */
 @SpringBootTest
