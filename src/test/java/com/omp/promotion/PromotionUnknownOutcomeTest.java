@@ -31,7 +31,8 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 /**
  * 커밋 결과를 모를 때(설계 3.4 "결과 모름"). 커밋 호출이 예외로 끝나면 Spring은 STATUS_UNKNOWN을 알린다(spring-tx 6.2.1 확인).
  * 이때 번호를 바로 돌려주지 않고, 대조기가 (이벤트, 사용자) 참여 행이 있는지 보고 정한다.
- * - 실제로는 커밋됐는데 응답만 잃은 경우: 참여 행이 있으므로 확정(번호를 돌려주면 초과 판매가 된다)
+ * - 실제로는 커밋됐는데 응답만 잃은 경우: 참여 행이 있으므로 확정(번호를 돌려주면 같은 번호가 다시 나가 그 번호를 받은 주문이
+ *   유니크 제약에 걸려 실패한다. 초과 판매는 유니크·외래 키가 막는다)
  * - 실제로는 커밋되지 않은 경우: 참여 행이 없으므로 반납
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
