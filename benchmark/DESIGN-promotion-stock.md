@@ -103,6 +103,7 @@ Spring은 트랜잭션이 끝날 때 결과를 `TransactionSynchronization.after
 - 커밋 전 예외로 롤백 → `STATUS_ROLLED_BACK`
 - 커밋 호출 자체가 실패(`TransactionException`, 기본 설정) → `STATUS_UNKNOWN`
 - 커밋 중 그 밖의 예외 → 롤백을 시도해 성공하면 `STATUS_ROLLED_BACK`, 롤백도 실패하면 `STATUS_UNKNOWN`
+- **이 앱(`JpaTransactionManager`)의 실제 경로:** spring-orm 6.2.1의 `doCommit`은 커밋 실패를 대부분 `DataAccessException`으로 바꿔 던지므로 바로 위 "그 밖의 예외" 경로를 탄다. Hibernate 6.6.4는 JDBC 커밋이 실패하면 트랜잭션을 비활성(FAILED_COMMIT)으로 두어 Spring의 롤백 시도가 아무것도 하지 않고 끝나므로, 실제 연결 끊김은 `STATUS_UNKNOWN`이 아니라 `STATUS_ROLLED_BACK`으로 알려질 수 있다. 그러면 아래 표의 "결과 모름" 처리를 타지 않고 번호가 대조 없이 돌아간다(라이브러리 코드를 읽은 판단, 실행 안 함). 초과 판매는 유니크·외래 키가 막지만 그 번호를 받은 다음 주문이 실패한다. 커밋을 시도한 뒤의 `STATUS_ROLLED_BACK`도 대조로 보내는 보완이 남았다(미구현)
 
 | 경우 | 주문 | 번호 처리 |
 |---|---|---|
@@ -234,7 +235,7 @@ Spring은 트랜잭션이 끝날 때 결과를 `TransactionSynchronization.after
 - **테스트 28개(79개 중):** 발급기 단위 8개, 세 방식 × 동기·비동기 동시 폭주(재고 100, 사용자 300명) 7개, 보상 규칙 11개, 커밋 결과 모름 2개. 5장 표의 항목을 모두 다룬다
 - **DB 여러 행은 READ COMMITTED:** 3.3 참고. 테스트가 찾은 교착이 근거다
 - **커밋 결과 모름 흉내:** "커밋하지 않고 예외"만 던지면 Hibernate가 JPA 규칙대로 진행 중인 트랜잭션의 EntityManager 종료를 미뤄, 잠금을 쥔 연결이 남았다. 실제로 커밋이 DB에 닿지 못하면(연결 끊김) DB가 되돌리므로 테스트도 "되돌린 뒤 예외"로 흉내 낸다
-- **`rollbackOnCommitFailure`는 기본값(false) 유지:** 켜면 커밋 실패 뒤 롤백을 시도해 성공하면 "롤백됨"을 알리는데, 실제로는 커밋됐고 응답만 잃은 경우에도 그렇게 되어 번호를 돌려주면 같은 번호가 다시 나간다. 초과 판매는 참여 행의 유니크가 막지만, 그 번호를 받은 주문이 실패한다. "모름 → DB 확인"이 안전하다(이 경로는 트랜잭션 매니저가 커밋 예외를 던지게 한 테스트로만 확인했다. 실제 연결 끊김에서 Spring이 STATUS_UNKNOWN을 알리는지는 실행해 보지 않았다)
+- **`rollbackOnCommitFailure`는 기본값(false) 유지:** 켜면 커밋 실패 뒤 롤백을 시도해 성공하면 "롤백됨"을 알리는데, 실제로는 커밋됐고 응답만 잃은 경우에도 그렇게 되어 번호를 돌려주면 같은 번호가 다시 나간다. 초과 판매는 참여 행의 유니크가 막지만, 그 번호를 받은 주문이 실패한다. "모름 → DB 확인"이 안전하다(이 경로는 트랜잭션 매니저가 커밋 예외를 던지게 한 테스트로만 확인했다. 실제 연결 끊김에서 Spring이 STATUS_UNKNOWN을 알리는지는 실행해 보지 않았고, 코드상으로는 3.4의 JPA 경로처럼 STATUS_ROLLED_BACK이 올 수 있다)
 - **매진 응답은 스택 트레이스 없이:** 초당 수천 건 나오는 정상 결과라 예외 객체를 가볍게 만들고, 비동기 워커의 매진 실패는 건별 경고 로그를 남기지 않는다(P2에서 찾은 로그 폭주와 같은 문제를 막는다)
 - **참여 행은 JdbcTemplate으로 넣는다:** 식별자를 직접 주는 엔티티의 `save`는 merge가 되어 SELECT를 한 번 더 한다
 - **측정 준비:** k6 `benchmark/k6/03-promotion-flash.js`(시도 + 평상시 주문 동시, VU 2,000 미리 할당), `benchmark/sql/seed-users-300k.sql`(회원·장바구니 30만), `reset-round.sql`에 참여 기록 비우기, 이벤트 관리 API(`omp.promotion.admin-api=true`일 때: 생성·초기화·정합성 확인)
